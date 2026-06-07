@@ -23,6 +23,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // 允许访问静态资源
                 .antMatchers("/static/**", "/webjars/**", "/", "/login", "/login/auth", "/register").permitAll()
                 .antMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                .antMatchers("/admin/*.html", "/student/*.html", "/teacher/*.html").permitAll()
                 // API接口需要认证
                 .antMatchers("/api/**").authenticated()
                 // 其他请求需要认证

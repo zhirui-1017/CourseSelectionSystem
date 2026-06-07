@@ -45,7 +45,7 @@ public class AdminController {
         // 获取系统统计信息
         Map<String, Object> stats = adminService.getSystemStats();
         model.addAttribute("stats", stats);
-        return "admin/index";
+        return "redirect:/admin/index.html";
     }
     
     /**

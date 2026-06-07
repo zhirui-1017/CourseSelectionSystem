@@ -515,6 +515,9 @@ public class UserServiceImpl implements UserService {
         if (!StringUtils.hasText(storedPassword)) {
             return false;
         }
+        if (storedPassword.equals(rawPassword)) {
+            return true;
+        }
         if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$")
                 || storedPassword.startsWith("$2y$")) {
             try {

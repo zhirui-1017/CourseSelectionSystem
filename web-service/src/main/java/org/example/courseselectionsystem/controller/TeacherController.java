@@ -41,7 +41,7 @@ public class TeacherController {
             model.addAttribute("teacher", user);
         }
         
-        return "teacher/index";
+        return "redirect:/teacher/index.html";
     }
 
     /**
