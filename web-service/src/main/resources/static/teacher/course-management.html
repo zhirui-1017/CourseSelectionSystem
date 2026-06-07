@@ -3,698 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>课程管理 - 教师管理系统</title>
-    <!-- 引入公共CSS -->
-    <link rel="stylesheet" href="../css/common.css">
-    <!-- 引入Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 引入Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        /* 课程管理页面特定样式 */
-        .course-card {
-            background: var(--glass-bg);
-            backdrop-filter: var(--glass-backdrop);
-            border-radius: var(--radius-lg);
-            border: var(--glass-border);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            transition: all var(--transition-normal);
-        }
-        
-        .course-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-glow);
-        }
-        
-        .course-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-        }
-        
-        .course-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin: 0;
-            display: flex;
-            align-items: center;
-        }
-        
-        .course-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--primary-gradient);
-            color: white;
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 0.75rem;
-            font-size: 1.2rem;
-        }
-        
-        .course-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-        
-        .meta-item {
-            display: flex;
-            align-items: center;
-        }
-        
-        .meta-icon {
-            margin-right: 0.5rem;
-            color: var(--primary-color);
-        }
-        
-        .capacity-bar {
-            height: 6px;
-            background: var(--bg-secondary);
-            border-radius: 3px;
-            margin-top: 0.5rem;
-            overflow: hidden;
-        }
-        
-        .capacity-progress {
-            height: 100%;
-            background: var(--primary-gradient);
-            border-radius: 3px;
-            transition: width 0.3s ease;
-        }
-        
-        .course-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-        
-        .filter-box {
-            background: var(--glass-bg);
-            backdrop-filter: var(--glass-backdrop);
-            border-radius: var(--radius-lg);
-            border: var(--glass-border);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        
-        .operation-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .badge {
-            font-weight: normal;
-        }
-        
-        .badge-success {
-            background: var(--success-color);
-        }
-        
-        .badge-warning {
-            background: var(--warning-color);
-        }
-    </style>
+    <title>课程管理 - 教师端</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/teacher-dynamic.css">
 </head>
-<body>
+<body class="teacher-page" data-teacher-page="courses">
     <div class="page-container">
-        <!-- 侧边栏 -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <a href="index.html" class="sidebar-brand">
-                    <div class="sidebar-brand-icon">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                    </div>
-                    <div class="sidebar-brand-text">教师管理系统</div>
+                <a href="/teacher/index.html" class="sidebar-brand">
+                    <div class="sidebar-brand-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                    <span class="sidebar-brand-text">教师端</span>
                 </a>
-                <button class="sidebar-toggle">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
+                <button class="sidebar-toggle" type="button" aria-label="收起侧边栏"><i class="fas fa-chevron-left"></i></button>
             </div>
-            
             <nav class="sidebar-nav">
-                <div class="nav-item">
-                    <a href="index.html" class="nav-link">
-                        <i class="nav-icon fas fa-home"></i>
-                        <span class="nav-text">首页</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="course-management.html" class="nav-link active">
-                        <i class="nav-icon fas fa-book"></i>
-                        <span class="nav-text">课程管理</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="student-management.html" class="nav-link">
-                        <i class="nav-icon fas fa-users"></i>
-                        <span class="nav-text">学生管理</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="grade-management.html" class="nav-link">
-                        <i class="nav-icon fas fa-graduation-cap"></i>
-                        <span class="nav-text">成绩管理</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="teaching-statistics.html" class="nav-link">
-                        <i class="nav-icon fas fa-chart-bar"></i>
-                        <span class="nav-text">教学统计</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="personal-info.html" class="nav-link">
-                        <i class="nav-icon fas fa-user-circle"></i>
-                        <span class="nav-text">个人信息</span>
-                    </a>
-                </div>
+                <div class="nav-item"><a href="/teacher/index.html" class="nav-link"><i class="nav-icon fas fa-house"></i><span class="nav-text">首页</span></a></div>
+                <div class="nav-item"><a href="/teacher/course-management.html" class="nav-link active"><i class="nav-icon fas fa-book-open"></i><span class="nav-text">课程管理</span></a></div>
+                <div class="nav-item"><a href="/teacher/student-management.html" class="nav-link"><i class="nav-icon fas fa-users"></i><span class="nav-text">学生管理</span></a></div>
+                <div class="nav-item"><a href="/teacher/grade-management.html" class="nav-link"><i class="nav-icon fas fa-pen-to-square"></i><span class="nav-text">成绩管理</span></a></div>
+                <div class="nav-item"><a href="/teacher/teaching-statistics.html" class="nav-link"><i class="nav-icon fas fa-chart-simple"></i><span class="nav-text">教学统计</span></a></div>
+                <div class="nav-item"><a href="/teacher/personal-info.html" class="nav-link"><i class="nav-icon fas fa-user"></i><span class="nav-text">个人信息</span></a></div>
             </nav>
         </aside>
-        
-        <!-- 主内容区 -->
+
         <main class="main-content">
-            <!-- 顶部导航栏 -->
-            <nav class="top-navbar">
+            <header class="top-navbar">
                 <div class="nav-left">
-                    <button class="mobile-sidebar-toggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
+                    <button class="mobile-sidebar-toggle" type="button" aria-label="打开侧边栏"><i class="fas fa-bars"></i></button>
                     <h1 class="page-title">课程管理</h1>
                 </div>
                 <div class="nav-right">
-                    <button class="nav-icon-btn">
-                        <i class="fas fa-bell"></i>
-                    </button>
-                    <button class="nav-icon-btn">
-                        <i class="fas fa-envelope"></i>
-                    </button>
-                    <div class="user-profile dropdown">
-                        <div class="dropdown-toggle">
-                            <div class="user-avatar">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="user-info">
-                                <span class="user-name">张教授</span>
-                                <span class="user-role">计算机科学与技术</span>
-                            </div>
-                        </div>
-                        <div class="dropdown-menu">
-                            <a href="personal-info.html" class="dropdown-item">
-                                <i class="fas fa-user-circle"></i> 个人信息
-                            </a>
-                            <a href="#" class="dropdown-item">
-                                <i class="fas fa-cog"></i> 设置
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a href="../login.html" class="dropdown-item">
-                                <i class="fas fa-sign-out-alt"></i> 退出登录
-                            </a>
+                    <div class="user-profile">
+                        <div class="user-avatar" data-teacher-avatar>师</div>
+                        <div class="user-info">
+                            <span class="user-name" data-teacher-name>教师</span>
+                            <span class="user-role" data-teacher-role>Teacher</span>
                         </div>
                     </div>
+                    <a class="btn btn-secondary btn-sm" href="/login/logout"><i class="fas fa-right-from-bracket"></i>退出</a>
                 </div>
-            </nav>
-            
-            <!-- 页面内容 --<div class="content-wrapper">
-                <!-- 筛选框 --<div class="filter-box">
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <label for="course-category" class="form-label">课程类别</label>
-                            <select id="course-category" class="form-control">
-                                <option value="all">全部类别>
-                                <option value="compulsory">必修课>
-                                <option value="optional">选修课>
-                                <option value="specialized">专业课>
-                                <option value="public">公共课>
-                            </select>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="course-semester" class="form-label">学期</label>
-                            <select id="course-semester" class="form-control">
-                                <option value="all">全部学期>
-                                <option value="2024-spring" selected>2024年春季学期>
-                                <option value="2023-autumn">2023年秋季学期>
-                                <option value="2023-spring">2023年春季学期>
-                            </select>
-                        <div class="col-md-3 mb-3">
-                            <label for="course-status" class="form-label">状态</label>
-                            <select id="course-status" class="form-control">
-                                <option value="all">全部状态>
-                                <option value="ongoing" selected>进行中>
-                                <option value="finished">已结束>
-                                <option value="upcoming">即将开始>
-                            </select>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="course-search" class="form-label">搜索课程>
-                            <div class="input-group">
-                                <input type="text" id="course-search" class="form-control" placeholder="输入课程名称或编号">
-                                <button id="search-btn" class="btn btn-primary">
-                                    <i class="fas fa-search"></i>
-                                </button>
+            </header>
+
+            <div class="content-wrapper">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">我的课程 <span class="teacher-table-note">共 <strong data-course-count>0</strong> 门</span></h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="teacher-filter">
+                            <div class="form-group">
+                                <label class="form-label" for="course-search">搜索课程</label>
+                                <input id="course-search" class="form-control" type="search" placeholder="课程名称或编号" data-course-search>
                             </div>
+                            <div class="form-group">
+                                <label class="form-label" for="course-status">开放状态</label>
+                                <select id="course-status" class="form-control" data-course-status>
+                                    <option value="">全部状态</option>
+                                    <option value="1">开放</option>
+                                    <option value="0">关闭</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" type="button" data-course-filter-button><i class="fas fa-filter"></i>筛选</button>
+                        </div>
+
+                        <div class="teacher-course-grid" data-course-list>
+                            <div class="teacher-empty"><span class="loading"></span></div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- 操作栏 --<div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="mb-0">我的课程 (<span id="course-count">5</span>)</h2>
-                    <div class="operation-btn">
-                        <button class="btn btn-success">
-                            <i class="fas fa-plus mr-2"></i>新建课程
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- 课程列表 --<div id="course-list">
-                    <!-- 课程卡片1 --<div class="course-card">
-                        <div class="course-header">
-                            <h3 class="course-title">
-                                <span class="course-icon">
-                                    <i class="fas fa-laptop-code"></i>
-                                </span>
-                                程序设计基础 <span class="badge badge-success">进行中</span>
-                            </h3>
-                            <div class="course-id">课程编号: CS101</div>
-                        </div>
-                        <div class="course-meta">
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-clock"></i>
-                                3学分 · 48学时
-                            </div>
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-users"></i>
-                                56/60 人
-                            </div>
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-building"></i>
-                                计算机实验室 A
-                            </div>
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-calendar-alt"></i>
-                                周二、周四 14:00-16:00
-                            </div>
-                        </div>
-                        <div class="mb-2">
-                            <small class="text-muted">课程容量: 56/60 (93%)</small>
-                            <div class="capacity-bar">
-                                <div class="capacity-progress" style="width: 93%"></div>
-                            </div>
-                        </div>
-                        <div class="course-actions">
-                            <button class="btn btn-sm btn-secondary">
-                                <i class="fas fa-list mr-1"></i>学生列表
-                            </button>
-                            <button class="btn btn-sm btn-secondary">
-                                <i class="fas fa-book-open mr-1"></i>教学资料
-                            </button>
-                            <button class="btn btn-sm btn-primary">
-                                <i class="fas fa-edit mr-1"></i>编辑课程
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- 课程卡片2 --<div class="course-card">
-                        <div class="course-header">
-                            <h3 class="course-title">
-                                <span class="course-icon">
-                                    <i class="fas fa-database"></i>
-                                </span>
-                                数据库系统 <span class="badge badge-success">进行中</span>
-                            </h3>
-                            <div class="course-id">课程编号: CS205</div>
-                        </div>
-                        <div class="course-meta">
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-clock"></i>
-                                4学分 · 64学时
-                            </div>
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-users"></i>
-                                45/50 人
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-building"></i>
-                                教学楼 B301
-                            </div>
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-calendar-alt"></i>
-                                周一、周三 09:00-11:00
-                            </div>
-                        </div>
-                        <div class="mb-2">
-                            <small class="text-muted">课程容量: 45/50 (90%)</small>
-                            <div class="capacity-bar">
-                                <div class="capacity-progress" style="width: 90%"></div>
-                            </div>
-                        </div>
-                        <div class="course-actions">
-                            <button class="btn btn-sm btn-secondary">
-                                <i class="fas fa-list mr-1"></i>学生列表
-                            </button>
-                            <button class="btn btn-sm btn-secondary">
-                                <i class="fas fa-book-open mr-1"></i>教学资料
-                            </button>
-                            <button class="btn btn-sm btn-primary">
-                                <i class="fas fa-edit mr-1"></i>编辑课程
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- 课程卡片3 --<div class="course-card">
-                        <div class="course-header">
-                            <h3 class="course-title">
-                                <span class="course-icon">
-                                    <i class="fas fa-network-wired"></i>
-                                </span>
-                                计算机网络 <span class="badge badge-success">进行中</span>
-                            </h3>
-                            <div class="course-id">课程编号: CS203</div>
-                        </div>
-                        <div class="course-meta">
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-clock"></i>
-                                4学分 · 64学时
-                            </div>
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-users"></i>
-                                42/45 人
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-building"></i>
-                                教学楼 A205
-                            </div>
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-calendar-alt"></i>
-                                周三、周五 10:00-12:00
-                            </div>
-                        </div>
-                        <div class="mb-2">
-                            <small class="text-muted">课程容量: 42/45 (93%)</small>
-                            <div class="capacity-bar">
-                                <div class="capacity-progress" style="width: 93%"></div>
-                            </div>
-                        </div>
-                        <div class="course-actions">
-                            <button class="btn btn-sm btn-secondary">
-                                <i class="fas fa-list mr-1"></i>学生列表
-                            </button>
-                            <button class="btn btn-sm btn-secondary">
-                                <i class="fas fa-book-open mr-1"></i>教学资料
-                            </button>
-                            <button class="btn btn-sm btn-primary">
-                                <i class="fas fa-edit mr-1"></i>编辑课程
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- 课程卡片4 --<div class="course-card">
-                        <div class="course-header">
-                            <h3 class="course-title">
-                                <span class="course-icon">
-                                    <i class="fas fa-code-branch"></i>
-                                </span>
-                                数据结构 <span class="badge badge-warning">即将开始</span>
-                            </h3>
-                            <div class="course-id">课程编号: CS105</div>
-                        </div>
-                        <div class="course-meta">
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-clock"></i>
-                                4学分 · 64学时
-                            </div>
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-users"></i>
-                                38/50 人
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-building"></i>
-                                计算机实验室 B
-                            </div>
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-calendar-alt"></i>
-                                周一、周五 14:00-16:00
-                            </div>
-                        </div>
-                        <div class="mb-2">
-                            <small class="text-muted">课程容量: 38/50 (76%)</small>
-                            <div class="capacity-bar">
-                                <div class="capacity-progress" style="width: 76%"></div>
-                            </div>
-                        </div>
-                        <div class="course-actions">
-                            <button class="btn btn-sm btn-secondary">
-                                <i class="fas fa-list mr-1"></i>学生列表
-                            </button>
-                            <button class="btn btn-sm btn-secondary">
-                                <i class="fas fa-book-open mr-1"></i>教学资料
-                            </button>
-                            <button class="btn btn-sm btn-primary">
-                                <i class="fas fa-edit mr-1"></i>编辑课程
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- 课程卡片5 --<div class="course-card">
-                        <div class="course-header">
-                            <h3 class="course-title">
-                                <span class="course-icon">
-                                    <i class="fas fa-robot"></i>
-                                </span>
-                                人工智能导论 <span class="badge badge-secondary">已结束</span>
-                            </h3>
-                            <div class="course-id">课程编号: CS305</div>
-                        </div>
-                        <div class="course-meta">
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-clock"></i>
-                                3学分 · 48学时
-                            </div>
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-users"></i>
-                                45/45 人
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-building"></i>
-                                教学楼 C101
-                            </div>
-                            <div class="meta-item">
-                                <i class="meta-icon fas fa-calendar-alt"></i>
-                                2023年秋季学期
-                            </div>
-                        </div>
-                        <div class="mb-2">
-                            <small class="text-muted">课程容量: 45/45 (100%)</small>
-                            <div class="capacity-bar">
-                                <div class="capacity-progress" style="width: 100%"></div>
-                            </div>
-                        </div>
-                        <div class="course-actions">
-                            <button class="btn btn-sm btn-secondary">
-                                <i class="fas fa-list mr-1"></i>学生列表
-                            </button>
-                            <button class="btn btn-sm btn-secondary">
-                                <i class="fas fa-chart-bar mr-1"></i>成绩统计
-                            </button>
-                            <button class="btn btn-sm btn-primary">
-                                <i class="fas fa-edit mr-1"></i>编辑课程
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 分页 --<div class="pagination-container">
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination justify-content-center">
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#" tabindex="-1">
-                                    <i class="fas fa-chevron-left"></i>
-                                </a>
-                            </li>
-                            <li class="page-item active">
-                                <a class="page-link" href="#">1</a>
-                            </li>
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#">
-                                    <i class="fas fa-chevron-right"></i>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
                 </div>
             </div>
         </main>
     </div>
-    
-    <!-- 课程详情模态框 --<div class="modal fade" id="course-detail-modal" tabindex="-1" aria-labelledby="course-detail-modal-label" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="course-detail-modal-label">课程详情</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <!-- 课程详情内容将通过JavaScript动态生成 -->
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 引入公共JS --<script src="../js/common.js"></script>
-    <!-- 引入Bootstrap JS --<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        // 课程管理页面的JavaScript逻辑
-        document.addEventListener('DOMContentLoaded', function() {
-            // 模拟课程数据
-            const courses = [
-                {
-                    id: 'CS101',
-                    name: '程序设计基础',
-                    credits: 3,
-                    hours: 48,
-                    currentStudents: 56,
-                    maxStudents: 60,
-                    classroom: '计算机实验室 A',
-                    schedule: '周二、周四 14:00-16:00',
-                    status: 'ongoing',
-                    icon: 'laptop-code',
-                    semester: '2024-spring',
-                    category: 'compulsory',
-                    description: '本课程主要介绍程序设计的基本概念和方法，包括变量、数据类型、控制结构、函数等内容。通过本课程的学习，学生将掌握程序设计的基本技能，能够编写简单的程序解决实际问题。'
-                },
-                {
-                    id: 'CS205',
-                    name: '数据库系统',
-                    credits: 4,
-                    hours: 64,
-                    currentStudents: 45,
-                    maxStudents: 50,
-                    classroom: '教学楼 B301',
-                    schedule: '周一、周三 09:00-11:00',
-                    status: 'ongoing',
-                    icon: 'database',
-                    semester: '2024-spring',
-                    category: 'specialized',
-                    description: '本课程介绍数据库系统的基本概念、原理和技术，包括关系模型、SQL语言、数据库设计、索引技术、事务处理等内容。通过本课程的学习，学生将掌握数据库系统的理论知识和实践技能。'
-                },
-                {
-                    id: 'CS203',
-                    name: '计算机网络',
-                    credits: 4,
-                    hours: 64,
-                    currentStudents: 42,
-                    maxStudents: 45,
-                    classroom: '教学楼 A205',
-                    schedule: '周三、周五 10:00-12:00',
-                    status: 'ongoing',
-                    icon: 'network-wired',
-                    semester: '2024-spring',
-                    category: 'specialized',
-                    description: '本课程介绍计算机网络的基本原理和技术，包括网络体系结构、物理层、数据链路层、网络层、传输层和应用层等内容。通过本课程的学习，学生将理解计算机网络的工作原理，掌握网络协议的基本概念。'
-                },
-                {
-                    id: 'CS105',
-                    name: '数据结构',
-                    credits: 4,
-                    hours: 64,
-                    currentStudents: 38,
-                    maxStudents: 50,
-                    classroom: '计算机实验室 B',
-                    schedule: '周一、周五 14:00-16:00',
-                    status: 'upcoming',
-                    icon: 'code-branch',
-                    semester: '2024-spring',
-                    category: 'compulsory',
-                    description: '本课程介绍常用的数据结构及其算法实现，包括线性表、栈、队列、树、图等内容。通过本课程的学习，学生将掌握数据结构的基本概念和应用方法，能够选择合适的数据结构解决实际问题。'
-                },
-                {
-                    id: 'CS305',
-                    name: '人工智能导论',
-                    credits: 3,
-                    hours: 48,
-                    currentStudents: 45,
-                    maxStudents: 45,
-                    classroom: '教学楼 C101',
-                    schedule: '2023年秋季学期',
-                    status: 'finished',
-                    icon: 'robot',
-                    semester: '2023-autumn',
-                    category: 'optional',
-                    description: '本课程介绍人工智能的基本概念、原理和方法，包括知识表示、搜索技术、机器学习等内容。通过本课程的学习，学生将了解人工智能的发展历程和研究方向，掌握人工智能的基本技术和应用。'
-                }
-            ];
-            
-            // 搜索功能
-            document.getElementById('search-btn').addEventListener('click', function() {
-                const searchTerm = document.getElementById('course-search').value.toLowerCase();
-                const semester = document.getElementById('course-semester').value;
-                const status = document.getElementById('course-status').value;
-                const category = document.getElementById('course-category').value;
-                
-                // 这里可以添加实际的搜索逻辑
-                console.log('搜索课程:', searchTerm, semester, status, category);
-                
-                // 模拟搜索结果
-                alert('搜索功能已触发，实际项目中将连接后端API获取数据');
-            });
-            
-            // 回车键触发搜索
-            document.getElementById('course-search').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    document.getElementById('search-btn').click();
-                }
-            });
-            
-            // 课程操作按钮事件监听
-            const courseCards = document.querySelectorAll('.course-card');
-            courseCards.forEach(card => {
-                const buttons = card.querySelectorAll('button');
-                buttons.forEach(button => {
-                    button.addEventListener('click', function() {
-                        const courseId = card.querySelector('.course-id').textContent.split(': ')[1];
-                        const buttonText = this.textContent.trim();
-                        
-                        console.log(`对课程 ${courseId} 执行 ${buttonText} 操作`);
-                        
-                        // 根据按钮类型执行不同操作
-                        if (buttonText.includes('学生列表')) {
-                            window.location.href = `student-management.html?courseId=${courseId}`;
-                        } else if (buttonText.includes('编辑课程')) {
-                            // 打开编辑课程模态框
-                            alert('编辑课程功能已触发');
-                        } else if (buttonText.includes('成绩统计')) {
-                            // 跳转到成绩统计页面
-                            window.location.href = `grade-management.html?courseId=${courseId}&action=statistics`;
-                        }
-                    });
-                });
-            });
-            
-            // 新建课程按钮事件
-            document.querySelector('.btn-success').addEventListener('click', function() {
-                alert('新建课程功能已触发');
-            });
-            
-            // 侧边栏导航高亮
-            const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
-            navLinks.forEach(link => {
-                if (link.getAttribute('href') === 'course-management.html') {
-                    link.classList.add('active');
-                } else {
-                    link.classList.remove('active');
-                }
-            });
-        });
-    </script>
+
+    <script src="/js/common.js"></script>
+    <script src="/js/app-api.js"></script>
+    <script src="/js/teacher-dashboard.js"></script>
 </body>
 </html>

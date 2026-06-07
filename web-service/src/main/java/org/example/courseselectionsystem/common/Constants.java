@@ -134,12 +134,12 @@ public class Constants {
     /**
      * 学号正则表达式（8位数字）
      */
-    public static final String STUDENT_NO_REGEX = "^\\d{8}$";
+    public static final String STUDENT_NO_REGEX = "^[A-Za-z]?\\d{4,10}$";
     
     /**
      * 工号正则表达式（6位数字）
      */
-    public static final String TEACHER_NO_REGEX = "^\\d{6}$";
+    public static final String TEACHER_NO_REGEX = "^[A-Za-z]?\\d{3,10}$";
     
     /**
      * 密码正则表达式（至少6位，包含字母和数字）

@@ -3,670 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>学生管理 - 教师管理系统</title>
-    <!-- 引入公共CSS -->
-    <link rel="stylesheet" href="../css/common.css">
-    <!-- 引入Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 引入Font Awesome --<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        /* 学生管理页面特定样式 */
-        .student-table {
-            background: var(--glass-bg);
-            backdrop-filter: var(--glass-backdrop);
-            border-radius: var(--radius-lg);
-            border: var(--glass-border);
-            overflow: hidden;
-        }
-        
-        .student-table thead th {
-            background: var(--bg-secondary);
-            font-weight: 600;
-            color: var(--text-primary);
-            border-bottom: none;
-        }
-        
-        .student-table tbody tr {
-            transition: background-color var(--transition-fast);
-        }
-        
-        .student-table tbody tr:hover {
-            background-color: var(--bg-hover);
-        }
-        
-        .student-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary-gradient);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-        }
-        
-        .filter-box {
-            background: var(--glass-bg);
-            backdrop-filter: var(--glass-backdrop);
-            border-radius: var(--radius-lg);
-            border: var(--glass-border);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        
-        .badge-primary {
-            background: var(--primary-color);
-        }
-        
-        .badge-success {
-            background: var(--success-color);
-        }
-        
-        .badge-warning {
-            background: var(--warning-color);
-        }
-        
-        .badge-info {
-            background: var(--info-color);
-        }
-        
-        .operation-btn {
-            display: flex;
-            gap: 0.5rem;
-        }
-    </style>
+    <title>学生管理 - 教师端</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/teacher-dynamic.css">
 </head>
-<body>
+<body class="teacher-page" data-teacher-page="students">
     <div class="page-container">
-        <!-- 侧边栏 -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <a href="index.html" class="sidebar-brand">
-                    <div class="sidebar-brand-icon">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                    </div>
-                    <div class="sidebar-brand-text">教师管理系统</div>
+                <a href="/teacher/index.html" class="sidebar-brand">
+                    <div class="sidebar-brand-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                    <span class="sidebar-brand-text">教师端</span>
                 </a>
-                <button class="sidebar-toggle">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
+                <button class="sidebar-toggle" type="button" aria-label="收起侧边栏"><i class="fas fa-chevron-left"></i></button>
             </div>
-            
             <nav class="sidebar-nav">
-                <div class="nav-item">
-                    <a href="index.html" class="nav-link">
-                        <i class="nav-icon fas fa-home"></i>
-                        <span class="nav-text">首页</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="course-management.html" class="nav-link">
-                        <i class="nav-icon fas fa-book"></i>
-                        <span class="nav-text">课程管理</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="student-management.html" class="nav-link active">
-                        <i class="nav-icon fas fa-users"></i>
-                        <span class="nav-text">学生管理</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="grade-management.html" class="nav-link">
-                        <i class="nav-icon fas fa-graduation-cap"></i>
-                        <span class="nav-text">成绩管理</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="teaching-statistics.html" class="nav-link">
-                        <i class="nav-icon fas fa-chart-bar"></i>
-                        <span class="nav-text">教学统计</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="personal-info.html" class="nav-link">
-                        <i class="nav-icon fas fa-user-circle"></i>
-                        <span class="nav-text">个人信息</span>
-                    </a>
-                </div>
+                <div class="nav-item"><a href="/teacher/index.html" class="nav-link"><i class="nav-icon fas fa-house"></i><span class="nav-text">首页</span></a></div>
+                <div class="nav-item"><a href="/teacher/course-management.html" class="nav-link"><i class="nav-icon fas fa-book-open"></i><span class="nav-text">课程管理</span></a></div>
+                <div class="nav-item"><a href="/teacher/student-management.html" class="nav-link active"><i class="nav-icon fas fa-users"></i><span class="nav-text">学生管理</span></a></div>
+                <div class="nav-item"><a href="/teacher/grade-management.html" class="nav-link"><i class="nav-icon fas fa-pen-to-square"></i><span class="nav-text">成绩管理</span></a></div>
+                <div class="nav-item"><a href="/teacher/teaching-statistics.html" class="nav-link"><i class="nav-icon fas fa-chart-simple"></i><span class="nav-text">教学统计</span></a></div>
+                <div class="nav-item"><a href="/teacher/personal-info.html" class="nav-link"><i class="nav-icon fas fa-user"></i><span class="nav-text">个人信息</span></a></div>
             </nav>
         </aside>
-        
-        <!-- 主内容区 -->
+
         <main class="main-content">
-            <!-- 顶部导航栏 -->
-            <nav class="top-navbar">
+            <header class="top-navbar">
                 <div class="nav-left">
-                    <button class="mobile-sidebar-toggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
+                    <button class="mobile-sidebar-toggle" type="button" aria-label="打开侧边栏"><i class="fas fa-bars"></i></button>
                     <h1 class="page-title">学生管理</h1>
                 </div>
                 <div class="nav-right">
-                    <button class="nav-icon-btn">
-                        <i class="fas fa-bell"></i>
-                    </button>
-                    <button class="nav-icon-btn">
-                        <i class="fas fa-envelope"></i>
-                    </button>
-                    <div class="user-profile dropdown">
-                        <div class="dropdown-toggle">
-                            <div class="user-avatar">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="user-info">
-                                <span class="user-name">张教授</span>
-                                <span class="user-role">计算机科学与技术</span>
-                            </div>
-                        </div>
-                        <div class="dropdown-menu">
-                            <a href="personal-info.html" class="dropdown-item">
-                                <i class="fas fa-user-circle"></i> 个人信息
-                            </a>
-                            <a href="#" class="dropdown-item">
-                                <i class="fas fa-cog"></i> 设置
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a href="../login.html" class="dropdown-item">
-                                <i class="fas fa-sign-out-alt"></i> 退出登录
-                            </a>
+                    <div class="user-profile">
+                        <div class="user-avatar" data-teacher-avatar>师</div>
+                        <div class="user-info">
+                            <span class="user-name" data-teacher-name>教师</span>
+                            <span class="user-role" data-teacher-role>Teacher</span>
                         </div>
                     </div>
+                    <a class="btn btn-secondary btn-sm" href="/login/logout"><i class="fas fa-right-from-bracket"></i>退出</a>
                 </div>
-            </nav>
-            
-            <!-- 页面内容 --<div class="content-wrapper">
-                <!-- 筛选框 --<div class="filter-box">
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <label for="course-select" class="form-label">选择课程>
-                            <select id="course-select" class="form-control">
-                                <option value="all">全部课程>
-                                <option value="CS101">程序设计基础 (CS101)>
-                                <option value="CS205">数据库系统 (CS205)>
-                                <option value="CS203">计算机网络 (CS203)>
-                                <option value="CS105">数据结构 (CS105)>
-                                <option value="CS305">人工智能导论 (CS305)>
-                            </select>
+            </header>
+
+            <div class="content-wrapper">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title" data-selected-course-title>学生名单</h2>
+                            <div class="teacher-table-note">有效选课学生 <strong data-student-count>0</strong> 人</div>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="student-status" class="form-label">状态筛选>
-                            <select id="student-status" class="form-control">
-                                <option value="all">全部状态>
-                                <option value="normal">正常
-                                <option value="absent">缺勤
-                                <option value="excellent">优秀
-                                <option value="poor">成绩不佳
-                            </select>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="student-grade" class="form-label">年级筛选>
-                            <select id="student-grade" class="form-control">
-                                <option value="all">全部年级>
-                                <option value="2021">2021级
-                                <option value="2022">2022级
-                                <option value="2023">2023级
-                                <option value="2024">2024级
-                            </select>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="student-search" class="form-label">搜索学生>
-                            <div class="input-group">
-                                <input type="text" id="student-search" class="form-control" placeholder="输入姓名或学号">
-                                <button id="search-btn" class="btn btn-primary">
-                                    <i class="fas fa-search"></i>
-                                </button>
+                        <a class="btn btn-primary btn-sm" href="/teacher/grade-management.html"><i class="fas fa-pen"></i>进入成绩管理</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="teacher-filter compact">
+                            <div class="form-group">
+                                <label class="form-label" for="course-select">选择课程</label>
+                                <select id="course-select" class="form-control"></select>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 操作栏 --<div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="mb-0">学生列表 (<span id="student-count">56</span>)<h2>
-                    <div class="operation-btn">
-                        <button class="btn btn-secondary">
-                            <i class="fas fa-file-export mr-2"></i>导出名单
-                        </button>
-                        <button class="btn btn-secondary">
-                            <i class="fas fa-qrcode mr-2"></i>生成签到码
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- 学生列表表格 --<table class="table table-hover student-table">
-                    <thead>
-                        <tr>
-                            <th scope="col">学号</th>
-                            <th scope="col">姓名</th>
-                            <th scope="col">年级</th>
-                            <th scope="col">专业</th>
-                            <th scope="col">出勤情况</th>
-                            <th scope="col">平时成绩</th>
-                            <th scope="col">期末成绩</th>
-                            <th scope="col">总评成绩</th>
-                            <th scope="col">状态</th>
-                            <th scope="col">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="student-list">
-                        <!-- 学生列表将通过JavaScript动态生成 -->
-                        <tr>
-                            <td>2021001</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="student-avatar">李</div>
-                                    <span class="ml-2">李明</span>
-                                </div>
-                            </td>
-                            <td>2021级</td>
-                            <td>计算机科学与技术</td>
-                            <td>3/40</td>
-                            <td>85</td>
-                            <td>-</td>
-                            <td>-</td>
-                            <td>
-                                <span class="badge badge-success">正常</span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="showStudentDetail('2021001')">
-                                    <i class="fas fa-info-circle"></i>
-                                </button>
-                                <button class="btn btn-sm btn-secondary" onclick="recordAttendance('2021001')">
-                                    <i class="fas fa-check-circle"></i>
-                                </button>
-                                <button class="btn btn-sm btn-warning" onclick="updateGrade('2021001')">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>2021002</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="student-avatar">王</div>
-                                    <span class="ml-2">王华</span>
-                                </div>
-                            </td>
-                            <td>2021级</td>
-                            <td>软件工程</td>
-                            <td>5/40</td>
-                            <td>92</td>
-                            <td>-</td>
-                            <td>-</td>
-                            <td>
-                                <span class="badge badge-success">优秀</span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="showStudentDetail('2021002')">
-                                    <i class="fas fa-info-circle"></i>
-                                </button>
-                                <button class="btn btn-sm btn-secondary" onclick="recordAttendance('2021002')">
-                                    <i class="fas fa-check-circle"></i>
-                                </button>
-                                <button class="btn btn-sm btn-warning" onclick="updateGrade('2021002')">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>2021003</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="student-avatar">张</div>
-                                    <span class="ml-2">张伟</span>
-                                </div>
-                            </td>
-                            <td>2021级</td>
-                            <td>数据科学与大数据技术</td>
-                            <td>12/40</td>
-                            <td>68</td>
-                            <td>-</td>
-                            <td>-</td>
-                            <td>
-                                <span class="badge badge-warning">缺勤过多</span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="showStudentDetail('2021003')">
-                                    <i class="fas fa-info-circle"></i>
-                                </button>
-                                <button class="btn btn-sm btn-secondary" onclick="recordAttendance('2021003')">
-                                    <i class="fas fa-check-circle"></i>
-                                </button>
-                                <button class="btn btn-sm btn-warning" onclick="updateGrade('2021003')">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>2021004</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="student-avatar">刘</div>
-                                    <span class="ml-2">刘芳</span>
-                                </div>
-                            </td>
-                            <td>2021级</td>
-                            <td>人工智能</td>
-                            <td>2/40</td>
-                            <td>95</td>
-                            <td>-</td>
-                            <td>-</td>
-                            <td>
-                                <span class="badge badge-success">优秀</span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="showStudentDetail('2021004')">
-                                    <i class="fas fa-info-circle"></i>
-                                </button>
-                                <button class="btn btn-sm btn-secondary" onclick="recordAttendance('2021004')">
-                                    <i class="fas fa-check-circle"></i>
-                                </button>
-                                <button class="btn btn-sm btn-warning" onclick="updateGrade('2021004')">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>2021005</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="student-avatar">赵</div>
-                                    <span class="ml-2">赵强</span>
-                                </div>
-                            </td>
-                            <td>2021级</td>
-                            <td>网络工程</td>
-                            <td>15/40</td>
-                            <td>58</td>
-                            <td>-</td>
-                            <td>-</td>
-                            <td>
-                                <span class="badge badge-danger">成绩不佳</span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="showStudentDetail('2021005')">
-                                    <i class="fas fa-info-circle"></i>
-                                </button>
-                                <button class="btn btn-sm btn-secondary" onclick="recordAttendance('2021005')">
-                                    <i class="fas fa-check-circle"></i>
-                                </button>
-                                <button class="btn btn-sm btn-warning" onclick="updateGrade('2021005')">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-                <!-- 分页 --<div class="pagination-container">
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination justify-content-center">
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#" tabindex="-1">
-                                    <i class="fas fa-chevron-left"></i>
-                                </a>
-                            </li>
-                            <li class="page-item active">
-                                <a class="page-link" href="#">1</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">2</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">3</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">
-                                    <i class="fas fa-chevron-right"></i>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 学生详情模态框 --<div class="modal fade" id="student-detail-modal" tabindex="-1" aria-labelledby="student-detail-modal-label" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="student-detail-modal-label">学生详情 - 李明 (2021001)</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-4 text-center">
-                                <div style="width: 120px; height: 120px; border-radius: 50%; background: var(--primary-gradient); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px; margin: 0 auto mb-3;">李</div>
-                                <h3 class="mb-1">李明</h3>
-                                <p class="text-muted mb-3">学号: 2021001</p>
-                                <button class="btn btn-primary w-100 mb-2">
-                                    <i class="fas fa-comment mr-2"></i>发送消息
-                                </button>
-                                <button class="btn btn-secondary w-100">
-                                    <i class="fas fa-phone mr-2"></i>联系学生
-                                </button>
+                            <div class="form-group">
+                                <label class="form-label" for="student-search">搜索学生</label>
+                                <input id="student-search" class="form-control" type="search" placeholder="姓名、学号或班级" data-student-search>
                             </div>
-                            <div class="col-md-8">
-                                <div class="mb-4">
-                                    <h4 class="mb-2">基本信息</h4>
-                                    <div class="row">
-                                        <div class="col-md-6 mb-2">
-                                            <strong>性别:</strong> 男
-                                        </div>
-                                        <div class="col-md-6 mb-2">
-                                            <strong>年龄:</strong> 21岁
-                                        </div>
-                                        <div class="col-md-6 mb-2">
-                                            <strong>年级:</strong> 2021级
-                                        </div>
-                                        <div class="col-md-6 mb-2">
-                                            <strong>专业:</strong> 计算机科学与技术
-                                        </div>
-                                        <div class="col-md-6 mb-2">
-                                            <strong>班级:</strong> 计算机2101班
-                                        </div>
-                                        <div class="col-md-6 mb-2">
-                                            <strong>入学时间:</strong> 2021-09-01
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="mb-4">
-                                    <h4 class="mb-2">课程表现</h4>
-                                    <div class="row">
-                                        <div class="col-md-6 mb-2">
-                                            <strong>出勤次数:</strong> 3/40 次缺勤
-                                        </div>
-                                        <div class="col-md-6 mb-2">
-                                            <strong>平时成绩:</strong> 85分
-                                        </div>
-                                        <div class="col-md-6 mb-2">
-                                            <strong>作业完成:</strong> 12/15 次
-                                        </div>
-                                        <div class="col-md-6 mb-2">
-                                            <strong>参与度:</strong> 良好
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="mb-4">
-                                    <h4 class="mb-2">学习记录</h4>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>日期</th>
-                                                    <th>内容记录</th>
-                                                    <th>教师评价</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td>2024-03-01</td>
-                                                    <td>完成实验一，表现良好</td>
-                                                    <td>优秀
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>2024-03-15</td>
-                                                    <td>小组项目展示，积极参与讨论</td>
-                                                    <td>良好
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>2024-03-29</td>
-                                                    <td>缺勤
-                                                    </td>
-                                                    <td>需加强出勤
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                            <div class="form-group">
+                                <label class="form-label">名单说明</label>
+                                <div class="teacher-table-note">仅展示状态为“已选”的学生</div>
                             </div>
+                            <button class="btn btn-primary" type="button" data-student-filter-button><i class="fas fa-search"></i>搜索</button>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
-                        <button type="button" class="btn btn-primary" onclick="updateGrade('2021001')">更新成绩信息</button>
+
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>学号</th>
+                                        <th>姓名</th>
+                                        <th>性别</th>
+                                        <th>班级</th>
+                                        <th>手机号</th>
+                                        <th>邮箱</th>
+                                        <th>选课时间</th>
+                                        <th>成绩状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody data-student-list>
+                                    <tr><td colspan="9" class="text-center"><span class="loading"></span></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
-    
-    <!-- 引入公共JS --<script src="../js/common.js"></script>
-    <!-- 引入Bootstrap JS --<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        // 学生管理页面的JavaScript逻辑
-        document.addEventListener('DOMContentLoaded', function() {
-            // 模拟学生数据
-            const students = [
-                {
-                    id: '2021001',
-                    name: '李明',
-                    grade: '2021级',
-                    major: '计算机科学与技术',
-                    absences: 3,
-                    totalClasses: 40,
-                   平时成绩: 85,
-                    finalGrade: null,
-                    overallGrade: null,
-                    status: 'normal'
-                },
-                {
-                    id: '2021002',
-                    name: '王华',
-                    grade: '2021级',
-                    major: '软件工程',
-                    absences: 5,
-                    totalClasses: 40,
-                   平时成绩: 92,
-                    finalGrade: null,
-                    overallGrade: null,
-                    status: 'excellent'
-                },
-                {
-                    id: '2021003',
-                    name: '张伟',
-                    grade: '2021级',
-                    major: '数据科学与大数据技术',
-                    absences: 12,
-                    totalClasses: 40,
-                   平时成绩: 68,
-                    finalGrade: null,
-                    overallGrade: null,
-                    status: 'absent'
-                },
-                {
-                    id: '2021004',
-                    name: '刘芳',
-                    grade: '2021级',
-                    major: '人工智能',
-                    absences: 2,
-                    totalClasses: 40,
-                   平时成绩: 95,
-                    finalGrade: null,
-                    overallGrade: null,
-                    status: 'excellent'
-                },
-                {
-                    id: '2021005',
-                    name: '赵强',
-                    grade: '2021级',
-                    major: '网络工程',
-                    absences: 15,
-                    totalClasses: 40,
-                   平时成绩: 58,
-                    finalGrade: null,
-                    overallGrade: null,
-                    status: 'poor'
-                }
-            ];
-            
-            // 搜索功能
-            document.getElementById('search-btn').addEventListener('click', function() {
-                const searchTerm = document.getElementById('student-search').value.toLowerCase();
-                const courseId = document.getElementById('course-select').value;
-                const status = document.getElementById('student-status').value;
-                const grade = document.getElementById('student-grade').value;
-                
-                console.log('搜索学生:', searchTerm, courseId, status, grade);
-                
-                // 这里可以添加实际的搜索逻辑
-                alert('搜索功能已触发，实际项目中将连接后端API获取数据');
-            });
-            
-            // 回车键触发搜索
-            document.getElementById('student-search').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    document.getElementById('search-btn').click();
-                }
-            });
-            
-            // 侧边栏导航高亮
-            const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
-            navLinks.forEach(link => {
-                if (link.getAttribute('href') === 'student-management.html') {
-                    link.classList.add('active');
-                } else {
-                    link.classList.remove('active');
-                }
-            });
-        });
-        
-        // 学生详情函数
-        function showStudentDetail(studentId) {
-            console.log('查看学生详情:', studentId);
-            // 在实际项目中，这里会根据学生ID加载详细信息
-            const studentDetailModal = new bootstrap.Modal(document.getElementById('student-detail-modal'));
-            studentDetailModal.show();
-        }
-        
-        // 记录出勤函数
-        function recordAttendance(studentId) {
-            console.log('记录学生出勤:', studentId);
-            alert('出勤记录功能已触发');
-        }
-        
-        // 更新成绩函数
-        function updateGrade(studentId) {
-            console.log('更新学生成绩:', studentId);
-            alert('成绩更新功能已触发');
-        }
-        
-        // 导出名单函数
-        document.querySelector('.btn-secondary:contains("导出名单")').addEventListener('click', function() {
-            alert('导出名单功能已触发');
-        });
-        
-        // 生成签到码函数
-        document.querySelector('.btn-secondary:contains("生成签到码")').addEventListener('click', function() {
-            alert('签到码生成功能已触发');
-        });
-    </script>
+
+    <script src="/js/common.js"></script>
+    <script src="/js/app-api.js"></script>
+    <script src="/js/teacher-dashboard.js"></script>
 </body>
 </html>

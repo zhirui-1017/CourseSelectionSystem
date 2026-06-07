@@ -1,0 +1,223 @@
+.teacher-page .card,
+.teacher-page .stat-card,
+.teacher-page .teacher-course-card,
+.teacher-page .teacher-panel {
+    border-radius: 8px;
+}
+
+.teacher-page .content-wrapper {
+    max-width: 1440px;
+    margin: 0 auto;
+}
+
+.teacher-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.teacher-filter {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(180px, 260px) auto;
+    gap: var(--spacing-md);
+    align-items: end;
+    margin-bottom: var(--spacing-lg);
+}
+
+.teacher-filter.compact {
+    grid-template-columns: minmax(220px, 320px) minmax(180px, 240px) minmax(220px, 1fr) auto;
+}
+
+.teacher-course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.teacher-course-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+    padding: var(--spacing-lg);
+    display: flex;
+    min-height: 260px;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.teacher-course-card:hover {
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+}
+
+.teacher-course-head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+}
+
+.teacher-course-title {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    line-height: 1.35;
+    color: var(--text-primary);
+}
+
+.teacher-course-code {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-xs);
+}
+
+.teacher-course-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-sm);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.teacher-meta-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    min-width: 0;
+}
+
+.teacher-meta-item i {
+    color: var(--primary-color);
+    width: 18px;
+    text-align: center;
+}
+
+.teacher-course-desc {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+    flex: 1;
+}
+
+.teacher-progress-line {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.teacher-progress {
+    height: 8px;
+    flex: 1;
+    min-width: 120px;
+    overflow: hidden;
+    background: var(--gray-200);
+    border-radius: 999px;
+}
+
+.teacher-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1abc9c, #3498db);
+    border-radius: inherit;
+}
+
+.teacher-progress-fill.warning {
+    background: linear-gradient(90deg, #f39c12, #e67e22);
+}
+
+.teacher-progress-fill.danger {
+    background: linear-gradient(90deg, #e74c3c, #c0392b);
+}
+
+.teacher-table-note {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.teacher-empty {
+    padding: var(--spacing-xl);
+    text-align: center;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+}
+
+.teacher-grade-input {
+    width: 82px;
+    min-width: 82px;
+    text-align: center;
+}
+
+.teacher-remark-input {
+    min-width: 180px;
+}
+
+.teacher-score-strong {
+    font-weight: 700;
+}
+
+.teacher-two-column {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+    gap: var(--spacing-lg);
+}
+
+.teacher-distribution {
+    display: grid;
+    gap: var(--spacing-md);
+}
+
+.teacher-distribution-row {
+    display: grid;
+    grid-template-columns: 76px 1fr 42px;
+    gap: var(--spacing-sm);
+    align-items: center;
+    font-size: var(--font-size-sm);
+}
+
+.teacher-distribution-bar {
+    height: 10px;
+    background: var(--gray-200);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.teacher-distribution-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2ecc71, #3498db);
+}
+
+.teacher-kpi-subtle {
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+}
+
+.badge-muted {
+    background-color: rgba(108, 117, 125, 0.12);
+    color: var(--gray-700);
+}
+
+@media (max-width: 960px) {
+    .teacher-filter,
+    .teacher-filter.compact,
+    .teacher-two-column {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .teacher-course-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .teacher-course-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .teacher-actions {
+        width: 100%;
+    }
+
+    .teacher-actions .btn {
+        flex: 1;
+    }
+}

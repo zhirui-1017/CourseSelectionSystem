@@ -93,6 +93,16 @@ public interface CourseService {
         Course course = new Course();
         course.setCourseName(String.valueOf(courseInfo.getOrDefault("courseName", "")));
         course.setCourseCode(String.valueOf(courseInfo.getOrDefault("courseCode", "")));
+        course.setTeacherId(longValue(courseInfo, "teacherId", 1L));
+        course.setCredit(doubleValue(courseInfo, "credit", doubleValue(courseInfo, "credits", 2D)));
+        course.setTotalHours(intValue(courseInfo, "totalHours", 32));
+        course.setAvailableSlots(intValue(courseInfo, "availableSlots", intValue(courseInfo, "capacity", 40)));
+        course.setSelectedCount(intValue(courseInfo, "selectedCount", 0));
+        course.setClassroom(stringValue(courseInfo, "classroom", "待安排"));
+        course.setSchedule(stringValue(courseInfo, "schedule", "待安排"));
+        course.setCourseType(stringValue(courseInfo, "courseType", "选修课"));
+        course.setDescription(stringValue(courseInfo, "description", ""));
+        course.setStatus(intValue(courseInfo, "status", 1));
         return addCourse(course);
     }
 
@@ -104,7 +114,61 @@ public interface CourseService {
         }
         course.setCourseName(String.valueOf(courseInfo.getOrDefault("courseName", "")));
         course.setCourseCode(String.valueOf(courseInfo.getOrDefault("courseCode", "")));
+        course.setTeacherId(longValue(courseInfo, "teacherId", 1L));
+        course.setCredit(doubleValue(courseInfo, "credit", doubleValue(courseInfo, "credits", 2D)));
+        course.setTotalHours(intValue(courseInfo, "totalHours", 32));
+        course.setAvailableSlots(intValue(courseInfo, "availableSlots", intValue(courseInfo, "capacity", 40)));
+        course.setSelectedCount(intValue(courseInfo, "selectedCount", 0));
+        course.setClassroom(stringValue(courseInfo, "classroom", "待安排"));
+        course.setSchedule(stringValue(courseInfo, "schedule", "待安排"));
+        course.setCourseType(stringValue(courseInfo, "courseType", "选修课"));
+        course.setDescription(stringValue(courseInfo, "description", ""));
+        course.setStatus(intValue(courseInfo, "status", 1));
         return updateCourse(course);
+    }
+
+    private static String stringValue(Map<String, Object> source, String key, String defaultValue) {
+        Object value = source.get(key);
+        if (value == null || String.valueOf(value).isBlank()) {
+            return defaultValue;
+        }
+        return String.valueOf(value);
+    }
+
+    private static Long longValue(Map<String, Object> source, String key, Long defaultValue) {
+        Object value = source.get(key);
+        if (value == null || String.valueOf(value).isBlank()) {
+            return defaultValue;
+        }
+        try {
+            return Long.valueOf(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
+    }
+
+    private static Integer intValue(Map<String, Object> source, String key, Integer defaultValue) {
+        Object value = source.get(key);
+        if (value == null || String.valueOf(value).isBlank()) {
+            return defaultValue;
+        }
+        try {
+            return Integer.valueOf(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
+    }
+
+    private static Double doubleValue(Map<String, Object> source, String key, Double defaultValue) {
+        Object value = source.get(key);
+        if (value == null || String.valueOf(value).isBlank()) {
+            return defaultValue;
+        }
+        try {
+            return Double.valueOf(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
     }
 
     default boolean deleteCourse(String courseId) {

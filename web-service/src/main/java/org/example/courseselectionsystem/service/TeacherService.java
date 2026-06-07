@@ -21,8 +21,15 @@ public interface TeacherService {
 
     default boolean addTeacher(Map<String, Object> teacherInfo) {
         Teacher teacher = new Teacher();
-        teacher.setTeacherNo(String.valueOf(teacherInfo.getOrDefault("teacherNo", "")));
+        teacher.setTeacherNo(stringValue(teacherInfo, "teacherNo", stringValue(teacherInfo, "username", "")));
         teacher.setName(String.valueOf(teacherInfo.getOrDefault("name", "")));
+        teacher.setGender(stringValue(teacherInfo, "gender", "男"));
+        teacher.setPhone(stringValue(teacherInfo, "phone", ""));
+        teacher.setEmail(stringValue(teacherInfo, "email", ""));
+        teacher.setPassword(stringValue(teacherInfo, "password", "123456"));
+        teacher.setTitle(stringValue(teacherInfo, "title", "讲师"));
+        teacher.setDepartmentId(longValue(teacherInfo, "departmentId", 1L));
+        teacher.setStatus(intValue(teacherInfo, "status", 1));
         return addTeacher(teacher);
     }
 
@@ -40,7 +47,46 @@ public interface TeacherService {
         }
         teacher.setTeacherNo(String.valueOf(teacherInfo.getOrDefault("teacherNo", "")));
         teacher.setName(String.valueOf(teacherInfo.getOrDefault("name", "")));
+        teacher.setGender(stringValue(teacherInfo, "gender", "男"));
+        teacher.setPhone(stringValue(teacherInfo, "phone", ""));
+        teacher.setEmail(stringValue(teacherInfo, "email", ""));
+        teacher.setPassword(stringValue(teacherInfo, "password", "123456"));
+        teacher.setTitle(stringValue(teacherInfo, "title", "讲师"));
+        teacher.setDepartmentId(longValue(teacherInfo, "departmentId", 1L));
+        teacher.setStatus(intValue(teacherInfo, "status", 1));
         return updateTeacher(teacher);
+    }
+
+    private static String stringValue(Map<String, Object> source, String key, String defaultValue) {
+        Object value = source.get(key);
+        if (value == null || String.valueOf(value).isBlank()) {
+            return defaultValue;
+        }
+        return String.valueOf(value);
+    }
+
+    private static Long longValue(Map<String, Object> source, String key, Long defaultValue) {
+        Object value = source.get(key);
+        if (value == null || String.valueOf(value).isBlank()) {
+            return defaultValue;
+        }
+        try {
+            return Long.valueOf(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
+    }
+
+    private static Integer intValue(Map<String, Object> source, String key, Integer defaultValue) {
+        Object value = source.get(key);
+        if (value == null || String.valueOf(value).isBlank()) {
+            return defaultValue;
+        }
+        try {
+            return Integer.valueOf(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
     }
 
     /**
