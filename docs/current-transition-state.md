@@ -7,5 +7,6 @@ This note records the current runnable transition state for the Spring Cloud mig
 - `selection-service` now owns the selection and course-selection REST APIs.
 - `user-service` now owns the user, role, and permission REST APIs.
 - `student-service` now owns the student REST APIs under `/api/v1/students/**`.
-- `teacher-service` is still a startup skeleton; both student and teacher page paths remain routed to `web-service` for compatibility.
+- `teacher-service` now owns the teacher REST APIs under `/api/v1/teachers/**`.
+- Student and teacher page paths remain routed to `web-service` for compatibility.
 - Gateway routes migrated API domains to their target services first, then keeps the legacy `web-service` route as a compatibility fallback for remaining pages and APIs.

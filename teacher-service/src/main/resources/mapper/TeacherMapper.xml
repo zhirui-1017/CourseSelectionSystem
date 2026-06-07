@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.courseselectionsystem.mapper.TeacherMapper">
+    <select id="selectByTeacherNo" parameterType="String" resultType="org.example.courseselectionsystem.entity.Teacher">
+        SELECT * FROM teacher WHERE teacher_no = #{teacherNo}
+    </select>
+    
+    <select id="selectByNameLike" parameterType="String" resultType="org.example.courseselectionsystem.entity.Teacher">
+        SELECT * FROM teacher WHERE name LIKE CONCAT('%', #{name}, '%')
+    </select>
+    
+    <select id="selectByDepartmentId" parameterType="Long" resultType="org.example.courseselectionsystem.entity.Teacher">
+        SELECT * FROM teacher WHERE department_id = #{departmentId}
+    </select>
+    
+    <select id="selectByCollegeId" parameterType="Long" resultType="org.example.courseselectionsystem.entity.Teacher">
+        SELECT t.*
+        FROM teacher t
+        INNER JOIN department d ON t.department_id = d.id
+        WHERE d.college_id = #{collegeId}
+    </select>
+    
+    <select id="countByTeacherNo" resultType="int">
+        SELECT COUNT(*) FROM teacher WHERE teacher_no = #{teacherNo}
+        <if test="id != null">
+            AND id != #{id}
+        </if>
+    </select>
+    
+    <select id="selectByCourseId" parameterType="Long" resultType="org.example.courseselectionsystem.entity.Teacher">
+        SELECT t.* FROM teacher t
+        JOIN course_teacher ct ON t.id = ct.teacher_id
+        WHERE ct.course_id = #{courseId}
+    </select>
+</mapper>
