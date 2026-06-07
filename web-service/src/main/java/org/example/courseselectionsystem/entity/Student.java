@@ -57,6 +57,9 @@ public class Student implements Serializable {
     @Column(name = "email", length = 100)
     public String email;
 
+    @Column(name = "password", length = 100)
+    public String password;
+
     /**
      * 专业ID
      */

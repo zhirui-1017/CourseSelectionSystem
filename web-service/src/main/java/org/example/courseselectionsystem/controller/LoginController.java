@@ -3,15 +3,24 @@ package org.example.courseselectionsystem.controller;
 import org.example.courseselectionsystem.common.Result;
 import org.example.courseselectionsystem.entity.Student;
 import org.example.courseselectionsystem.entity.Teacher;
+import org.example.courseselectionsystem.exception.BusinessException;
 import org.example.courseselectionsystem.service.StudentService;
 import org.example.courseselectionsystem.service.TeacherService;
 import org.example.courseselectionsystem.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.util.Collections;
 
 /**
  * 登录控制器
@@ -20,6 +29,8 @@ import javax.servlet.http.HttpSession;
 @Controller
 @RequestMapping("/login")
 public class LoginController {
+
+    private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
 
     @Autowired
     private UserService userService;
@@ -62,26 +73,34 @@ public class LoginController {
             
             // 登录成功，将用户信息存入session
             HttpSession session = request.getSession();
-            session.setAttribute("username", username);
             session.setAttribute("role", role);
+            session.setAttribute("loginName", username);
             
             // 根据角色获取用户信息
             if ("student".equals(role)) {
                 Student student = studentService.getStudentByStudentNo(username);
+                session.setAttribute("username", student.getStudentNo());
                 session.setAttribute("userId", student.getId());
                 session.setAttribute("user", student);
             } else if ("teacher".equals(role)) {
                 Teacher teacher = teacherService.getTeacherByTeacherNo(username);
+                session.setAttribute("username", teacher.getTeacherNo());
                 session.setAttribute("userId", teacher.getId());
                 session.setAttribute("user", teacher);
             } else if ("admin".equals(role)) {
+                session.setAttribute("username", username);
                 session.setAttribute("userId", 0); // 管理员ID为0
             }
             
             // 返回重定向地址
+            authenticateSession(request, username, role);
             String redirectUrl = getRedirectUrlByRole(role);
             return Result.success(redirectUrl);
+        } catch (BusinessException e) {
+            logger.warn("Login failed: {}", e.getMessage());
+            return Result.fail(e.getCode(), e.getMessage());
         } catch (Exception e) {
+            logger.error("Login failed unexpectedly, username: {}, role: {}", username, role, e);
             return Result.fail(500, "登录失败，请稍后重试");
         }
     }
@@ -114,5 +133,22 @@ public class LoginController {
             default:
                 return "/login";
         }
+    }
+
+    private void authenticateSession(HttpServletRequest request, String username, String role) {
+        String authority = "ROLE_" + role.toUpperCase();
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        username,
+                        null,
+                        Collections.singletonList(new SimpleGrantedAuthority(authority))
+                );
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        request.getSession().setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                securityContext
+        );
     }
 }
