@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.courseselectionsystem.mapper.StudentMapper">
+    <select id="selectByStudentNo" parameterType="String" resultType="org.example.courseselectionsystem.entity.Student">
+        SELECT * FROM student WHERE student_no = #{studentNo}
+    </select>
+    
+    <select id="selectByNameLike" parameterType="String" resultType="org.example.courseselectionsystem.entity.Student">
+        SELECT * FROM student WHERE name LIKE CONCAT('%', #{name}, '%')
+    </select>
+    
+    <select id="selectByMajorId" parameterType="Long" resultType="org.example.courseselectionsystem.entity.Student">
+        SELECT * FROM student WHERE major_id = #{majorId}
+    </select>
+    
+    <select id="selectByDepartmentId" parameterType="Long" resultType="org.example.courseselectionsystem.entity.Student">
+        SELECT s.*
+        FROM student s
+        INNER JOIN major m ON s.major_id = m.id
+        WHERE m.department_id = #{departmentId}
+    </select>
+    
+    <select id="selectByCollegeId" parameterType="Long" resultType="org.example.courseselectionsystem.entity.Student">
+        SELECT * FROM student WHERE college_id = #{collegeId}
+    </select>
+    
+    <select id="countByStudentNo" resultType="int">
+        SELECT COUNT(*) FROM student WHERE student_no = #{studentNo}
+        <if test="id != null">
+            AND id != #{id}
+        </if>
+    </select>
+</mapper>
