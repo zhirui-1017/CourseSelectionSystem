@@ -11,6 +11,10 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class Result<T> implements Serializable {
     private static final long serialVersionUID = 1L;
+    public static final int PARAM_ERROR = 400;
+    public static final int NOT_FOUND = 404;
+    public static final int FAIL = 500;
+    public static final int NOT_LOGIN = 401;
 
     private Integer code;
     private String message;
@@ -19,6 +23,10 @@ public class Result<T> implements Serializable {
 
     public static <T> Result<T> success(T data) {
         return new Result<>(200, "操作成功", data, true);
+    }
+
+    public static <T> Result<T> success(String message, T data) {
+        return new Result<>(200, message, data, true);
     }
 
     public static <T> Result<T> success() {
@@ -31,6 +39,14 @@ public class Result<T> implements Serializable {
 
     public static <T> Result<T> fail(String message) {
         return fail(400, message);
+    }
+
+    public static <T> Result<T> error(String message) {
+        return fail(500, message);
+    }
+
+    public static <T> Result<T> error(Integer code, String message) {
+        return fail(code, message);
     }
 
     public static <T> Result<T> unauthorized(String message) {
