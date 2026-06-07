@@ -2,7 +2,9 @@
 
 This note records the current runnable transition state for the Spring Cloud migration.
 
-- The business modules (`user-service`, `student-service`, `teacher-service`, `course-service`, `selection-service`) are still startup skeletons.
-- Existing controllers and business logic are still hosted by `web-service`.
-- During this transition stage, Gateway routes page paths, static resources, and `/api/v1/**` to `web-service`.
-- When a business domain is migrated into its target service, move that route from the legacy `web-service` route back to the target service route and verify it through Gateway.
+- Page paths, static resources, and Session login remain hosted by `web-service`.
+- `course-service` now owns the course, college, department, and major REST APIs.
+- `selection-service` now owns the selection and course-selection REST APIs.
+- `user-service` now owns the user, role, and permission REST APIs.
+- `student-service` and `teacher-service` are still startup skeletons; their page paths remain routed to `web-service` for compatibility.
+- Gateway routes migrated API domains to their target services first, then keeps the legacy `web-service` route as a compatibility fallback for remaining pages and APIs.
