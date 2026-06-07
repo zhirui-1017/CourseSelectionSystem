@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成绩管理 - 网上选课系统</title>
+    <!-- 引入Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css">
+    <!-- 引入公共CSS -->
+    <link rel="stylesheet" href="../css/common.css">
+    <style>
+        /* 成绩管理页面专用样式 */
+        .grade-table th, .grade-table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .search-filter-box {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .operation-buttons {
+            margin-bottom: 15px;
+        }
+        .checkbox-all {
+            margin-right: 5px;
+        }
+        .grade-badge {
+            min-width: 60px;
+            display: inline-block;
+            text-align: center;
+            font-size: 14px;
+            padding: 3px 8px;
+        }
+        .grade-excellent { background-color: #5cb85c; color: white; }
+        .grade-good { background-color: #5bc0de; color: white; }
+        .grade-average { background-color: #f0ad4e; color: white; }
+        .grade-poor { background-color: #d9534f; color: white; }
+        .statistics-card {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #fff;
+        }
+        .statistics-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #007bff;
+            text-align: center;
+        }
+        .statistics-label {
+            text-align: center;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .chart-container {
+            height: 300px;
+            margin-top: 20px;
+        }
+        .export-options {
+            margin-top: 10px;
+        }
+        .score-input {
+            width: 80px;
+            text-align: center;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-sm-3 col-md-2 sidebar">
+                <div class="logo-container">
+                    <h4 class="text-center text-primary">管理系统</h4>
+                </div>
+                <ul class="nav nav-sidebar">
+                    <li><a href="index.html">系统首页</a></li>
+                    <li><a href="student-management.html">学生管理</a></li>
+                    <li><a href="teacher-management.html">教师管理</a></li>
+                    <li><a href="course-management.html">课程管理</a></li>
+                    <li><a href="class-management.html">班级管理</a></li>
+                    <li class="active"><a href="grade-management.html">成绩管理</a></li>
+                    <li><a href="system-settings.html">系统设置</a></li>
+                    <li><a href="system-logs.html">系统日志</a></li>
+                </ul>
+                <div class="user-info">
+                    <div class="dropdown">
+                        <button class="btn btn-default dropdown-toggle" type="button" id="userDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            <span class="glyphicon glyphicon-user"></span> 管理员
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                            <li><a href="javascript:void(0)" onclick="showUserInfo()">用户信息</a></li>
+                            <li><a href="javascript:void(0)" onclick="logout()">退出登录</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主内容区域 -->
+            <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+                <h1 class="page-header">成绩管理</h1>
+                
+                <!-- 操作按钮区 -->
+                <div class="operation-buttons">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary" onclick="showGradeInputModal()">
+                            <span class="glyphicon glyphicon-plus"></span> 录入成绩
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="batchUpdateGrades()">
+                            <span class="glyphicon glyphicon-floppy-disk"></span> 批量保存
+                        </button>
+                        <button type="button" class="btn btn-info" onclick="exportGradeData()">
+                            <span class="glyphicon glyphicon-export"></span> 导出成绩
+                        </button>
+                        <label class="btn btn-warning">
+                            <span class="glyphicon glyphicon-import"></span> 导入成绩
+                            <input type="file" id="importGradeFile" style="display: none;" accept=".xlsx,.xls,.csv" onchange="importGradeData(this.files[0])">
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 搜索和筛选区 -->
+                <div class="search-filter-box">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchGradeInput" placeholder="搜索学生姓名/学号/课程名称">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default" type="button" onclick="searchGrades()">
+                                        <span class="glyphicon glyphicon-search"></span>
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <select class="form-control" id="semesterFilter" onchange="filterGrades()">
+                                        <option value="all">所有学期</option>
+                                        <option value="2023-2024春季">2023-2024春季</option>
+                                        <option value="2023-2024秋季">2023-2024秋季</option>
+                                        <option value="2022-2023春季">2022-2023春季</option>
+                                        <option value="2022-2023秋季">2022-2023秋季</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-control" id="courseFilter" onchange="filterGrades()">
+                                        <option value="all">所有课程</option>
+                                        <option value="CS101">计算机科学基础</option>
+                                        <option value="CS102">程序设计基础</option>
+                                        <option value="CS301">数据结构</option>
+                                        <option value="CS302">操作系统原理</option>
+                                        <option value="MA201">高等数学</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-control" id="classFilter" onchange="filterGrades()">
+                                        <option value="all">所有班级</option>
+                                        <option value="CS2201">计算机科学与技术2201班</option>
+                                        <option value="CS2202">计算机科学与技术2202班</option>
+                                        <option value="CS2101">计算机科学与技术2101班</option>
+                                        <option value="CS2102">计算机科学与技术2102班</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-control" id="statusFilter" onchange="filterGrades()">
+                                        <option value="all">所有状态</option>
+                                        <option value="graded">已评分</option>
+                                        <option value="ungraded">未评分</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 统计信息 -->
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="statistics-card">
+                            <div class="statistics-value" id="totalCount">0</div>
+                            <div class="statistics-label">总成绩数</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="statistics-card">
+                            <div class="statistics-value" id="averageScore">0</div>
+                            <div class="statistics-label">平均分</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="statistics-card">
+                            <div class="statistics-value" id="passRate">0%</div>
+                            <div class="statistics-label">及格率</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="statistics-card">
+                            <div class="statistics-value" id="excellentRate">0%</div>
+                            <div class="statistics-label">优秀率</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 成绩列表 -->
+                <div class="table-responsive">
+                    <table class="table table-hover grade-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" id="selectAll" class="checkbox-all" onclick="toggleSelectAll()">
+                                </th>
+                                <th style="width: 80px;">学号</th>
+                                <th style="width: 80px;">姓名</th>
+                                <th style="width: 150px;">班级</th>
+                                <th style="width: 120px;">课程编号</th>
+                                <th>课程名称</th>
+                                <th style="width: 80px;">学分</th>
+                                <th style="width: 100px;">学期</th>
+                                <th style="width: 80px;">成绩</th>
+                                <th style="width: 100px;">状态</th>
+                                <th style="width: 150px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gradeTableBody">
+                            <!-- 成绩列表将通过JavaScript动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 分页 -->
+                <div class="pagination-container">
+                    <nav>
+                        <ul class="pagination" id="gradePagination">
+                            <!-- 分页按钮将通过JavaScript动态生成 -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 录入成绩模态框 -->
+    <div class="modal fade" id="gradeInputModal" tabindex="-1" role="dialog" aria-labelledby="gradeInputModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="gradeInputModalLabel">录入成绩</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="gradeInputForm">
+                        <div class="form-group">
+                            <label for="studentId">学生</label>
+                            <select class="form-control" id="studentId" required>
+                                <option value="">请选择学生</option>
+                                <option value="220101">张同学 (220101)</option>
+                                <option value="220102">李同学 (220102)</option>
+                                <option value="220103">王同学 (220103)</option>
+                                <option value="220104">刘同学 (220104)</option>
+                                <option value="220105">陈同学 (220105)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="courseId">课程</label>
+                            <select class="form-control" id="courseId" required>
+                                <option value="">请选择课程</option>
+                                <option value="CS101">计算机科学基础 (CS101)</option>
+                                <option value="CS102">程序设计基础 (CS102)</option>
+                                <option value="CS301">数据结构 (CS301)</option>
+                                <option value="CS302">操作系统原理 (CS302)</option>
+                                <option value="MA201">高等数学 (MA201)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="semester">学期</label>
+                            <select class="form-control" id="semester" required>
+                                <option value="2023-2024春季">2023-2024春季</option>
+                                <option value="2023-2024秋季">2023-2024秋季</option>
+                                <option value="2022-2023春季">2022-2023春季</option>
+                                <option value="2022-2023秋季">2022-2023秋季</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="score">成绩</label>
+                            <input type="number" class="form-control" id="score" min="0" max="100" step="0.5" placeholder="输入成绩（0-100）" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="teacherComment">教师评语</label>
+                            <textarea class="form-control" id="teacherComment" rows="3" placeholder="输入教师评语（可选）"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitGrade()">确定录入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑成绩模态框 -->
+    <div class="modal fade" id="editGradeModal" tabindex="-1" role="dialog" aria-labelledby="editGradeModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="editGradeModalLabel">修改成绩</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="editGradeForm">
+                        <input type="hidden" id="editGradeId">
+                        <div class="form-group">
+                            <label>学生信息</label>
+                            <input type="text" class="form-control" id="editStudentInfo" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>课程信息</label>
+                            <input type="text" class="form-control" id="editCourseInfo" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="editScore">成绩</label>
+                            <input type="number" class="form-control" id="editScore" min="0" max="100" step="0.5" placeholder="输入成绩（0-100）" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editTeacherComment">教师评语</label>
+                            <textarea class="form-control" id="editTeacherComment" rows="3" placeholder="输入教师评语（可选）"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>录入时间</label>
+                            <input type="text" class="form-control" id="editInputTime" disabled>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="updateGrade()">保存修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 成绩详情模态框 -->
+    <div class="modal fade" id="gradeDetailModal" tabindex="-1" role="dialog" aria-labelledby="gradeDetailModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="gradeDetailModalLabel">成绩详情</h4>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-striped">
+                        <tbody>
+                            <tr>
+                                <td class="col-sm-3">学生信息</td>
+                                <td id="detailStudentInfo"></td>
+                            </tr>
+                            <tr>
+                                <td>班级</td>
+                                <td id="detailClass"></td>
+                            </tr>
+                            <tr>
+                                <td>课程信息</td>
+                                <td id="detailCourseInfo"></td>
+                            </tr>
+                            <tr>
+                                <td>学分</td>
+                                <td id="detailCredits"></td>
+                            </tr>
+                            <tr>
+                                <td>学期</td>
+                                <td id="detailSemester"></td>
+                            </tr>
+                            <tr>
+                                <td>成绩</td>
+                                <td id="detailScore"></td>
+                            </tr>
+                            <tr>
+                                <td>等级</td>
+                                <td id="detailGradeLevel"></td>
+                            </tr>
+                            <tr>
+                                <td>绩点</td>
+                                <td id="detailGPA"></td>
+                            </tr>
+                            <tr>
+                                <td>教师评语</td>
+                                <td id="detailTeacherComment"></td>
+                            </tr>
+                            <tr>
+                                <td>录入时间</td>
+                                <td id="detailInputTime"></td>
+                            </tr>
+                            <tr>
+                                <td>最后修改时间</td>
+                                <td id="detailUpdateTime"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量录入成绩模态框 -->
+    <div class="modal fade" id="batchInputModal" tabindex="-1" role="dialog" aria-labelledby="batchInputModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="batchInputModalLabel">批量录入成绩</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="batchInputForm">
+                        <div class="form-group">
+                            <label for="batchCourseId">选择课程</label>
+                            <select class="form-control" id="batchCourseId" required onchange="loadCourseStudents(this.value)">
+                                <option value="">请选择课程</option>
+                                <option value="CS101">计算机科学基础 (CS101)</option>
+                                <option value="CS102">程序设计基础 (CS102)</option>
+                                <option value="CS301">数据结构 (CS301)</option>
+                                <option value="CS302">操作系统原理 (CS302)</option>
+                                <option value="MA201">高等数学 (MA201)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="batchSemester">学期</label>
+                            <select class="form-control" id="batchSemester" required>
+                                <option value="2023-2024春季">2023-2024春季</option>
+                                <option value="2023-2024秋季">2023-2024秋季</option>
+                                <option value="2022-2023春季">2022-2023春季</option>
+                                <option value="2022-2023秋季">2022-2023秋季</option>
+                            </select>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px;">#</th>
+                                        <th style="width: 80px;">学号</th>
+                                        <th style="width: 80px;">姓名</th>
+                                        <th style="width: 120px;">班级</th>
+                                        <th style="width: 80px;">成绩</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="batchGradeTable">
+                                    <!-- 学生列表将通过JavaScript动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitBatchGrades()">提交成绩</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+    <!-- 引入Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+    <!-- 引入公共JS -->
+    <script src="../js/common.js"></script>
+    <script>
+        // 成绩数据（模拟数据）
+        let grades = [
+            {
+                id: '1',
+                studentId: '220101',
+                studentName: '张同学',
+                className: '计算机科学与技术2201班',
+                courseId: 'CS101',
+                courseName: '计算机科学基础',
+                credits: 4,
+                semester: '2023-2024春季',
+                score: 95,
+                teacherComment: '优秀，继续保持！',
+                inputTime: '2024-04-15 10:30:00',
+                updateTime: '2024-04-15 10:30:00'
+            },
+            {
+                id: '2',
+                studentId: '220102',
+                studentName: '李同学',
+                className: '计算机科学与技术2201班',
+                courseId: 'CS101',
+                courseName: '计算机科学基础',
+                credits: 4,
+                semester: '2023-2024春季',
+                score: 88,
+                teacherComment: '表现良好',
+                inputTime: '2024-04-15 10:35:00',
+                updateTime: '2024-04-15 10:35:00'
+            },
+            {
+                id: '3',
+                studentId: '220103',
+                studentName: '王同学',
+                className: '计算机科学与技术2201班',
+                courseId: 'CS101',
+                courseName: '计算机科学基础',
+                credits: 4,
+                semester: '2023-2024春季',
+                score: 76,
+                teacherComment: '需要加强',
+                inputTime: '2024-04-15 10:40:00',
+                updateTime: '2024-04-15 10:40:00'
+            },
+            {
+                id: '4',
+                studentId: '220104',
+                studentName: '刘同学',
+                className: '计算机科学与技术2201班',
+                courseId: 'CS101',
+                courseName: '计算机科学基础',
+                credits: 4,
+                semester: '2023-2024春季',
+                score: 65,
+                teacherComment: '及格',
+                inputTime: '2024-04-15 10:45:00',
+                updateTime: '2024-04-15 10:45:00'
+            },
+            {
+                id: '5',
+                studentId: '220105',
+                studentName: '陈同学',
+                className: '计算机科学与技术2201班',
+                courseId: 'CS101',
+                courseName: '计算机科学基础',
+                credits: 4,
+                semester: '2023-2024春季',
+                score: null,
+                teacherComment: '',
+                inputTime: null,
+                updateTime: null
+            },
+            {
+                id: '6',
+                studentId: '220101',
+                studentName: '张同学',
+                className: '计算机科学与技术2201班',
+                courseId: 'CS102',
+                courseName: '程序设计基础',
+                credits: 3,
+                semester: '2023-2024春季',
+                score: 92,
+                teacherComment: '编程能力很强',
+                inputTime: '2024-04-16 14:20:00',
+                updateTime: '2024-04-16 14:20:00'
+            },
+            {
+                id: '7',
+                studentId: '220102',
+                studentName: '李同学',
+                className: '计算机科学与技术2201班',
+                courseId: 'CS102',
+                courseName: '程序设计基础',
+                credits: 3,
+                semester: '2023-2024春季',
+                score: 85,
+                teacherComment: '逻辑清晰',
+                inputTime: '2024-04-16 14:25:00',
+                updateTime: '2024-04-16 14:25:00'
+            },
+            {
+                id: '8',
+                studentId: '220103',
+                studentName: '王同学',
+                className: '计算机科学与技术2201班',
+                courseId: 'CS102',
+                courseName: '程序设计基础',
+                credits: 3,
+                semester: '2023-2024春季',
+                score: 78,
+                teacherComment: '还需多加练习',
+                inputTime: '2024-04-16 14:30:00',
+                updateTime: '2024-04-16 14:30:00'
+            },
+            {
+                id: '9',
+                studentId: '220104',
+                studentName: '刘同学',
+                className: '计算机科学与技术2201班',
+                courseId: 'CS102',
+                courseName: '程序设计基础',
+                credits: 3,
+                semester: '2023-2024春季',
+                score: 62,
+                teacherComment: '需要加强编程练习',
+                inputTime: '2024-04-16 14:35:00',
+                updateTime: '2024-04-16 14:35:00'
+            },
+            {
+                id: '10',
+                studentId: '220105',
+                studentName: '陈同学',
+                className: '计算机科学与技术2201班',
+                courseId: 'CS102',
+                courseName: '程序设计基础',
+                credits: 3,
+                semester: '2023-2024春季',
+                score: 89,
+                teacherComment: '进步很大',
+                inputTime: '2024-04-16 14:40:00',
+                updateTime: '2024-04-16 14:40:00'
+            }
+        ];
+
+        // 当前页和每页显示数量
+        let currentPage = 1;
+        let pageSize = 10;
+        let filteredGrades = [...grades];
+        let nextGradeId = 11; // 用于生成新成绩ID
+
+        // 初始化页面
+        $(document).ready(function() {
+            initPage();
+        });
+
+        // 初始化页面
+        function initPage() {
+            renderGradeTable();
+            renderPagination();
+            updateStatistics();
+        }
+
+        // 更新统计信息
+        function updateStatistics() {
+            const totalCount = filteredGrades.length;
+            const scoredGrades = filteredGrades.filter(g => g.score !== null);
+            const scoredCount = scoredGrades.length;
+            
+            let totalScore = 0;
+            let passCount = 0;
+            let excellentCount = 0;
+            
+            scoredGrades.forEach(grade => {
+                totalScore += grade.score;
+                if (grade.score >= 60) {
+                    passCount++;
+                }
+                if (grade.score >= 90) {
+                    excellentCount++;
+                }
+            });
+            
+            const averageScore = scoredCount > 0 ? (totalScore / scoredCount).toFixed(1) : 0;
+            const passRate = scoredCount > 0 ? Math.round((passCount / scoredCount) * 100) : 0;
+            const excellentRate = scoredCount > 0 ? Math.round((excellentCount / scoredCount) * 100) : 0;
+            
+            $('#totalCount').text(totalCount);
+            $('#averageScore').text(averageScore);
+            $('#passRate').text(passRate + '%');
+            $('#excellentRate').text(excellentRate + '%');
+        }
+
+        // 渲染成绩表格
+        function renderGradeTable() {
+            const tableBody = $('#gradeTableBody');
+            tableBody.empty();
+            
+            // 计算分页数据
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            const currentGrades = filteredGrades.slice(startIndex, endIndex);
+            
+            if (currentGrades.length === 0) {
+                tableBody.append(`
+                    <tr>
+                        <td colspan="11" class="text-center text-muted">暂无符合条件的成绩数据</td>
+                    </tr>
+                `);
+                return;
+            }
+            
+            currentGrades.forEach(grade => {
+                let scoreDisplay = '-';
+                let gradeClass = '';
+                let statusText = '未评分';
+                let statusClass = 'label-warning';
+                
+                if (grade.score !== null) {
+                    scoreDisplay = grade.score;
+                    statusText = '已评分';
+                    statusClass = 'label-success';
+                    
+                    if (grade.score >= 90) {
+                        gradeClass = 'grade-excellent';
+                    } else if (grade.score >= 80) {
+                        gradeClass = 'grade-good';
+                    } else if (grade.score >= 60) {
+                        gradeClass = 'grade-average';
+                    } else {
+                        gradeClass = 'grade-poor';
+                    }
+                }
+                
+                const row = `
+                    <tr class="grade-row" data-id="${grade.id}">
+                        <td><input type="checkbox" class="grade-checkbox" value="${grade.id}"></td>
+                        <td>${grade.studentId}</td>
+                        <td>${grade.studentName}</td>
+                        <td>${grade.className}</td>
+                        <td>${grade.courseId}</td>
+                        <td>${grade.courseName}</td>
+                        <td>${grade.credits}</td>
+                        <td>${grade.semester}</td>
+                        <td>
+                            ${grade.score !== null ? 
+                                `<span class="grade-badge ${gradeClass}">${scoreDisplay}</span>` : 
+                                `<input type="number" class="form-control score-input" min="0" max="100" step="0.5" data-id="${grade.id}" placeholder="-">`
+                            }
+                        </td>
+                        <td><span class="label ${statusClass}">${statusText}</span></td>
+                        <td>
+                            <div class="btn-group btn-group-xs">
+                                <button class="btn btn-info" onclick="showGradeDetail('${grade.id}')">详情</button>
+                                <button class="btn btn-primary" onclick="showEditGradeModal('${grade.id}')">编辑</button>
+                                <button class="btn btn-danger" onclick="deleteGrade('${grade.id}')">删除</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tableBody.append(row);
+            });
+            
+            // 添加行点击事件
+            $('.grade-row').click(function(e) {
+                if (!$(e.target).is('input') && !$(e.target).closest('button').length) {
+                    const checkbox = $(this).find('input[type="checkbox"]');
+                    checkbox.prop('checked', !checkbox.prop('checked'));
+                }
+            });
+            
+            // 添加分数输入框事件
+            $('.score-input').change(function() {
+                const gradeId = $(this).data('id');
+                const newScore = parseFloat($(this).val());
+                const grade = grades.find(g => g.id === gradeId);
+                
+                if (grade && !isNaN(newScore)) {
+                    grade.score = newScore;
+                    grade.inputTime = grade.inputTime || new Date().toLocaleString();
+                    grade.updateTime = new Date().toLocaleString();
+                    renderGradeTable();
+                    updateStatistics();
+                }
+            });
+        }
+
+        // 渲染分页
+        function renderPagination() {
+            const pagination = $('#gradePagination');
+            pagination.empty();
+            
+            const totalPages = Math.ceil(filteredGrades.length / pageSize);
+            
+            // 上一页按钮
+            const prevClass = currentPage === 1 ? 'disabled' : '';
+            pagination.append(`
+                <li class="${prevClass}">
+                    <a href="javascript:void(0)" onclick="goToPage(${currentPage - 1})">&laquo;</a>
+                </li>
+            `);
+            
+            // 页码按钮
+            for (let i = 1; i <= totalPages; i++) {
+                const activeClass = i === currentPage ? 'active' : '';
+                pagination.append(`
+                    <li class="${activeClass}">
+                        <a href="javascript:void(0)" onclick="goToPage(${i})"><strong>${i}</strong></a>
+                    </li>
+                `);
+            }
+            
+            // 下一页按钮
+            const nextClass = currentPage === totalPages ? 'disabled' : '';
+            pagination.append(`
+                <li class="${nextClass}">
+                    <a href="javascript:void(0)" onclick="goToPage(${currentPage + 1})">&raquo;</a>
+                </li>
+            `);
+        }
+
+        // 跳转到指定页
+        function goToPage(page) {
+            currentPage = page;
+            renderGradeTable();
+            renderPagination();
+            // 滚动到顶部
+            $(window).scrollTop(0);
+        }
+
+        // 搜索成绩
+        function searchGrades() {
+            const keyword = $('#searchGradeInput').val().toLowerCase();
+            if (!keyword) {
+                filterGrades();
+                return;
+            }
+            
+            filteredGrades = grades.filter(grade => 
+                grade.studentId.toLowerCase().includes(keyword) ||
+                grade.studentName.toLowerCase().includes(keyword) ||
+                grade.courseId.toLowerCase().includes(keyword) ||
+                grade.courseName.toLowerCase().includes(keyword) ||
+                grade.className.toLowerCase().includes(keyword)
+            );
+            
+            currentPage = 1;
+            renderGradeTable();
+            renderPagination();
+            updateStatistics();
+        }
+
+        // 筛选成绩
+        function filterGrades() {
+            const semester = $('#semesterFilter').val();
+            const courseId = $('#courseFilter').val();
+            const className = $('#classFilter').val();
+            const status = $('#statusFilter').val();
+            
+            filteredGrades = grades.filter(grade => {
+                let match = true;
+                
+                if (semester !== 'all' && grade.semester !== semester) {
+                    match = false;
+                }
+                
+                if (match && courseId !== 'all' && grade.courseId !== courseId) {
+                    match = false;
+                }
+                
+                if (match && className !== 'all' && grade.className !== className) {
+                    match = false;
+                }
+                
+                if (match && status !== 'all') {
+                    if (status === 'graded' && grade.score === null) {
+                        match = false;
+                    } else if (status === 'ungraded' && grade.score !== null) {
+                        match = false;
+                    }
+                }
+                
+                return match;
+            });
+            
+            currentPage = 1;
+            renderGradeTable();
+            renderPagination();
+            updateStatistics();
+        }
+
+        // 显示录入成绩模态框
+        function showGradeInputModal() {
+            // 重置表单
+            $('#gradeInputForm')[0].reset();
+            // 显示模态框
+            $('#gradeInputModal').modal('show');
+        }
+
+        // 提交成绩录入
+        function submitGrade() {
+            // 收集表单数据
+            const studentId = $('#studentId').val();
+            const courseId = $('#courseId').val();
+            const semester = $('#semester').val();
+            const score = parseFloat($('#score').val());
+            const teacherComment = $('#teacherComment').val();
+            
+            // 简单验证
+            if (!studentId || !courseId || !semester || isNaN(score)) {
+                alert('请填写必要的成绩信息！');
+                return;
+            }
+            
+            // 检查是否已存在相同的成绩记录
+            const existingGrade = grades.find(g => 
+                g.studentId === studentId && g.courseId === courseId && g.semester === semester
+            );
+            
+            if (existingGrade) {
+                alert('该学生在该学期的这门课程已有成绩记录！');
+                return;
+            }
+            
+            // 获取学生和课程信息
+            const studentName = $('#studentId option:selected').text().split(' ')[0];
+            const courseName = $('#courseId option:selected').text().split(' ')[0];
+            const credits = courseId === 'CS101' || courseId === 'CS301' || courseId === 'CS302' ? 4 : 
+                            courseId === 'CS102' ? 3 : 5;
+            
+            // 创建新成绩对象
+            const newGrade = {
+                id: String(nextGradeId++),
+                studentId: studentId,
+                studentName: studentName,
+                className: '计算机科学与技术2201班', // 根据实际情况获取
+                courseId: courseId,
+                courseName: courseName,
+                credits: credits,
+                semester: semester,
+                score: score,
+                teacherComment: teacherComment,
+                inputTime: new Date().toLocaleString(),
+                updateTime: new Date().toLocaleString()
+            };
+            
+            // 添加到成绩列表
+            grades.push(newGrade);
+            
+            // 刷新列表
+            filterGrades();
+            
+            // 关闭模态框
+            $('#gradeInputModal').modal('hide');
+            
+            // 提示成功
+            alert('成绩录入成功！');
+        }
+
+        // 显示编辑成绩模态框
+        function showEditGradeModal(gradeId) {
+            const grade = grades.find(g => g.id === gradeId);
+            if (!grade) return;
+            
+            // 填充表单数据
+            $('#editGradeId').val(grade.id);
+            $('#editStudentInfo').val(`${grade.studentName} (${grade.studentId})`);
+            $('#editCourseInfo').val(`${grade.courseName} (${grade.courseId})`);
+            $('#editScore').val(grade.score || '');
+            $('#editTeacherComment').val(grade.teacherComment || '');
+            $('#editInputTime').val(grade.inputTime || '');
+            
+            // 显示模态框
+            $('#editGradeModal').modal('show');
+        }
+
+        // 更新成绩
+        function updateGrade() {
+            const gradeId = $('#editGradeId').val();
+            const grade = grades.find(g => g.id === gradeId);
+            if (!grade) return;
+            
+            // 更新成绩信息
+            grade.score = parseFloat($('#editScore').val());
+            grade.teacherComment = $('#editTeacherComment').val();
+            grade.updateTime = new Date().toLocaleString();
+            
+            if (grade.inputTime === null) {
+                grade.inputTime = grade.updateTime;
+            }
+            
+            // 刷新列表
+            filterGrades();
+            
+            // 关闭模态框
+            $('#editGradeModal').modal('hide');
+            
+            // 提示成功
+            alert('成绩更新成功！');
+        }
+
+        // 删除成绩
+        function deleteGrade(gradeId) {
+            if (confirm('确定要删除这条成绩记录吗？删除后将无法恢复！')) {
+                const index = grades.findIndex(g => g.id === gradeId);
+                if (index !== -1) {
+                    grades.splice(index, 1);
+                    filterGrades();
+                    alert('成绩删除成功！');
+                }
+            }
+        }
+
+        // 显示成绩详情
+        function showGradeDetail(gradeId) {
+            const grade = grades.find(g => g.id === gradeId);
+            if (!grade) return;
+            
+            // 计算等级和绩点
+            let gradeLevel = '-';
+            let gpa = '-';
+            
+            if (grade.score !== null) {
+                if (grade.score >= 90) {
+                    gradeLevel = '优秀';
+                    gpa = 4.0;
+                } else if (grade.score >= 80) {
+                    gradeLevel = '良好';
+                    gpa = 3.0;
+                } else if (grade.score >= 70) {
+                    gradeLevel = '中等';
+                    gpa = 2.0;
+                } else if (grade.score >= 60) {
+                    gradeLevel = '及格';
+                    gpa = 1.0;
+                } else {
+                    gradeLevel = '不及格';
+                    gpa = 0.0;
+                }
+            }
+            
+            // 填充详情信息
+            $('#detailStudentInfo').text(`${grade.studentName} (${grade.studentId})`);
+            $('#detailClass').text(grade.className);
+            $('#detailCourseInfo').text(`${grade.courseName} (${grade.courseId})`);
+            $('#detailCredits').text(grade.credits);
+            $('#detailSemester').text(grade.semester);
+            $('#detailScore').text(grade.score !== null ? grade.score : '未评分');
+            $('#detailGradeLevel').text(gradeLevel);
+            $('#detailGPA').text(gpa);
+            $('#detailTeacherComment').text(grade.teacherComment || '无');
+            $('#detailInputTime').text(grade.inputTime || '未录入');
+            $('#detailUpdateTime').text(grade.updateTime || '未修改');
+            
+            // 显示模态框
+            $('#gradeDetailModal').modal('show');
+        }
+
+        // 批量保存成绩
+        function batchUpdateGrades() {
+            let updatedCount = 0;
+            
+            $('.score-input').each(function() {
+                const gradeId = $(this).data('id');
+                const newScore = parseFloat($(this).val());
+                const grade = grades.find(g => g.id === gradeId);
+                
+                if (grade && !isNaN(newScore)) {
+                    grade.score = newScore;
+                    grade.inputTime = grade.inputTime || new Date().toLocaleString();
+                    grade.updateTime = new Date().toLocaleString();
+                    updatedCount++;
+                }
+            });
+            
+            if (updatedCount > 0) {
+                renderGradeTable();
+                updateStatistics();
+                alert(`成功更新${updatedCount}条成绩记录！`);
+            } else {
+                alert('没有需要更新的成绩记录！');
+            }
+        }
+
+        // 导出成绩数据
+        function exportGradeData() {
+            alert('成绩数据导出功能正在开发中...');
+        }
+
+        // 导入成绩数据
+        function importGradeData(file) {
+            if (file) {
+                alert(`已选择文件：${file.name}\n导入功能正在开发中...`);
+                // 重置文件输入
+                $('#importGradeFile').val('');
+            }
+        }
+
+        // 全选/取消全选
+        function toggleSelectAll() {
+            const isChecked = $('#selectAll').prop('checked');
+            $('.grade-checkbox').prop('checked', isChecked);
+        }
+
+        // 加载课程学生列表（批量录入时使用）
+        function loadCourseStudents(courseId) {
+            if (!courseId) return;
+            
+            // 模拟课程学生数据
+            const students = [
+                { id: '220101', name: '张同学', className: '计算机科学与技术2201班' },
+                { id: '220102', name: '李同学', className: '计算机科学与技术2201班' },
+                { id: '220103', name: '王同学', className: '计算机科学与技术2201班' },
+                { id: '220104', name: '刘同学', className: '计算机科学与技术2201班' },
+                { id: '220105', name: '陈同学', className: '计算机科学与技术2201班' }
+            ];
+            
+            // 渲染学生列表
+            const tableBody = $('#batchGradeTable');
+            tableBody.empty();
+            
+            students.forEach((student, index) => {
+                const row = `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${student.id}</td>
+                        <td>${student.name}</td>
+                        <td>${student.className}</td>
+                        <td><input type="number" class="form-control score-input" min="0" max="100" step="0.5" data-student-id="${student.id}" placeholder="-"></td>
+                    </tr>
+                `;
+                tableBody.append(row);
+            });
+        }
+
+        // 提交批量成绩
+        function submitBatchGrades() {
+            const courseId = $('#batchCourseId').val();
+            const semester = $('#batchSemester').val();
+            
+            if (!courseId || !semester) {
+                alert('请选择课程和学期！');
+                return;
+            }
+            
+            let submittedCount = 0;
+            
+            $('.score-input[data-student-id]').each(function() {
+                const studentId = $(this).data('student-id');
+                const score = parseFloat($(this).val());
+                
+                if (!isNaN(score)) {
+                    // 检查是否已存在相同的成绩记录
+                    const existingGradeIndex = grades.findIndex(g => 
+                        g.studentId === studentId && g.courseId === courseId && g.semester === semester
+                    );
+                    
+                    const studentName = $(this).closest('tr').find('td:eq(2)').text();
+                    const className = $(this).closest('tr').find('td:eq(3)').text();
+                    const courseName = $('#batchCourseId option:selected').text().split(' ')[0];
+                    const credits = courseId === 'CS101' || courseId === 'CS301' || courseId === 'CS302' ? 4 : 
+                                    courseId === 'CS102' ? 3 : 5;
+                    
+                    const gradeData = {
+                        studentId: studentId,
+                        studentName: studentName,
+                        className: className,
+                        courseId: courseId,
+                        courseName: courseName,
+                        credits: credits,
+                        semester: semester,
+                        score: score,
+                        teacherComment: '',
+                        inputTime: new Date().toLocaleString(),
+                        updateTime: new Date().toLocaleString()
+                    };
+                    
+                    if (existingGradeIndex !== -1) {
+                        // 更新现有记录
+                        grades[existingGradeIndex] = { ...grades[existingGradeIndex], ...gradeData };
+                    } else {
+                        // 创建新记录
+                        grades.push({ id: String(nextGradeId++), ...gradeData });
+                    }
+                    
+                    submittedCount++;
+                }
+            });
+            
+            if (submittedCount > 0) {
+                // 刷新列表
+                filterGrades();
+                
+                // 关闭模态框
+                $('#batchInputModal').modal('hide');
+                
+                // 提示成功
+                alert(`成功提交${submittedCount}条成绩记录！`);
+            } else {
+                alert('请至少填写一条成绩！');
+            }
+        }
+
+        // 显示用户信息
+        function showUserInfo() {
+            alert('当前用户：系统管理员');
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                alert('已退出登录！');
+                // 实际应用中应该跳转到登录页面
+                // window.location.href = '../login.html';
+            }
+        }
+    </script>
+</body>
+</html>

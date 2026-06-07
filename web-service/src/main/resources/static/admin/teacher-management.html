@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教师管理 - 管理员控制台</title>
+    <!-- 引入第三方库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.3.0/chart.min.css">
+    <!-- 引入公共样式 --<link rel="stylesheet" href="/static/css/common.css">
+</head>
+<body>
+    <div class="page-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/admin" class="sidebar-brand">
+                    <div class="sidebar-brand-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <span class="sidebar-brand-text">管理员控制台</span>
+                </a>
+                <button class="sidebar-toggle">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item">
+                    <a href="/admin" class="nav-link">
+                        <i class="nav-icon fas fa-tachometer-alt"></i>
+                        <span class="nav-text">控制台首页</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/student-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-user-graduate"></i>
+                        <span class="nav-text">学生管理</span>
+                        <span class="nav-badge">128</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/teacher-management.html" class="nav-link active">
+                        <i class="nav-icon fas fa-chalkboard-teacher"></i>
+                        <span class="nav-text">教师管理</span>
+                        <span class="nav-badge">32</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/course-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-book"></i>
+                        <span class="nav-text">课程管理</span>
+                        <span class="nav-badge">86</span>
+                    </a>
+                <div class="nav-item">
+                    <a href="/admin/class-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-users"></i>
+                        <span class="nav-text">班级管理</span>
+                        <span class="nav-badge">16</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/grade-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-chart-line"></i>
+                        <span class="nav-text">成绩管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/system-settings.html" class="nav-link">
+                        <i class="nav-icon fas fa-cog"></i>
+                        <span class="nav-text">系统设置</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/system-logs.html" class="nav-link">
+                        <i class="nav-icon fas fa-history"></i>
+                        <span class="nav-text">系统日志</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 --<main class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="top-navbar">
+                <div class="nav-left">
+                    <button class="mobile-sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">教师管理</h1>
+                </div>
+                <div class="nav-right">
+                    <button class="nav-icon-btn" id="notification-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge"></span>
+                    </button>
+                    <div class="user-profile">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-info">
+                            <span class="user-name">管理员</span>
+                            <span class="user-role">Admin</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 页面内容区 --<div class="content-wrapper">
+                <!-- 功能操作区 --<div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">教师管理</h3>
+                        <div class="card-actions">
+                            <button class="btn btn-primary" data-toggle="modal" data-target="#addTeacherModal">
+                                <i class="fas fa-plus"></i>
+                                添加教师
+                            </button>
+                            <button class="btn btn-secondary" data-toggle="modal" data-target="#importTeachersModal">
+                                <i class="fas fa-file-import"></i>
+                                批量导入
+                            </button>
+                            <button class="btn btn-secondary" id="exportTeachersBtn">
+                                <i class="fas fa-file-export"></i>
+                                导出教师
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- 搜索和筛选 --<div class="search-filter">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">搜索</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="teacherSearch" placeholder="搜索工号/姓名">
+                                            <button class="btn btn-primary" id="searchTeacherBtn">
+                                                <i class="fas fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">筛选条件</label>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <select class="form-control" id="teacherCollegeFilter">
+                                                    <option value="">所有学院</option>
+                                                    <option value="computer">计算机学院</option>
+                                                    <option value="electronic">电子工程学院</option>
+                                                    <option value="mechanical">机械工程学院</option>
+                                                    <option value="civil">土木工程学院</option>
+                                                    <option value="business">商学院</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <select class="form-control" id="teacherTitleFilter">
+                                                    <option value="">所有职称</option>
+                                                    <option value="professor">教授</option>
+                                                    <option value="associate_professor">副教授</option>
+                                                    <option value="lecturer">讲师</option>
+                                                    <option value="assistant">助教</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <button class="btn btn-secondary" id="filterTeacherBtn">
+                                                    <i class="fas fa-filter"></i>
+                                                    筛选
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 数据表格 --<div class="card">
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th data-sortable>工号</th>
+                                        <th data-sortable>姓名</th>
+                                        <th data-sortable>性别</th>
+                                        <th data-sortable>学院</th>
+                                        <th data-sortable>职称</th>
+                                        <th data-sortable>联系电话</th>
+                                        <th data-sortable>电子邮箱</th>
+                                        <th data-sortable>入职时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>T0001</td>
+                                        <td>张教授</td>
+                                        <td>男</td>
+                                        <td>计算机学院</td>
+                                        <td><span class="badge badge-primary">教授</span></td>
+                                        <td>13800138001</td>
+                                        <td>zhang@example.com</td>
+                                        <td>2010-09-01</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editTeacherModal" data-id="T0001">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="T0001">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteTeacherModal" data-id="T0001">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>T0002</td>
+                                        <td>李副教授</td>
+                                        <td>女</td>
+                                        <td>计算机学院</td>
+                                        <td><span class="badge badge-secondary">副教授</span></td>
+                                        <td>13800138002</td>
+                                        <td>li@example.com</td>
+                                        <td>2015-03-15</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editTeacherModal" data-id="T0002">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="T0002">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteTeacherModal" data-id="T0002">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>T0003</td>
+                                        <td>王讲师</td>
+                                        <td>男</td>
+                                        <td>电子工程学院</td>
+                                        <td><span class="badge badge-info">讲师</span></td>
+                                        <td>13800138003</td>
+                                        <td>wang@example.com</td>
+                                        <td>2018-07-20</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editTeacherModal" data-id="T0003">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="T0003">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteTeacherModal" data-id="T0003">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>T0004</td>
+                                        <td>赵助教</td>
+                                        <td>女</td>
+                                        <td>商学院</td>
+                                        <td><span class="badge badge-secondary">助教</span></td>
+                                        <td>13800138004</td>
+                                        <td>zhao@example.com</td>
+                                        <td>2020-09-01</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editTeacherModal" data-id="T0004">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="T0004">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteTeacherModal" data-id="T0004">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>T0005</td>
+                                        <td>钱教授</td>
+                                        <td>男</td>
+                                        <td>机械工程学院</td>
+                                        <td><span class="badge badge-primary">教授</span></td>
+                                        <td>13800138005</td>
+                                        <td>qian@example.com</td>
+                                        <td>2008-06-10</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editTeacherModal" data-id="T0005">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="T0005">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteTeacherModal" data-id="T0005">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- 分页 --<div class="pagination">
+                            <button class="btn btn-secondary pagination-btn" disabled>
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button class="btn btn-primary pagination-btn">1</button>
+                            <button class="btn btn-secondary pagination-btn">2</button>
+                            <button class="btn btn-secondary pagination-btn">3</button>
+                            <span class="pagination-ellipsis">...</span>
+                            <button class="btn btn-secondary pagination-btn">6</button>
+                            <button class="btn btn-secondary pagination-btn">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 添加教师模态框 -->
+    <div class="modal" id="addTeacherModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加教师</h5>
+                    <button class="close" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="addTeacherForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="teacherId">工号 *</label>
+                                    <input type="text" class="form-control" id="teacherId" name="teacherId" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="teacherName">姓名 *</label>
+                                    <input type="text" class="form-control" id="teacherName" name="teacherName" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="teacherGender">性别 *</label>
+                                    <select class="form-control" id="teacherGender" name="teacherGender" required>
+                                        <option value="male">男</option>
+                                        <option value="female">女</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="teacherCollege">学院 *</label>
+                                    <select class="form-control" id="teacherCollege" name="teacherCollege" required>
+                                        <option value="">请选择学院>
+                                        <option value="computer">计算机学院</option>
+                                        <option value="electronic">电子工程学院</option>
+                                        <option value="mechanical">机械工程学院</option>
+                                        <option value="civil">土木工程学院</option>
+                                        <option value="business">商学院</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="teacherTitle">职称 *</label>
+                                    <select class="form-control" id="teacherTitle" name="teacherTitle" required>
+                                        <option value="professor">教授>
+                                        <option value="associate_professor">副教授</option>
+                                        <option value="lecturer">讲师</option>
+                                        <option value="assistant">助教</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="hireDate">入职时间 *</label>
+                                    <input type="date" class="form-control" id="hireDate" name="hireDate" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="teacherEmail">电子邮箱 *</label>
+                            <input type="email" class="form-control" id="teacherEmail" name="teacherEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="teacherPhone">手机号码 *</label>
+                            <input type="tel" class="form-control" id="teacherPhone" name="teacherPhone" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="teacherOffice">办公地点</label>
+                            <input type="text" class="form-control" id="teacherOffice" name="teacherOffice">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button class="btn btn-primary" id="submitAddTeacher">添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑教师模态框 -->
+    <div class="modal" id="editTeacherModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑教师</h5>
+                    <button class="close" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="editTeacherForm">
+                        <input type="hidden" id="editTeacherId">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="editTeacherName">姓名 *</label>
+                                    <input type="text" class="form-control" id="editTeacherName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="editTeacherGender">性别 *</label>
+                                    <select class="form-control" id="editTeacherGender" required>
+                                        <option value="male">男>
+                                        <option value="female">女</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="editTeacherCollege">学院 *</label>
+                                    <select class="form-control" id="editTeacherCollege" required>
+                                        <option value="computer">计算机学院>
+                                        <option value="electronic">电子工程学院</option>
+                                        <option value="mechanical">机械工程学院</option>
+                                        <option value="civil">土木工程学院</option>
+                                        <option value="business">商学院</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="editTeacherTitle">职称 *</label>
+                                    <select class="form-control" id="editTeacherTitle" required>
+                                        <option value="professor">教授>
+                                        <option value="associate_professor">副教授</option>
+                                        <option value="lecturer">讲师</option>
+                                        <option value="assistant">助教</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="editHireDate">入职时间 *</label>
+                                    <input type="date" class="form-control" id="editHireDate" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="editTeacherPhone">手机号码 *</label>
+                                    <input type="tel" class="form-control" id="editTeacherPhone" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editTeacherEmail">电子邮箱 *</label>
+                            <input type="email" class="form-control" id="editTeacherEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editTeacherOffice">办公地点</label>
+                            <input type="text" class="form-control" id="editTeacherOffice">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button class="btn btn-primary" id="submitEditTeacher">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 重置密码模态框 -->
+    <div class="modal" id="resetPasswordModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">重置密码</h5>
+                    <button class="close" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="resetPasswordTeacherId">
+                    <p>确定要将 <span id="resetPasswordTeacherName" class="font-weight-bold"></span> 的密码重置为默认密码吗？</p>
+                    <p class="text-warning">默认密码为：<code>123456</code>，请提醒教师登录后及时修改密码。</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button class="btn btn-primary" id="confirmResetPassword">确定重置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除教师模态框 -->
+    <div class="modal" id="deleteTeacherModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">删除教师</h5>
+                    <button class="close" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                <div class="modal-body">
+                    <input type="hidden" id="deleteTeacherId">
+                    <p class="text-danger">警告：删除操作不可撤销！</p>
+                    <p>确定要删除教师 <span id="deleteTeacherName" class="font-weight-bold"></span> 吗？</p>
+                    <p class="text-sm">删除教师将同时删除该教师的所有授课信息。</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button class="btn btn-danger" id="confirmDeleteTeacher">删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量导入教师模态框 -->
+    <div class="modal" id="importTeachersModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">批量导入教师</h5>
+                    <button class="close" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">下载模板</label>
+                        <a href="#" class="btn btn-secondary">
+                            <i class="fas fa-download"></i>
+                            教师信息导入模板.xlsx
+                        </a>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">上传文件</label>
+                        <div class="file-upload">
+                            <input type="file" class="form-control-file" id="importFile" accept=".xlsx,.xls">
+                            <p class="text-sm text-muted mt-2">请上传Excel格式的教师信息文件，支持.xlsx和.xls格式</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button class="btn btn-primary" id="confirmImportTeachers">开始导入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入公共JavaScript -->
+    <script src="/static/js/common.js"></script>
+    <script>
+        // 页面特定的JavaScript逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            // 筛选和搜索功能
+            document.getElementById('searchTeacherBtn').addEventListener('click', function() {
+                const searchText = document.getElementById('teacherSearch').value.trim();
+                // 实现搜索逻辑
+                notifications.info('搜索', `搜索教师: ${searchText}`);
+            });
+
+            document.getElementById('filterTeacherBtn').addEventListener('click', function() {
+                const college = document.getElementById('teacherCollegeFilter').value;
+                const title = document.getElementById('teacherTitleFilter').value;
+                // 实现筛选逻辑
+                notifications.info('筛选', `筛选条件: 学院=${college}, 职称=${title}`);
+            });
+
+            // 导出教师数据
+            document.getElementById('exportTeachersBtn').addEventListener('click', function() {
+                notifications.info('导出', '正在导出教师数据...');
+                // 模拟导出延迟
+                setTimeout(() => {
+                    notifications.success('导出成功', '教师数据已成功导出');
+                }, 1500);
+            });
+
+            // 添加教师表单提交
+            document.getElementById('submitAddTeacher').addEventListener('click', function() {
+                const form = document.getElementById('addTeacherForm');
+                if (validateForm(form)) {
+                    notifications.info('添加', '正在添加教师...');
+                    // 模拟添加延迟
+                    setTimeout(() => {
+                        closeModal(document.getElementById('addTeacherModal'));
+                        notifications.success('添加成功', '教师信息已成功添加');
+                        form.reset();
+                    }, 1500);
+                }
+            });
+
+            // 编辑教师模态框
+            const editButtons = document.querySelectorAll('[data-target="#editTeacherModal"]');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const teacherId = this.getAttribute('data-id');
+                    document.getElementById('editTeacherId').value = teacherId;
+                    // 这里应该根据teacherId加载教师数据
+                    // 模拟数据加载
+                    setTimeout(() => {
+                        document.getElementById('editTeacherName').value = '示例教师';
+                        document.getElementById('editTeacherGender').value = 'male';
+                        // 其他字段...
+                    }, 300);
+                });
+            });
+
+            // 提交编辑表单
+            document.getElementById('submitEditTeacher').addEventListener('click', function() {
+                const form = document.getElementById('editTeacherForm');
+                if (validateForm(form)) {
+                    notifications.info('保存', '正在保存教师信息...');
+                    // 模拟保存延迟
+                    setTimeout(() => {
+                        closeModal(document.getElementById('editTeacherModal'));
+                        notifications.success('保存成功', '教师信息已成功更新');
+                    }, 1500);
+                }
+            });
+
+            // 重置密码模态框
+            const resetButtons = document.querySelectorAll('[data-target="#resetPasswordModal"]');
+            resetButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const teacherId = this.getAttribute('data-id');
+                    document.getElementById('resetPasswordTeacherId').value = teacherId;
+                    document.getElementById('resetPasswordTeacherName').textContent = teacherId;
+                });
+            });
+
+            // 确认重置密码
+            document.getElementById('confirmResetPassword').addEventListener('click', function() {
+                notifications.info('重置密码', '正在重置密码...');
+                // 模拟重置延迟
+                setTimeout(() => {
+                    closeModal(document.getElementById('resetPasswordModal'));
+                    notifications.success('重置成功', '密码已重置为默认密码');
+                }, 1500);
+            });
+
+            // 删除教师模态框
+            const deleteButtons = document.querySelectorAll('[data-target="#deleteTeacherModal"]');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const teacherId = this.getAttribute('data-id');
+                    document.getElementById('deleteTeacherId').value = teacherId;
+                    document.getElementById('deleteTeacherName').textContent = teacherId;
+                });
+            });
+
+            // 确认删除教师
+            document.getElementById('confirmDeleteTeacher').addEventListener('click', function() {
+                notifications.info('删除', '正在删除教师...');
+                // 模拟删除延迟
+                setTimeout(() => {
+                    closeModal(document.getElementById('deleteTeacherModal'));
+                    notifications.success('删除成功', '教师已成功删除');
+                }, 1500);
+            });
+
+            // 批量导入教师
+            document.getElementById('confirmImportTeachers').addEventListener('click', function() {
+                const fileInput = document.getElementById('importFile');
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    notifications.error('导入失败', '请选择要导入的文件');
+                    return;
+                }
+                
+                notifications.info('导入', '正在导入教师数据...');
+                // 模拟导入延迟
+                setTimeout(() => {
+                    closeModal(document.getElementById('importTeachersModal'));
+                    notifications.success('导入成功', '教师数据已成功导入');
+                    fileInput.value = '';
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

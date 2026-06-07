@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员控制台 - 网上选课系统</title>
+    <!-- 引入第三方库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.3.0/chart.min.css">
+    <!-- 引入公共样式 -->
+    <link rel="stylesheet" href="/static/css/common.css">
+</head>
+<body>
+    <div class="page-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/admin" class="sidebar-brand">
+                    <div class="sidebar-brand-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <span class="sidebar-brand-text">管理员控制台</span>
+                </a>
+                <button class="sidebar-toggle">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item">
+                    <a href="#dashboard" class="nav-link active">
+                        <i class="nav-icon fas fa-tachometer-alt"></i>
+                        <span class="nav-text">仪表盘</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#user-management" class="nav-link">
+                        <i class="nav-icon fas fa-users-cog"></i>
+                        <span class="nav-text">用户管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#course-management" class="nav-link">
+                        <i class="nav-icon fas fa-book"></i>
+                        <span class="nav-text">课程管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#role-management" class="nav-link">
+                        <i class="nav-icon fas fa-user-shield"></i>
+                        <span class="nav-text">角色权限</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#selection-records" class="nav-link">
+                        <i class="nav-icon fas fa-list-alt"></i>
+                        <span class="nav-text">选课记录</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#school-management" class="nav-link">
+                        <i class="nav-icon fas fa-university"></i>
+                        <span class="nav-text">学院专业</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#system-settings" class="nav-link">
+                        <i class="nav-icon fas fa-sliders-h"></i>
+                        <span class="nav-text">系统设置</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#system-logs" class="nav-link">
+                        <i class="nav-icon fas fa-history"></i>
+                        <span class="nav-text">操作日志</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="top-navbar">
+                <div class="nav-left">
+                    <button class="mobile-sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">管理员控制台</h1>
+                </div>
+                <div class="nav-right">
+                    <button class="nav-icon-btn" id="notification-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge"></span>
+                    </button>
+                    <div class="user-profile">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-info">
+                            <span class="user-name">管理员</span>
+                            <span class="user-role">Admin</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 页面内容区 -->
+            <div class="content-wrapper">
+                <!-- 仪表盘 -->
+                <section id="dashboard" class="tab-pane active">
+                    <h2 class="section-title">仪表盘概览</h2>
+                    
+                    <!-- 统计卡片 -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                            <div class="stat-value">1,256</div>
+                            <div class="stat-title">学生总数</div>
+                            <div class="stat-trend positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>5.2% 较上月</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
+                            <div class="stat-value">86</div>
+                            <div class="stat-title">教师总数</div>
+                            <div class="stat-trend positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>2.4% 较上月</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div class="stat-value">328</div>
+                            <div class="stat-title">课程总数</div>
+                            <div class="stat-trend positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>8.7% 较上月</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="stat-value">24,758</div>
+                            <div class="stat-title">选课记录</div>
+                            <div class="stat-trend positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>12.5% 较上月</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 图表区域 -->
+                    <div class="grid grid-cols-2 gap-lg">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">学生选课情况趋势</h3>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="selectionTrendChart" height="250"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">用户角色分布</h3>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="roleDistributionChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 最近操作日志 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">最近操作日志</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>操作时间</th>
+                                            <th>用户</th>
+                                            <th>角色</th>
+                                            <th>操作内容</th>
+                                            <th>IP地址</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>2024-05-20 09:32:18</td>
+                                            <td>张老师</td>
+                                            <td>教师</td>
+                                            <td>添加课程《数据结构》</td>
+                                            <td>192.168.1.102</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2024-05-20 08:45:33</td>
+                                            <td>李明</td>
+                                            <td>学生</td>
+                                            <td>选择课程《高等数学》</td>
+                                            <td>192.168.1.145</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2024-05-20 07:12:05</td>
+                                            <td>管理员</td>
+                                            <td>管理员</td>
+                                            <td>修改系统设置</td>
+                                            <td>192.168.1.1</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2024-05-19 16:38:22</td>
+                                            <td>王老师</td>
+                                            <td>教师</td>
+                                            <td>录入学生成绩</td>
+                                            <td>192.168.1.105</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2024-05-19 15:22:11</td>
+                                            <td>管理员</td>
+                                            <td>管理员</td>
+                                            <td>添加新学生账号</td>
+                                            <td>192.168.1.1</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 用户管理 -->
+                <section id="user-management" class="tab-pane">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">用户管理</h3>
+                            <div class="card-actions">
+                                <button class="btn btn-primary" data-toggle="modal" data-target="#addUserModal">
+                                    <i class="fas fa-plus"></i>
+                                    添加用户
+                                </button>
+                                <button class="btn btn-secondary" data-toggle="modal" data-target="#importUsersModal">
+                                    <i class="fas fa-file-import"></i>
+                                    批量导入
+                                </button>
+                                <button class="btn btn-secondary" id="exportUsersBtn">
+                                    <i class="fas fa-file-export"></i>
+                                    导出用户
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- 搜索和筛选 -->
+                            <div class="search-filter">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">搜索</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="userSearch" placeholder="搜索用户名/姓名/ID">
+                                                <button class="btn btn-primary" id="searchUserBtn">
+                                                    <i class="fas fa-search"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">筛选条件</label>
+                                            <div class="row">
+                                                <div class="col-md-5">
+                                                    <select class="form-control" id="userRoleFilter">
+                                                        <option value="">所有角色</option>
+                                                        <option value="student">学生</option>
+                                                        <option value="teacher">教师</option>
+                                                        <option value="admin">管理员</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <select class="form-control" id="userStatusFilter">
+                                                        <option value="">所有状态</option>
+                                                        <option value="active">启用</option>
+                                                        <option value="inactive">禁用</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <button class="btn btn-secondary" id="filterUserBtn">
+                                                        <i class="fas fa-filter"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 用户数据表格 -->
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>用户名</th>
+                                            <th>姓名</th>
+                                            <th>角色</th>
+                                            <th>学院</th>
+                                            <th>专业</th>
+                                            <th>状态</th>
+                                            <th>创建时间</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>1001</td>
+                                            <td>zhangsan</td>
+                                            <td>张三</td>
+                                            <td><span class="badge badge-primary">学生</span></td>
+                                            <td>计算机学院</td>
+                                            <td>软件工程</td>
+                                            <td><span class="badge badge-success">启用</span></td>
+                                            <td>2024-01-15</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editUserModal" data-id="1001">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="1001">
+                                                    <i class="fas fa-key"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteUserModal" data-id="1001">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>2001</td>
+                                            <td>wanglao</td>
+                                            <td>王老师</td>
+                                            <td><span class="badge badge-info">教师</span></td>
+                                            <td>计算机学院</td>
+                                            <td>-</td>
+                                            <td><span class="badge badge-success">启用</span></td>
+                                            <td>2023-12-10</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editUserModal" data-id="2001">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="2001">
+                                                    <i class="fas fa-key"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteUserModal" data-id="2001">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>3001</td>
+                                            <td>admin</td>
+                                            <td>系统管理员</td>
+                                            <td><span class="badge badge-danger">管理员</span></td>
+                                            <td>系统</td>
+                                            <td>-</td>
+                                            <td><span class="badge badge-success">启用</span></td>
+                                            <td>2023-09-01</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editUserModal" data-id="3001">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="3001">
+                                                    <i class="fas fa-key"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>1002</td>
+                                            <td>lisi</td>
+                                            <td>李四</td>
+                                            <td><span class="badge badge-primary">学生</span></td>
+                                            <td>电子工程学院</td>
+                                            <td>电子信息工程</td>
+                                            <td><span class="badge badge-warning">禁用</span></td>
+                                            <td>2024-02-20</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editUserModal" data-id="1002">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="1002">
+                                                    <i class="fas fa-key"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteUserModal" data-id="1002">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>2002</td>
+                                            <td>zhaolao</td>
+                                            <td>赵老师</td>
+                                            <td><span class="badge badge-info">教师</span></td>
+                                            <td>数学学院</td>
+                                            <td>-</td>
+                                            <td><span class="badge badge-success">启用</span></td>
+                                            <td>2024-01-05</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editUserModal" data-id="2002">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="2002">
+                                                    <i class="fas fa-key"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteUserModal" data-id="2002">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- 分页 -->
+                            <div class="pagination">
+                                <button class="btn btn-secondary btn-sm" disabled>
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button class="btn btn-primary btn-sm">1</button>
+                                <button class="btn btn-secondary btn-sm">2</button>
+                                <button class="btn btn-secondary btn-sm">3</button>
+                                <button class="btn btn-secondary btn-sm">...</button>
+                                <button class="btn btn-secondary btn-sm">12</button>
+                                <button class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 课程管理 -->
+                <section id="course-management" class="tab-pane">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">课程管理</h3>
+                            <div class="card-actions">
+                                <button class="btn btn-primary" data-toggle="modal" data-target="#addCourseModal">
+                                    <i class="fas fa-plus"></i>
+                                    添加课程
+                                </button>
+                                <button class="btn btn-secondary" id="exportCoursesBtn">
+                                    <i class="fas fa-file-export"></i>
+                                    导出课程
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- 搜索和筛选 -->
+                            <div class="search-filter">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">搜索</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="courseSearch" placeholder="搜索课程名称/编号/教师">
+                                                <button class="btn btn-primary" id="searchCourseBtn">
+                                                    <i class="fas fa-search"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">筛选条件</label>
+                                            <div class="row">
+                                                <div class="col-md-5">
+                                                    <select class="form-control" id="courseCollegeFilter">
+                                                        <option value="">所有学院</option>
+                                                        <option value="computer">计算机学院</option>
+                                                        <option value="math">数学学院</option>
+                                                        <option value="physics">物理学院</option>
+                                                        <option value="ee">电子工程学院</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <select class="form-control" id="courseCreditFilter">
+                                                        <option value="">所有学分</option>
+                                                        <option value="1">1学分</option>
+                                                        <option value="2">2学分</option>
+                                                        <option value="3">3学分</option>
+                                                        <option value="4">4学分</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <button class="btn btn-secondary" id="filterCourseBtn">
+                                                        <i class="fas fa-filter"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 课程数据表格 -->
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>课程编号</th>
+                                            <th>课程名称</th>
+                                            <th>教师</th>
+                                            <th>学院</th>
+                                            <th>学分</th>
+                                            <th>容量</th>
+                                            <th>已选</th>
+                                            <th>状态</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>CS101</td>
+                                            <td>计算机基础</td>
+                                            <td>王老师</td>
+                                            <td>计算机学院</td>
+                                            <td>3</td>
+                                            <td>60</td>
+                                            <td>48</td>
+                                            <td><span class="badge badge-success">招生中</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editCourseModal" data-id="CS101">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-secondary" data-toggle="modal" data-target="#viewCourseModal" data-id="CS101">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteCourseModal" data-id="CS101">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>MATH201</td>
+                                            <td>高等数学</td>
+                                            <td>赵老师</td>
+                                            <td>数学学院</td>
+                                            <td>4</td>
+                                            <td>80</td>
+                                            <td>80</td>
+                                            <td><span class="badge badge-warning">已满</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editCourseModal" data-id="MATH201">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-secondary" data-toggle="modal" data-target="#viewCourseModal" data-id="MATH201">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteCourseModal" data-id="MATH201">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>CS302</td>
+                                            <td>数据结构</td>
+                                            <td>李老师</td>
+                                            <td>计算机学院</td>
+                                            <td>3</td>
+                                            <td>50</td>
+                                            <td>0</td>
+                                            <td><span class="badge badge-primary">未开始</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editCourseModal" data-id="CS302">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-secondary" data-toggle="modal" data-target="#viewCourseModal" data-id="CS302">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteCourseModal" data-id="CS302">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>PHY101</td>
+                                            <td>大学物理</td>
+                                            <td>陈老师</td>
+                                            <td>物理学院</td>
+                                            <td>4</td>
+                                            <td>70</td>
+                                            <td>62</td>
+                                            <td><span class="badge badge-success">招生中</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editCourseModal" data-id="PHY101">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-secondary" data-toggle="modal" data-target="#viewCourseModal" data-id="PHY101">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteCourseModal" data-id="PHY101">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>EE203</td>
+                                            <td>电路分析</td>
+                                            <td>张老师</td>
+                                            <td>电子工程学院</td>
+                                            <td>3</td>
+                                            <td>50</td>
+                                            <td>45</td>
+                                            <td><span class="badge badge-success">招生中</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editCourseModal" data-id="EE203">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-secondary" data-toggle="modal" data-target="#viewCourseModal" data-id="EE203">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteCourseModal" data-id="EE203">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- 分页 -->
+                            <div class="pagination">
+                                <button class="btn btn-secondary btn-sm" disabled>
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button class="btn btn-primary btn-sm">1</button>
+                                <button class="btn btn-secondary btn-sm">2</button>
+                                <button class="btn btn-secondary btn-sm">3</button>
+                                <button class="btn btn-secondary btn-sm">...</button>
+                                <button class="btn btn-secondary btn-sm">15</button>
+                                <button class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 其他功能区域 -->
+                <section id="role-management" class="tab-pane">
+                    <h2 class="section-title">角色权限管理</h2>
+                    <!-- 角色权限管理内容 -->
+                </section>
+
+                <section id="selection-records" class="tab-pane">
+                    <h2 class="section-title">选课记录管理</h2>
+                    <!-- 选课记录管理内容 -->
+                </section>
+
+                <section id="school-management" class="tab-pane">
+                    <h2 class="section-title">学院专业管理</h2>
+                    <!-- 学院专业管理内容 -->
+                </section>
+
+                <section id="system-settings" class="tab-pane">
+                    <h2 class="section-title">系统设置</h2>
+                    <!-- 系统设置内容 -->
+                </section>
+
+                <section id="system-logs" class="tab-pane">
+                    <h2 class="section-title">系统日志</h2>
+                    <!-- 系统日志内容 -->
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- 模态框 -->
+    <!-- 添加用户模态框 -->
+    <div class="modal" id="addUserModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">添加用户</h4>
+                    <button class="close" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="addUserForm">
+                        <div class="form-group">
+                            <label class="form-label">用户名</label>
+                            <input type="text" class="form-control" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">姓名</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">角色</label>
+                            <select class="form-control" name="role" required>
+                                <option value="student">学生</option>
+                                <option value="teacher">教师</option>
+                                <option value="admin">管理员</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">学院</label>
+                            <select class="form-control" name="college" required>
+                                <option value="computer">计算机学院</option>
+                                <option value="math">数学学院</option>
+                                <option value="physics">物理学院</option>
+                                <option value="ee">电子工程学院</option>
+                                <option value="system">系统</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">专业</label>
+                            <select class="form-control" name="major">
+                                <option value="">无</option>
+                                <option value="cs">计算机科学</option>
+                                <option value="se">软件工程</option>
+                                <option value="ee">电子信息工程</option>
+                                <option value="math">应用数学</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">邮箱</label>
+                            <input type="email" class="form-control" name="email">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button class="btn btn-primary" id="submitAddUser">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加课程模态框 -->
+    <div class="modal" id="addCourseModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">添加课程</h4>
+                    <button class="close" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="addCourseForm">
+                        <div class="form-group">
+                            <label class="form-label">课程编号</label>
+                            <input type="text" class="form-control" name="courseCode" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">课程名称</label>
+                            <input type="text" class="form-control" name="courseName" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">教师</label>
+                            <select class="form-control" name="teacher" required>
+                                <option value="wang">王老师</option>
+                                <option value="zhao">赵老师</option>
+                                <option value="li">李老师</option>
+                                <option value="chen">陈老师</option>
+                                <option value="zhang">张老师</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">学院</label>
+                            <select class="form-control" name="college" required>
+                                <option value="computer">计算机学院</option>
+                                <option value="math">数学学院</option>
+                                <option value="physics">物理学院</option>
+                                <option value="ee">电子工程学院</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">学分</label>
+                            <select class="form-control" name="credits" required>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">课程容量</label>
+                            <input type="number" class="form-control" name="capacity" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">课程介绍</label>
+                            <textarea class="form-control" name="description" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button class="btn btn-primary" id="submitAddCourse">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 其他模态框（简化显示） -->
+    <div class="modal" id="importUsersModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">批量导入用户</h4>
+                    <button class="close" data-dismiss="modal"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <!-- 批量导入用户表单 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.3.0/chart.min.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script>
+        // 管理员页面特定脚本
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化图表
+            initCharts();
+            
+            // 初始化功能按钮
+            initFunctionButtons();
+        });
+
+        // 初始化图表
+        function initCharts() {
+            // 选课趋势图表
+            const trendCtx = document.getElementById('selectionTrendChart');
+            if (trendCtx) {
+                new Chart(trendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                        datasets: [{
+                            label: '选课人数',
+                            data: [2500, 3200, 4500, 3800, 5100, 4800],
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 角色分布图表
+            const roleCtx = document.getElementById('roleDistributionChart');
+            if (roleCtx) {
+                new Chart(roleCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['学生', '教师', '管理员'],
+                        datasets: [{
+                            data: [1256, 86, 3],
+                            backgroundColor: ['#3498db', '#2ecc71', '#e74c3c']
+                        }]
+                    },
+                    options: {
+                        responsive: true
+                    }
+                });
+            }
+        }
+
+        // 初始化功能按钮
+        function initFunctionButtons() {
+            // 导出用户按钮
+            document.getElementById('exportUsersBtn')?.addEventListener('click', function() {
+                // 导出用户逻辑
+                notifications.success('导出成功', '用户数据已导出为CSV文件');
+            });
+
+            // 导出课程按钮
+            document.getElementById('exportCoursesBtn')?.addEventListener('click', function() {
+                // 导出课程逻辑
+                notifications.success('导出成功', '课程数据已导出为CSV文件');
+            });
+
+            // 保存添加用户
+            document.getElementById('submitAddUser')?.addEventListener('click', function() {
+                const form = document.getElementById('addUserForm');
+                if (validateForm(form)) {
+                    // 提交表单逻辑
+                    closeModal(document.getElementById('addUserModal'));
+                    notifications.success('添加成功', '用户已成功添加');
+                }
+            });
+
+            // 保存添加课程
+            document.getElementById('submitAddCourse')?.addEventListener('click', function() {
+                const form = document.getElementById('addCourseForm');
+                if (validateForm(form)) {
+                    // 提交表单逻辑
+                    closeModal(document.getElementById('addCourseModal'));
+                    notifications.success('添加成功', '课程已成功添加');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

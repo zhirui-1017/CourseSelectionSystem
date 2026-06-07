@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成绩查询 - 学生选课系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../css/common.css">
+    <script src="../../js/common.js"></script>
+    <style>
+        /* 成绩统计卡片样式 */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .stat-card {
+            background: var(--glass-bg);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            backdrop-filter: var(--glass-backdrop);
+            box-shadow: var(--shadow);
+            padding: var(--spacing-lg);
+            text-align: center;
+            transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+            margin-bottom: var(--spacing-sm);
+            color: var(--primary-color);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .stat-label {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+        }
+        
+        /* 筛选栏样式 */
+        .filter-bar {
+            background: var(--glass-bg);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            backdrop-filter: var(--glass-backdrop);
+            box-shadow: var(--shadow);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+        
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            min-width: 180px;
+        }
+        
+        .filter-label {
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .filter-select,
+        .filter-input {
+            padding: var(--spacing-sm);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background-color: var(--white);
+            font-size: var(--font-size-sm);
+            transition: border-color var(--transition-normal);
+        }
+        
+        .filter-select:focus,
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-left: auto;
+        }
+        
+        /* 成绩表格样式 */
+        .grades-container {
+            background: var(--glass-bg);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            backdrop-filter: var(--glass-backdrop);
+            box-shadow: var(--shadow);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .grades-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+        
+        .grades-title {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        .grades-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+        
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+        
+        .grades-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--white);
+        }
+        
+        .grades-table th {
+            background-color: var(--primary-color-light);
+            color: var(--primary-color);
+            font-weight: 600;
+            text-align: left;
+            padding: var(--spacing-md);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        
+        .grades-table td {
+            padding: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .grades-table tr:hover {
+            background-color: rgba(240, 247, 255, 0.6);
+        }
+        
+        .grades-table tr:nth-child(even) {
+            background-color: var(--gray-50);
+        }
+        
+        /* 成绩等级样式 */
+        .grade-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+        }
+        
+        .grade-badge.A {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: var(--success-color);
+        }
+        
+        .grade-badge.B {
+            background-color: rgba(52, 152, 219, 0.2);
+            color: var(--info-color);
+        }
+        
+        .grade-badge.C {
+            background-color: rgba(241, 196, 15, 0.2);
+            color: var(--warning-color);
+        }
+        
+        .grade-badge.D {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: var(--danger-color);
+        }
+        
+        .grade-badge.F {
+            background-color: rgba(149, 165, 166, 0.2);
+            color: var(--gray-600);
+        }
+        
+        /* 成绩详情模态框样式 */
+        .grade-details {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .grade-details-content {
+            background: var(--glass-bg);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            backdrop-filter: var(--glass-backdrop);
+            box-shadow: var(--shadow-xl);
+            padding: var(--spacing-xl);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .grade-details-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .grade-details-title {
+            font-size: var(--font-size-xl);
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        .grade-details-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: var(--spacing-xs);
+            transition: color var(--transition-normal);
+        }
+        
+        .grade-details-close:hover {
+            color: var(--text-primary);
+        }
+        
+        .grade-details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .grade-detail-item {
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .grade-detail-label {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .grade-detail-value {
+            font-size: var(--font-size-md);
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        /* 图表容器样式 */
+        .chart-container {
+            background: var(--glass-bg);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            backdrop-filter: var(--glass-backdrop);
+            box-shadow: var(--shadow);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .chart-title {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        .chart-type {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+        
+        .chart-type-btn {
+            padding: var(--spacing-xs) var(--spacing-md);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background-color: var(--white);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            transition: all var(--transition-normal);
+        }
+        
+        .chart-type-btn.active {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+        
+        .chart-placeholder {
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--gray-100);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+        }
+        
+        /* 移动端响应式 */
+        @media (max-width: 768px) {
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-item {
+                width: 100%;
+            }
+            
+            .filter-actions {
+                margin-left: 0;
+                justify-content: center;
+            }
+            
+            .grades-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .grades-actions {
+                justify-content: center;
+            }
+            
+            .grade-details-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="sidebar-brand">
+                    <div class="sidebar-brand-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <span class="sidebar-brand-text">选课系统学生端>
+                </a>
+                <button class="sidebar-toggle" aria-label="收起侧边栏">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <div class="nav-item">
+                        <a href="index.html" class="nav-link">
+                            <i class="nav-icon fas fa-home"></i>
+                            <span class="nav-text">首页>
+                        </a>
+                    <div class="nav-item">
+                        <a href="my-courses.html" class="nav-link">
+                            <i class="nav-icon fas fa-book"></i>
+                            <span class="nav-text">我的课程>
+                        </a>
+                    <div class="nav-item">
+                        <a href="course-selection.html" class="nav-link">
+                            <i class="nav-icon fas fa-search"></i>
+                            <span class="nav-text">课程选择>
+                        </a>
+                    <div class="nav-item">
+                        <a href="schedule.html" class="nav-link">
+                            <i class="nav-icon fas fa-calendar-alt"></i>
+                            <span class="nav-text">我的课表>
+                        </a>
+                    <div class="nav-item">
+                        <a href="grades.html" class="nav-link active">
+                            <i class="nav-icon fas fa-chart-line"></i>
+                            <span class="nav-text">成绩查询>
+                        </a>
+                    <div class="nav-item">
+                        <a href="evaluations.html" class="nav-link">
+                            <i class="nav-icon fas fa-star"></i>
+                            <span class="nav-text">课程评价>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="nav-group">
+                    <div class="nav-item">
+                        <a href="profile.html" class="nav-link">
+                            <i class="nav-icon fas fa-user"></i>
+                            <span class="nav-text">个人信息>
+                        </a>
+                    <div class="nav-item">
+                        <a href="messages.html" class="nav-link">
+                            <i class="nav-icon fas fa-envelope"></i>
+                            <span class="nav-text">消息通知</span>
+                            <span class="nav-badge">5</span>
+                        </a>
+                    <div class="nav-item">
+                        <a href="settings.html" class="nav-link">
+                            <i class="nav-icon fas fa-cog"></i>
+                            <span class="nav-text">设置</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- 主内容区 --<main class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="top-navbar">
+                <div class="nav-left">
+                    <button class="mobile-sidebar-toggle" aria-label="切换侧边栏">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">成绩查询</h1>
+                </div>
+                
+                <div class="nav-right">
+                    <div class="breadcrumb">
+                        <a href="index.html">首页</a>
+                        <span class="breadcrumb-separator">/</span>
+                        <span class="breadcrumb-current">成绩查询</span>
+                    </div>
+                    
+                    <button class="nav-icon-btn" aria-label="通知">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">5</span>
+                    </button>
+                    
+                    <div class="dropdown">
+                        <button class="user-profile dropdown-toggle">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="user-info">
+                                <span class="user-name">张三</span>
+                                <span class="user-role">计算机科学与技术>
+                            </div>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a href="profile.html" class="dropdown-item">
+                                <i class="fas fa-user"></i> 个人信息
+                            </a>
+                            <a href="settings.html" class="dropdown-item">
+                                <i class="fas fa-cog"></i> 设置
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="../login.html" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i> 退出登录
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 页面内容 --<div class="content-wrapper">
+                <!-- 成绩统计卡片 --<div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="stat-value">3.85</div>
+                        <div class="stat-label">当前学期平均绩点>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="stat-value">89.25>
+                        <div class="stat-label">当前学期平均分>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-book"></i>
+                        <div class="stat-value">15>
+                        <div class="stat-label">已完成课程数>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-award"></i>
+                        <div class="stat-value">7>
+                        <div class="stat-label">获得A等级课程数>
+                    </div>
+                </div>
+                
+                <!-- 筛选栏 --<div class="filter-bar">
+                    <div class="filter-item">
+                        <div class="filter-label">学期选择>
+                        <select class="filter-select" id="semester-filter">
+                            <option value="2024-spring">2024年春季学期>
+                            <option value="2023-autumn">2023年秋季学期>
+                            <option value="2023-spring">2023年春季学期>
+                            <option value="2022-autumn">2022年秋季学期>
+                            <option value="all">全部学期>
+                        </select>
+                    <div class="filter-item">
+                        <div class="filter-label">课程类型>
+                        <select class="filter-select" id="course-type-filter">
+                            <option value="all">全部类型>
+                            <option value="required">必修课
+                            <option value="elective">选修课
+                            <option value="general">通识课
+                            <option value="professional">专业课
+                        </select>
+                    <div class="filter-item">
+                        <div class="filter-label">成绩范围>
+                        <select class="filter-select" id="grade-range-filter">
+                            <option value="all">全部成绩
+                            <option value="A">优秀 (A/A-)
+                            <option value="B">良好 (B+/B/B-)
+                            <option value="C">中等 (C+/C)
+                            <option value="D">及格 (D+/D)
+                            <option value="F">不及格 (F)
+                        </select>
+                    <div class="filter-item">
+                        <div class="filter-label">课程名称
+                        </label>
+                        <input type="text" class="filter-input" placeholder="搜索课程名称"
+                            id="course-name-filter">
+                    </div>
+                    <div class="filter-actions">
+                        <button class="btn btn-primary">查询>
+                        <button class="btn btn-outline-secondary">重置
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 成绩列表 --<div class="grades-container">
+                    <div class="grades-header">
+                        <h3 class="grades-title">成绩明细>
+                        <div class="grades-actions">
+                            <button class="btn btn-outline-secondary">
+                                <i class="fas fa-download"></i> 导出成绩
+                            </button>
+                            <button class="btn btn-outline-secondary">
+                                <i class="fas fa-print"></i> 打印成绩
+                            </button>
+                        </div>
+                    <div class="table-responsive">
+                        <table class="grades-table">
+                            <thead>
+                                <tr>
+                                    <th>课程代码>
+                                    <th>课程名称>
+                                    <th>课程类型>
+                                    <th>学分
+                                    </th>
+                                    <th>成绩等级>
+                                    <th>分数成绩>
+                                    <th>学分绩点
+                                    </th>
+                                    <th>学期>
+                                    <th>操作
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="grade-row">
+                                    <td>CS101>
+                                    <td>数据结构与算法
+                                    <td>必修课
+                                    <td>4.0>
+                                    <td>
+                                        <span class="grade-badge A">A+>
+                                    <td>96>
+                                    <td>4.0>
+                                    <td>2024年春季学期
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary view-grade-details">详情
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="grade-row">
+                                    <td>CS202>
+                                    <td>操作系统原理
+                                    <td>必修课
+                                    <td>4.0>
+                                    <td>
+                                        <span class="grade-badge A">A>
+                                    <td>92>
+                                    <td>4.0>
+                                    <td>2024年春季学期
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary view-grade-details">详情
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="grade-row">
+                                    <td>CS301>
+                                    <td>计算机网络
+                                    <td>必修课
+                                    <td>3.5>
+                                    <td>
+                                        <span class="grade-badge B">B+>
+                                    <td>87>
+                                    <td>3.5>
+                                    <td>2024年春季学期
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary view-grade-details">详情
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="grade-row">
+                                    <td>CS402>
+                                    <td>人工智能导论
+                                    <td>选修课
+                                    <td>3.0>
+                                    <td>
+                                        <span class="grade-badge A">A->
+                                    <td>88>
+                                    <td>3.7
+                                    </td>
+                                    <td>2023年秋季学期
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary view-grade-details">详情
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="grade-row">
+                                    <td>CS501
+                                    </td>
+                                    <td>数据库系统原理
+                                    <td>专业课
+                                    <td>3.0>
+                                    <td>
+                                        <span class="grade-badge B">B
+                                    </span>
+                                    <td>83
+                                    </td>
+                                    <td>3.0
+                                    </td>
+                                    <td>2023年秋季学期
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary view-grade-details">详情
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="grade-row">
+                                    <td>CS602
+                                    </td>
+                                    <td>软件工程导论
+                                    <td>必修课
+                                    <td>3.0>
+                                    <td>
+                                        <span class="grade-badge B">B->
+                                    <td>80
+                                    </td>
+                                    <td>2.7
+                                    </td>
+                                    <td>2023年春季学期
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary view-grade-details">详情
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </table-responsive">
+                </div>
+                
+                <!-- 成绩分析图表 --<div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">成绩分析
+                    <h3 class="chart-type">
+                        <button class="chart-type-btn active">等级分布
+                    </button>
+                        <button class="chart-type-btn">趋势分析
+                    </button>
+                        <button class="chart-type-btn">课程类型对比
+                    </button>
+                    </div>
+                    </div>
+                    <div class="chart-placeholder">
+                        <div class="chart-placeholder-content">
+                            <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                            <div>成绩分析图表区域
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 成绩详情模态框 --<div class="grade-details">
+        <div class="grade-details-content">
+            <div class="grade-details-header">
+                <h2 class="grade-details-title">成绩详情 - 数据结构与算法
+                <h2 class="grade-details-close">
+                    <i class="fas fa-times"></i>
+                </h2>
+            </div>
+            <div class="grade-details-grid">
+                <div class="grade-detail-item">
+                    <div class="grade-detail-label">课程代码
+                    </label>
+                    <div class="grade-detail-value">CS101
+                </div>
+                <div class="grade-detail-item">
+                    <div class="grade-detail-label">课程名称
+                    </label>
+                    <div class="grade-detail-value">数据结构与算法
+                </div>
+                <div class="grade-detail-item">
+                    <div class="grade-detail-label">课程类型
+                    </label>
+                    <div class="grade-detail-value">必修课
+                </div>
+                <div class="grade-detail-item">
+                    <div class="grade-detail-label">学分
+                    </label>
+                    <div class="grade-detail-value">4.0
+                </div>
+                <div class="grade-detail-item">
+                    <div class="grade-detail-label">最终成绩
+                    </label>
+                    <div class="grade-detail-value">96分 (A+)
+                </div>
+                <div class="grade-detail-item">
+                    <div class="grade-detail-label">学分绩点
+                    </label>
+                    <div class="grade-detail-value">4.0
+                </div>
+                <div class="grade-detail-item">
+                    <div class="grade-detail-label">授课教师
+                    </label>
+                    <div class="grade-detail-value">王教授
+                </div>
+                <div class="grade-detail-item">
+                    <div class="grade-detail-label">学期
+                    </label>
+                    <div class="grade-detail-value">2024年春季学期
+                </div>
+                <div class="grade-detail-item">
+                    <div class="grade-detail-label">平时成绩
+                    </label>
+                    <div class="grade-detail-value">95分
+                </div>
+                <div class="grade-detail-item">
+                    <div class="grade-detail-label">期中考试
+                    </label>
+                    <div class="grade-detail-value">98分
+                </div>
+                <div class="grade-detail-item">
+                    <div class="grade-detail-label">期末考试
+                    </label>
+                    <div class="grade-detail-value">94分
+                </div>
+                <div class="grade-detail-item">
+                    <div class="grade-detail-label">成绩录入时间
+                    </label>
+                    <div class="grade-detail-value">2024-04-15 09:30
+                </div>
+            <div class="grade-detail-item">
+                <div class="grade-detail-label">成绩说明
+                </label>
+                <div class="grade-detail-value">该课程综合评价良好，各项指标表现优异，特别是在算法设计方面展现出较强的创新思维。
+                </div>
+            </div>
+        </div>
+    </script>
+    <script>
+        // 成绩查询功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 查询按钮点击事件
+            const searchButton = document.querySelector('.filter-actions .btn-primary');
+            searchButton.addEventListener('click', function() {
+                // 在实际应用中，这里应该获取筛选条件并发送查询请求
+                alert('正在查询成绩...');
+            });
+            
+            // 重置按钮点击事件
+            const resetButton = document.querySelector('.filter-actions .btn-outline-secondary');
+            resetButton.addEventListener('click', function() {
+                document.getElementById('semester-filter').value = '2024-spring';
+                document.getElementById('course-type-filter').value = 'all';
+                document.getElementById('grade-range-filter').value = 'all';
+                document.getElementById('course-name-filter').value = '';
+            });
+            
+            // 查看成绩详情按钮点击事件
+            const viewDetailsButtons = document.querySelectorAll('.view-grade-details');
+            const gradeDetailsModal = document.querySelector('.grade-details');
+            const closeDetailsButton = document.querySelector('.grade-details-close');
+            
+            viewDetailsButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    gradeDetailsModal.style.display = 'flex';
+                });
+            });
+            
+            // 关闭成绩详情模态框
+            closeDetailsButton.addEventListener('click', function() {
+                gradeDetailsModal.style.display = 'none';
+            });
+            
+            // 点击模态框外部关闭
+            gradeDetailsModal.addEventListener('click', function(e) {
+                if (e.target === gradeDetailsModal) {
+                    gradeDetailsModal.style.display = 'none';
+                }
+            });
+            
+            // 图表类型切换
+            const chartTypeButtons = document.querySelectorAll('.chart-type-btn');
+            chartTypeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    chartTypeButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    // 在实际应用中，这里应该切换图表类型
+                    alert(`切换到${this.textContent.trim()}图表`);
+                });
+            });
+            
+            // 导出和打印功能
+            const exportButton = document.querySelector('.grades-actions button:first-of-type');
+            const printButton = document.querySelector('.grades-actions button:last-of-type');
+            
+            exportButton.addEventListener('click', function() {
+                alert('正在导出成绩数据...');
+            });
+            
+            printButton.addEventListener('click', function() {
+                window.print();
+            });
+        });
+    </script>
+</body>
+</html>

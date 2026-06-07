@@ -1,0 +1,1723 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生控制台 - 课程管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../css/common.css">
+    <script src="../../js/common.js"></script>
+</head>
+<body>
+    <div class="page-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="#" class="sidebar-brand">
+                    <div class="sidebar-brand-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <span class="sidebar-brand-text">选课系统学生端</span>
+                </a>
+                <button class="sidebar-toggle" aria-label="收起侧边栏">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <div class="nav-item">
+                        <a href="#dashboard" class="nav-link active">
+                            <i class="nav-icon fas fa-home"></i>
+                            <span class="nav-text">首页</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#my-courses" class="nav-link">
+                            <i class="nav-icon fas fa-book"></i>
+                            <span class="nav-text">我的课程</span>
+                            <span class="nav-badge">8</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#course-selection" class="nav-link">
+                            <i class="nav-icon fas fa-search"></i>
+                            <span class="nav-text">课程选择</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#schedule" class="nav-link">
+                            <i class="nav-icon fas fa-calendar-alt"></i>
+                            <span class="nav-text">我的课表</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#grades" class="nav-link">
+                            <i class="nav-icon fas fa-chart-line"></i>
+                            <span class="nav-text">成绩查询</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#evaluations" class="nav-link">
+                            <i class="nav-icon fas fa-star"></i>
+                            <span class="nav-text">课程评价</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="nav-group">
+                    <div class="nav-item">
+                        <a href="#profile" class="nav-link">
+                            <i class="nav-icon fas fa-user"></i>
+                            <span class="nav-text">个人信息</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#messages" class="nav-link">
+                            <i class="nav-icon fas fa-envelope"></i>
+                            <span class="nav-text">消息通知</span>
+                            <span class="nav-badge">5</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#settings" class="nav-link">
+                            <i class="nav-icon fas fa-cog"></i>
+                            <span class="nav-text">设置</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="top-navbar">
+                <div class="nav-left">
+                    <button class="mobile-sidebar-toggle" aria-label="切换侧边栏">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">学生控制台首页</h1>
+                </div>
+                
+                <div class="nav-right">
+                    <div class="breadcrumb">
+                        <a href="#dashboard">首页</a>
+                        <span class="breadcrumb-separator">/</span>
+                        <span class="breadcrumb-current">学生控制台</span>
+                    </div>
+                    
+                    <button class="nav-icon-btn" aria-label="通知">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">5</span>
+                    </button>
+                    
+                    <div class="dropdown">
+                        <button class="user-profile dropdown-toggle">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="user-info">
+                                <span class="user-name">张三</span>
+                                <span class="user-role">计算机科学与技术</span>
+                            </div>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a href="#profile" class="dropdown-item">
+                                <i class="fas fa-user"></i> 个人信息
+                            </a>
+                            <a href="#settings" class="dropdown-item">
+                                <i class="fas fa-cog"></i> 设置
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#logout" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i> 退出登录
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 页面内容 -->
+            <div class="content-wrapper">
+                <!-- 学生首页 -->
+                <section id="dashboard" class="tab-content active">
+                    <div class="welcome-section">
+                        <h2>欢迎回来，张三同学</h2>
+                        <p>祝您学习愉快！今天是个学习的好日子。</p>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div class="stat-value">8</div>
+                            <div class="stat-title">当前选课数</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-value">24</div>
+                            <div class="stat-title">本周上课节数</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="stat-value">4.2</div>
+                            <div class="stat-title">平均成绩</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="stat-value">12</div>
+                            <div class="stat-title">未完成作业</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">本周课程安排</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="week-schedule">
+                                        <div class="schedule-day">
+                                            <div class="day-header">周一</div>
+                                            <div class="day-content">
+                                                <div class="schedule-item">
+                                                    <span class="schedule-time">1-2</span>
+                                                    <span class="schedule-course">高等数学</span>
+                                                    <span class="schedule-location">A301</span>
+                                                </div>
+                                                <div class="schedule-item">
+                                                    <span class="schedule-time">3-4</span>
+                                                    <span class="schedule-course">程序设计基础</span>
+                                                    <span class="schedule-location">B203</span>
+                                                </div>
+                                                <div class="schedule-item">
+                                                    <span class="schedule-time">7-8</span>
+                                                    <span class="schedule-course">数据结构</span>
+                                                    <span class="schedule-location">C105</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="schedule-day">
+                                            <div class="day-header">周二</div>
+                                            <div class="day-content">
+                                                <div class="schedule-item">
+                                                    <span class="schedule-time">3-4</span>
+                                                    <span class="schedule-course">线性代数</span>
+                                                    <span class="schedule-location">A201</span>
+                                                </div>
+                                                <div class="schedule-item">
+                                                    <span class="schedule-time">5-6</span>
+                                                    <span class="schedule-course">大学英语</span>
+                                                    <span class="schedule-location">语言中心</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="schedule-day">
+                                            <div class="day-header">周三</div>
+                                            <div class="day-content">
+                                                <div class="schedule-item">
+                                                    <span class="schedule-time">1-2</span>
+                                                    <span class="schedule-course">离散数学</span>
+                                                    <span class="schedule-location">B301</span>
+                                                </div>
+                                                <div class="schedule-item">
+                                                    <span class="schedule-time">7-8</span>
+                                                    <span class="schedule-course">计算机组成原理</span>
+                                                    <span class="schedule-location">实验楼</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="schedule-day">
+                                            <div class="day-header">周四</div>
+                                            <div class="day-content">
+                                                <div class="schedule-item">
+                                                    <span class="schedule-time">3-4</span>
+                                                    <span class="schedule-course">概率论</span>
+                                                    <span class="schedule-location">A101</span>
+                                                </div>
+                                                <div class="schedule-item">
+                                                    <span class="schedule-time">5-6</span>
+                                                    <span class="schedule-course">操作系统</span>
+                                                    <span class="schedule-location">C205</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="schedule-day">
+                                            <div class="day-header">周五</div>
+                                            <div class="day-content">
+                                                <div class="schedule-item">
+                                                    <span class="schedule-time">1-2</span>
+                                                    <span class="schedule-course">软件工程</span>
+                                                    <span class="schedule-location">B101</span>
+                                                </div>
+                                                <div class="schedule-item">
+                                                    <span class="schedule-time">3-4</span>
+                                                    <span class="schedule-course">数据库原理</span>
+                                                    <span class="schedule-location">C301</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">最新消息</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="messages-list">
+                                        <div class="message-item">
+                                            <div class="message-icon">
+                                                <i class="fas fa-exclamation-circle text-warning"></i>
+                                            </div>
+                                            <div class="message-content">
+                                                <div class="message-title">选课时间调整通知</div>
+                                                <div class="message-time">今天 10:30</div>
+                                            </div>
+                                        </div>
+                                        <div class="message-item">
+                                            <div class="message-icon">
+                                                <i class="fas fa-info-circle text-primary"></i>
+                                            </div>
+                                            <div class="message-content">
+                                                <div class="message-title">期末考试安排已发布</div>
+                                                <div class="message-time">昨天 15:45</div>
+                                            </div>
+                                        </div>
+                                        <div class="message-item">
+                                            <div class="message-icon">
+                                                <i class="fas fa-graduation-cap text-success"></i>
+                                            </div>
+                                            <div class="message-content">
+                                                <div class="message-title">高等数学期中考试成绩已出</div>
+                                                <div class="message-time">2天前</div>
+                                            </div>
+                                        </div>
+                                        <div class="message-item">
+                                            <div class="message-icon">
+                                                <i class="fas fa-book text-secondary"></i>
+                                            </div>
+                                            <div class="message-content">
+                                                <div class="message-title">新课程推荐</div>
+                                                <div class="message-time">3天前</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">即将到期</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="deadlines-list">
+                                        <div class="deadline-item">
+                                            <div class="deadline-icon">
+                                                <i class="fas fa-file-alt text-primary"></i>
+                                            </div>
+                                            <div class="deadline-content">
+                                                <div class="deadline-title">程序设计作业提交</div>
+                                                <div class="deadline-time">明天 23:59</div>
+                                            </div>
+                                        </div>
+                                        <div class="deadline-item">
+                                            <div class="deadline-icon">
+                                                <i class="fas fa-calendar-alt text-warning"></i>
+                                            </div>
+                                            <div class="deadline-content">
+                                                <div class="deadline-title">期中考试：数据结构</div>
+                                                <div class="deadline-time">周五 10:00</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 我的课程 -->
+                <section id="my-courses" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">我的课程</h3>
+                            <div class="card-header-actions">
+                                <div class="search-box">
+                                    <input type="text" id="my-course-search" placeholder="搜索课程名称..." class="form-control">
+                                    <button class="btn btn-secondary search-btn">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="filter-options">
+                                <div class="filter-group">
+                                    <label for="my-course-semester-filter">学期:</label>
+                                    <select id="my-course-semester-filter" class="form-control">
+                                        <option value="current">当前学期</option>
+                                        <option value="all">全部学期</option>
+                                        <option value="2024-spring">2024年春季学期</option>
+                                        <option value="2023-fall">2023年秋季学期</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="filter-group">
+                                    <label for="my-course-status-filter">状态:</label>
+                                    <select id="my-course-status-filter" class="form-control">
+                                        <option value="">全部状态</option>
+                                        <option value="ongoing">进行中</option>
+                                        <option value="completed">已完成</option>
+                                        <option value="not-started">未开始</option>
+                                    </select>
+                                </div>
+                                
+                                <button class="btn btn-secondary filter-btn">
+                                    <i class="fas fa-filter"></i> 筛选
+                                </button>
+                            </div>
+                            
+                            <div class="courses-grid">
+                                <div class="course-card">
+                                    <div class="course-header">
+                                        <h4 class="course-title">数据结构与算法</h4>
+                                        <span class="course-code">CS301</span>
+                                    </div>
+                                    <div class="course-body">
+                                        <div class="course-info">
+                                            <i class="fas fa-user"></i> 李教授
+                                        </div>
+                                        <div class="course-info">
+                                            <i class="fas fa-clock"></i> 周一 7-8节
+                                        </div>
+                                        <div class="course-info">
+                                            <i class="fas fa-map-marker-alt"></i> C105
+                                        </div>
+                                        <div class="course-info">
+                                            <i class="fas fa-book"></i> 3学分
+                                        </div>
+                                    </div>
+                                    <div class="course-footer">
+                                        <span class="course-progress">进度: 65%</span>
+                                        <div class="course-actions">
+                                            <button class="btn btn-info btn-sm course-detail-btn">详情</button>
+                                            <button class="btn btn-danger btn-sm drop-course-btn">退课</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="course-card">
+                                    <div class="course-header">
+                                        <h4 class="course-title">操作系统</h4>
+                                        <span class="course-code">CS303</span>
+                                    </div>
+                                    <div class="course-body">
+                                        <div class="course-info">
+                                            <i class="fas fa-user"></i> 张教授
+                                        </div>
+                                        <div class="course-info">
+                                            <i class="fas fa-clock"></i> 周四 5-6节
+                                        </div>
+                                        <div class="course-info">
+                                            <i class="fas fa-map-marker-alt"></i> C205
+                                        </div>
+                                        <div class="course-info">
+                                            <i class="fas fa-book"></i> 4学分
+                                        </div>
+                                    </div>
+                                    <div class="course-footer">
+                                        <span class="course-progress">进度: 45%</span>
+                                        <div class="course-actions">
+                                            <button class="btn btn-info btn-sm course-detail-btn">详情</button>
+                                            <button class="btn btn-danger btn-sm drop-course-btn">退课</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="course-card">
+                                    <div class="course-header">
+                                        <h4 class="course-title">数据库原理</h4>
+                                        <span class="course-code">CS302</span>
+                                    </div>
+                                    <div class="course-body">
+                                        <div class="course-info">
+                                            <i class="fas fa-user"></i> 王副教授
+                                        </div>
+                                        <div class="course-info">
+                                            <i class="fas fa-clock"></i> 周五 3-4节
+                                        </div>
+                                        <div class="course-info">
+                                            <i class="fas fa-map-marker-alt"></i> C301
+                                        </div>
+                                        <div class="course-info">
+                                            <i class="fas fa-book"></i> 3学分
+                                        </div>
+                                    </div>
+                                    <div class="course-footer">
+                                        <span class="course-progress">进度: 35%</span>
+                                        <div class="course-actions">
+                                            <button class="btn btn-info btn-sm course-detail-btn">详情</button>
+                                            <button class="btn btn-danger btn-sm drop-course-btn">退课</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="course-card">
+                                    <div class="course-header">
+                                        <h4 class="course-title">高等数学</h4>
+                                        <span class="course-code">MATH301</span>
+                                    </div>
+                                    <div class="course-body">
+                                        <div class="course-info">
+                                            <i class="fas fa-user"></i> 赵教授
+                                        </div>
+                                        <div class="course-info">
+                                            <i class="fas fa-clock"></i> 周一 1-2节
+                                        </div>
+                                        <div class="course-info">
+                                            <i class="fas fa-map-marker-alt"></i> A301
+                                        </div>
+                                        <div class="course-info">
+                                            <i class="fas fa-book"></i> 4学分
+                                        </div>
+                                    </div>
+                                    <div class="course-footer">
+                                        <span class="course-progress">进度: 75%</span>
+                                        <div class="course-actions">
+                                            <button class="btn btn-info btn-sm course-detail-btn">详情</button>
+                                            <button class="btn btn-danger btn-sm drop-course-btn">退课</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="pagination-container">
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination">
+                                        <li class="page-item disabled">
+                                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">上一页</a>
+                                        </li>
+                                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="#">下一页</a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 课程选择 -->
+                <section id="course-selection" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">课程选择</h3>
+                            <div class="card-header-actions">
+                                <div class="search-box">
+                                    <input type="text" id="course-selection-search" placeholder="搜索课程名称、教师..." class="form-control">
+                                    <button class="btn btn-secondary search-btn">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="filter-options">
+                                <div class="filter-group">
+                                    <label for="dept-filter">学院:</label>
+                                    <select id="dept-filter" class="form-control">
+                                        <option value="">全部学院</option>
+                                        <option value="cs">计算机学院</option>
+                                        <option value="ee">电子工程学院</option>
+                                        <option value="math">数学学院</option>
+                                        <option value="physics">物理学院</option>
+                                        <option value="foreign">外语学院</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="filter-group">
+                                    <label for="credit-filter">学分:</label>
+                                    <select id="credit-filter" class="form-control">
+                                        <option value="">全部学分</option>
+                                        <option value="1">1学分</option>
+                                        <option value="2">2学分</option>
+                                        <option value="3">3学分</option>
+                                        <option value="4">4学分</option>
+                                        <option value="5+">5学分及以上</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="filter-group">
+                                    <label for="time-filter">时间段:</label>
+                                    <select id="time-filter" class="form-control">
+                                        <option value="">全部时间</option>
+                                        <option value="morning">上午 (1-4节)</option>
+                                        <option value="afternoon">下午 (5-8节)</option>
+                                        <option value="evening">晚上 (9-12节)</option>
+                                    </select>
+                                </div>
+                                
+                                <button class="btn btn-secondary filter-btn">
+                                    <i class="fas fa-filter"></i> 筛选
+                                </button>
+                                
+                                <button class="btn btn-secondary reset-btn">
+                                    <i class="fas fa-redo"></i> 重置
+                                </button>
+                            </div>
+                            
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>课程编号</th>
+                                            <th>课程名称</th>
+                                            <th>教师</th>
+                                            <th>学分</th>
+                                            <th>上课时间</th>
+                                            <th>上课地点</th>
+                                            <th>剩余容量</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>CS305</td>
+                                            <td>算法设计与分析</td>
+                                            <td>李教授</td>
+                                            <td>3</td>
+                                            <td>周二 1-2节</td>
+                                            <td>B205</td>
+                                            <td class="capacity-high">35/60</td>
+                                            <td>
+                                                <button class="btn btn-info btn-sm course-detail-btn">详情</button>
+                                                <button class="btn btn-success btn-sm select-course-btn">选课</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>CS306</td>
+                                            <td>人工智能基础</td>
+                                            <td>钱教授</td>
+                                            <td>3</td>
+                                            <td>周三 3-4节</td>
+                                            <td>C305</td>
+                                            <td class="capacity-medium">20/60</td>
+                                            <td>
+                                                <button class="btn btn-info btn-sm course-detail-btn">详情</button>
+                                                <button class="btn btn-success btn-sm select-course-btn">选课</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>CS307</td>
+                                            <td>计算机网络</td>
+                                            <td>孙教授</td>
+                                            <td>4</td>
+                                            <td>周四 1-2节</td>
+                                            <td>C201</td>
+                                            <td class="capacity-low">5/60</td>
+                                            <td>
+                                                <button class="btn btn-info btn-sm course-detail-btn">详情</button>
+                                                <button class="btn btn-success btn-sm select-course-btn">选课</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>EE302</td>
+                                            <td>数字电路</td>
+                                            <td>刘教授</td>
+                                            <td>3</td>
+                                            <td>周五 5-6节</td>
+                                            <td>实验楼</td>
+                                            <td class="capacity-high">40/50</td>
+                                            <td>
+                                                <button class="btn btn-info btn-sm course-detail-btn">详情</button>
+                                                <button class="btn btn-success btn-sm select-course-btn">选课</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>MATH302</td>
+                                            <td>概率论与数理统计</td>
+                                            <td>周教授</td>
+                                            <td>3</td>
+                                            <td>周二 3-4节</td>
+                                            <td>A205</td>
+                                            <td class="capacity-medium">25/70</td>
+                                            <td>
+                                                <button class="btn btn-info btn-sm course-detail-btn">详情</button>
+                                                <button class="btn btn-success btn-sm select-course-btn">选课</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="pagination-container">
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination">
+                                        <li class="page-item disabled">
+                                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">上一页</a>
+                                        </li>
+                                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                        <li class="page-item"><a class="page-link" href="#">4</a></li>
+                                        <li class="page-item"><a class="page-link" href="#">5</a></li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="#">下一页</a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 成绩查询 -->
+                <section id="grades" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">成绩查询</h3>
+                            <div class="card-header-actions">
+                                <div class="filter-group">
+                                    <label for="grade-semester-filter">学期:</label>
+                                    <select id="grade-semester-filter" class="form-control">
+                                        <option value="current">当前学期</option>
+                                        <option value="all">全部学期</option>
+                                        <option value="2024-spring">2024年春季学期</option>
+                                        <option value="2023-fall">2023年秋季学期</option>
+                                        <option value="2023-spring">2023年春季学期</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="grades-overview">
+                                <div class="grade-stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <div class="stat-value">4.2</div>
+                                    <div class="stat-title">平均学分绩点</div>
+                                </div>
+                                <div class="grade-stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-trophy"></i>
+                                    </div>
+                                    <div class="stat-value">88.5</div>
+                                    <div class="stat-title">平均成绩</div>
+                                </div>
+                                <div class="grade-stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-award"></i>
+                                    </div>
+                                    <div class="stat-value">32</div>
+                                    <div class="stat-title">已修学分</div>
+                                </div>
+                                <div class="grade-stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-book-reader"></i>
+                                    </div>
+                                    <div class="stat-value">128</div>
+                                    <div class="stat-title">总学分要求</div>
+                                </div>
+                            </div>
+                            
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>课程编号</th>
+                                            <th>课程名称</th>
+                                            <th>学分</th>
+                                            <th>平时成绩</th>
+                                            <th>期中成绩</th>
+                                            <th>期末成绩</th>
+                                            <th>总评成绩</th>
+                                            <th>学分绩点</th>
+                                            <th>状态</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>CS201</td>
+                                            <td>程序设计基础</td>
+                                            <td>4</td>
+                                            <td>95</td>
+                                            <td>88</td>
+                                            <td>92</td>
+                                            <td class="grade-excellent">91</td>
+                                            <td>4.0</td>
+                                            <td><span class="badge badge-success">已通过</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>CS202</td>
+                                            <td>数据结构基础</td>
+                                            <td>3</td>
+                                            <td>85</td>
+                                            <td>82</td>
+                                            <td>88</td>
+                                            <td class="grade-good">85</td>
+                                            <td>3.5</td>
+                                            <td><span class="badge badge-success">已通过</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>MATH201</td>
+                                            <td>线性代数</td>
+                                            <td>3</td>
+                                            <td>78</td>
+                                            <td>75</td>
+                                            <td>80</td>
+                                            <td class="grade-medium">78</td>
+                                            <td>2.8</td>
+                                            <td><span class="badge badge-success">已通过</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>CS301</td>
+                                            <td>数据结构与算法</td>
+                                            <td>3</td>
+                                            <td>90</td>
+                                            <td>85</td>
+                                            <td>-</td>
+                                            <td class="grade-in-progress">进行中</td>
+                                            <td>-</td>
+                                            <td><span class="badge badge-info">未完成</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>CS303</td>
+                                            <td>操作系统</td>
+                                            <td>4</td>
+                                            <td>88</td>
+                                            <td>82</td>
+                                            <td>-</td>
+                                            <td class="grade-in-progress">进行中</td>
+                                            <td>-</td>
+                                            <td><span class="badge badge-info">未完成</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="grade-chart">
+                                <h4>成绩分布</h4>
+                                <div class="chart-container">
+                                    <canvas id="gradeDistributionChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 模态框 -->
+    <div class="modal" id="course-detail-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">课程详情</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="关闭">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="course-detail">
+                        <h3 class="course-detail-name">数据结构与算法</h3>
+                        <div class="course-detail-code">课程编号: CS301</div>
+                        
+                        <div class="course-detail-section">
+                            <h4>基本信息</h4>
+                            <div class="detail-info">
+                                <div class="info-item">
+                                    <span class="info-label">教师:</span>
+                                    <span class="info-value">李教授</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">学分:</span>
+                                    <span class="info-value">3学分</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">总学时:</span>
+                                    <span class="info-value">48学时</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">上课时间:</span>
+                                    <span class="info-value">周一 7-8节</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">上课地点:</span>
+                                    <span class="info-value">C105</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">课程容量:</span>
+                                    <span class="info-value">60人</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">已选人数:</span>
+                                    <span class="info-value">45人</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">课程类别:</span>
+                                    <span class="info-value">专业必修课</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="course-detail-section">
+                            <h4>课程简介</h4>
+                            <div class="course-description">
+                                本课程主要介绍数据结构的基本概念、原理和应用，以及常见算法的设计与分析方法。通过本课程的学习，学生将掌握线性表、栈、队列、树、图等基本数据结构的实现和应用，理解算法复杂度分析的基本方法，培养学生的程序设计能力和算法思维。
+                            </div>
+                        </div>
+                        
+                        <div class="course-detail-section">
+                            <h4>先修要求</h4>
+                            <div class="prerequisites">
+                                程序设计基础、离散数学基础
+                            </div>
+                        </div>
+                        
+                        <div class="course-detail-section">
+                            <h4>考核方式</h4>
+                            <div class="assessment-method">
+                                平时成绩 (30%) + 期中考试 (30%) + 期末考试 (40%)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-success enroll-btn">选课</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="confirm-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">确认操作</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="关闭">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirm-message">您确定要执行此操作吗？</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirm-btn">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 调用common.js中的初始化函数
+            initSidebarToggle();
+            initMobileResponsive();
+            initNotifications();
+            initDataTables();
+            initUserDropdown();
+            initModals();
+            initFormValidation();
+            
+            // 初始化导航标签切换
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // 移除所有导航链接的激活状态
+                    navLinks.forEach(item => item.classList.remove('active'));
+                    
+                    // 添加当前导航链接的激活状态
+                    this.classList.add('active');
+                    
+                    // 隐藏所有内容区域
+                    const tabContents = document.querySelectorAll('.tab-content');
+                    tabContents.forEach(content => content.style.display = 'none');
+                    
+                    // 显示当前内容区域
+                    const targetId = this.getAttribute('href');
+                    const targetContent = document.querySelector(targetId);
+                    if (targetContent) {
+                        targetContent.style.display = 'block';
+                    }
+                    
+                    // 更新页面标题
+                    const pageTitle = document.querySelector('.page-title');
+                    if (pageTitle) {
+                        pageTitle.textContent = this.querySelector('.nav-text').textContent;
+                    }
+                    
+                    // 为导航切换添加额外处理
+                    if (targetId === '#schedule') {
+                        // 可以在这里添加课表相关的动态加载逻辑
+                    } else if (targetId === '#grades') {
+                        // 确保成绩图表正确渲染
+                        setTimeout(initGradeChart, 100);
+                    }
+                });
+            });
+            
+            // 隐藏除了第一个之外的所有内容区域
+            const tabContents = document.querySelectorAll('.tab-content');
+            for (let i = 1; i < tabContents.length; i++) {
+                tabContents[i].style.display = 'none';
+            }
+            
+            // 初始化选课按钮事件
+            const selectCourseButtons = document.querySelectorAll('.select-course-btn');
+            selectCourseButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // 获取课程信息
+                    const courseRow = button.closest('tr');
+                    const courseId = courseRow.dataset.courseId || '未知';
+                    const courseName = courseRow.querySelector('.course-name')?.textContent || '未知课程';
+                    
+                    // 显示确认对话框
+                    const confirmModal = document.querySelector('#confirm-modal');
+                    const confirmMessage = document.querySelector('#confirm-message');
+                    confirmMessage.textContent = `您确定要选择课程《${courseName}》吗？`;
+                    
+                    openModal(confirmModal);
+                    
+                    // 绑定确认按钮事件
+                    const confirmBtn = document.querySelector('#confirm-btn');
+                    const originalOnClick = confirmBtn.onclick;
+                    
+                    confirmBtn.onclick = function() {
+                        // 确保先清除之前的事件处理函数
+                        if (typeof originalOnClick === 'function') {
+                            // 这里我们不调用originalOnClick，而是替换为新逻辑
+                        }
+                        
+                        closeModal(confirmModal);
+                        // 显示成功提示
+                        notifications.success('选课成功', `您已成功选择课程《${courseName}》！`);
+                        
+                        // 更新UI
+                        button.textContent = '已选';
+                        button.classList.remove('btn-success');
+                        button.classList.add('btn-secondary');
+                        button.disabled = true;
+                        
+                        // 更新课程容量
+                        const capacityElement = courseRow.querySelector('.capacity-info');
+                        if (capacityElement) {
+                            const capacityText = capacityElement.textContent;
+                            const matches = capacityText.match(/(\d+)\/(\d+)/);
+                            if (matches && matches.length === 3) {
+                                const current = parseInt(matches[1]) + 1;
+                                const total = parseInt(matches[2]);
+                                
+                                // 更新容量文本
+                                capacityElement.textContent = `${current}/${total}`;
+                                
+                                // 更新容量状态样式
+                                updateCapacityStyle(capacityElement, current, total);
+                            }
+                        }
+                    };
+                });
+            });
+            
+            // 更新课程容量样式
+            function updateCapacityStyle(element, current, total) {
+                const percentage = (current / total) * 100;
+                
+                // 移除所有状态类
+                element.classList.remove('capacity-high', 'capacity-medium', 'capacity-low');
+                
+                // 添加新状态类
+                if (percentage < 70) {
+                    element.classList.add('capacity-high');
+                } else if (percentage < 90) {
+                    element.classList.add('capacity-medium');
+                } else {
+                    element.classList.add('capacity-low');
+                }
+            }
+            
+            // 初始化退课按钮事件
+            const dropCourseButtons = document.querySelectorAll('.drop-course-btn');
+            dropCourseButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // 获取课程卡片信息
+                    const courseCard = button.closest('.course-card');
+                    const courseTitle = courseCard.querySelector('.card-header h5')?.textContent || '未知课程';
+                    
+                    // 显示确认对话框
+                    const confirmModal = document.querySelector('#confirm-modal');
+                    const confirmMessage = document.querySelector('#confirm-message');
+                    confirmMessage.textContent = `您确定要退课《${courseTitle}》吗？此操作不可撤销。`;
+                    
+                    openModal(confirmModal);
+                    
+                    // 保存当前按钮和卡片引用，以便在确认回调中使用
+                    const currentButton = button;
+                    const currentCourseCard = courseCard;
+                    
+                    // 绑定确认按钮事件
+                    const confirmBtn = document.querySelector('#confirm-btn');
+                    
+                    confirmBtn.onclick = function() {
+                        closeModal(confirmModal);
+                        
+                        // 显示成功提示
+                        notifications.success('退课成功', `您已成功退课《${courseTitle}》！`);
+                        
+                        // 添加动画效果，然后移除卡片
+                        currentCourseCard.style.transition = 'all 0.3s ease';
+                        currentCourseCard.style.opacity = '0';
+                        currentCourseCard.style.transform = 'translateY(20px)';
+                        
+                        setTimeout(() => {
+                            // 从DOM中移除卡片
+                            currentCourseCard.remove();
+                            
+                            // 如果所有课程都被退掉，显示提示信息
+                            const remainingCourses = document.querySelectorAll('.course-card');
+                            if (remainingCourses.length === 0) {
+                                const coursesGrid = document.querySelector('.courses-grid');
+                                if (coursesGrid) {
+                                    // 检查是否已有空消息元素
+                                    if (!coursesGrid.querySelector('.empty-message')) {
+                                        const emptyMessage = document.createElement('div');
+                                        emptyMessage.className = 'empty-message text-center py-5';
+                                        emptyMessage.innerHTML = `
+                                            <div class="alert alert-info">
+                                                <i class="fa fa-info-circle mr-2"></i>
+                                                您当前没有选修任何课程，请前往课程选择页面选课。
+                                            </div>
+                                        `;
+                                        coursesGrid.appendChild(emptyMessage);
+                                    }
+                                }
+                            }
+                        }, 300);
+                    };
+                });
+            });
+            
+            // 初始化课程详情按钮事件
+            const courseDetailButtons = document.querySelectorAll('.course-detail-btn');
+            courseDetailButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const courseDetailModal = document.querySelector('#course-detail-modal');
+                    openModal(courseDetailModal);
+                });
+            });
+            
+            // 初始化选课按钮（模态框内）
+            const enrollBtn = document.querySelector('.enroll-btn');
+            if (enrollBtn) {
+                enrollBtn.addEventListener('click', function() {
+                    const courseDetailModal = document.querySelector('#course-detail-modal');
+                    closeModal(courseDetailModal);
+                    // 显示成功提示
+                    notifications.success('选课成功', '您已成功选择该课程！');
+                });
+            }
+            
+            // 添加学生特定样式
+            const style = document.createElement('style');
+            style.textContent = `
+                .week-schedule {
+                    display: grid;
+                    grid-template-columns: repeat(5, 1fr);
+                    gap: var(--spacing-md);
+                }
+                
+                .schedule-day {
+                    border: 1px solid var(--border-color);
+                    border-radius: var(--border-radius);
+                }
+                
+                .day-header {
+                    background-color: var(--primary-color);
+                    color: white;
+                    padding: var(--spacing-xs) var(--spacing-md);
+                    font-weight: 600;
+                    text-align: center;
+                    border-top-left-radius: var(--border-radius);
+                    border-top-right-radius: var(--border-radius);
+                }
+                
+                .day-content {
+                    padding: var(--spacing-md);
+                }
+                
+                .schedule-item {
+                    background-color: var(--gray-100);
+                    padding: var(--spacing-xs) var(--spacing-md);
+                    margin-bottom: var(--spacing-xs);
+                    border-radius: var(--border-radius-sm);
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                    transition: all 0.2s ease;
+                }
+                
+                .schedule-item:hover {
+                    background-color: var(--primary-light);
+                    transform: translateY(-1px);
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }
+                
+                .schedule-time {
+                    font-weight: 600;
+                    color: var(--primary-color);
+                    font-size: var(--font-size-sm);
+                }
+                
+                .schedule-course {
+                    font-weight: 500;
+                }
+                
+                .schedule-location {
+                    font-size: var(--font-size-sm);
+                    color: var(--text-secondary);
+                }
+                
+                .messages-list, .deadlines-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: var(--spacing-md);
+                }
+                
+                .message-item, .deadline-item {
+                    display: flex;
+                    gap: var(--spacing-md);
+                    align-items: center;
+                    padding-bottom: var(--spacing-md);
+                    border-bottom: 1px solid var(--border-color);
+                }
+                
+                .message-item:last-child, .deadline-item:last-child {
+                    border-bottom: none;
+                    padding-bottom: 0;
+                }
+                
+                .message-icon, .deadline-icon, .activity-icon {
+                    width: 40px;
+                    height: 40px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background-color: var(--gray-100);
+                    border-radius: 50%;
+                    flex-shrink: 0;
+                }
+                
+                .message-title, .deadline-title {
+                    font-weight: 500;
+                }
+                
+                .message-time, .deadline-time {
+                    font-size: var(--font-size-sm);
+                    color: var(--text-secondary);
+                }
+                
+                .courses-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+                    gap: var(--spacing-lg);
+                    margin-top: var(--spacing-lg);
+                }
+                
+                .course-card {
+                    border: 1px solid var(--border-color);
+                    border-radius: var(--border-radius);
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                }
+                
+                .course-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+                
+                .course-header {
+                    background-color: var(--primary-light);
+                    padding: var(--spacing-md);
+                    border-bottom: 1px solid var(--border-color);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                
+                .course-title {
+                    margin: 0;
+                    font-size: var(--font-size-lg);
+                    font-weight: 600;
+                    color: var(--primary-color);
+                }
+                
+                .course-code {
+                    background-color: var(--primary-color);
+                    color: white;
+                    padding: 2px 8px;
+                    border-radius: var(--border-radius-sm);
+                    font-size: var(--font-size-sm);
+                }
+                
+                .course-body {
+                    padding: var(--spacing-md);
+                }
+                
+                .course-info {
+                    display: flex;
+                    align-items: center;
+                    gap: var(--spacing-xs);
+                    margin-bottom: var(--spacing-xs);
+                    font-size: var(--font-size-sm);
+                }
+                
+                .course-footer {
+                    background-color: var(--gray-100);
+                    padding: var(--spacing-md);
+                    border-top: 1px solid var(--border-color);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                
+                .course-progress {
+                    font-size: var(--font-size-sm);
+                    color: var(--text-secondary);
+                }
+                
+                .course-actions {
+                    display: flex;
+                    gap: var(--spacing-xs);
+                }
+                
+                .capacity-high {
+                    color: var(--success-color);
+                }
+                
+                .capacity-medium {
+                    color: var(--warning-color);
+                }
+                
+                .capacity-low {
+                    color: var(--danger-color);
+                }
+                
+                .grade-excellent {
+                    color: var(--success-color);
+                    font-weight: 600;
+                }
+                
+                .grade-good {
+                    color: var(--success-color);
+                    font-weight: 500;
+                }
+                
+                .grade-medium {
+                    color: var(--warning-color);
+                    font-weight: 500;
+                }
+                
+                .grade-poor {
+                    color: var(--danger-color);
+                    font-weight: 500;
+                }
+                
+                .grade-in-progress {
+                    color: var(--info-color);
+                    font-weight: 500;
+                }
+                
+                .grades-overview {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: var(--spacing-md);
+                    margin-bottom: var(--spacing-lg);
+                }
+                
+                .grade-stat-card {
+                    background-color: white;
+                    border: 1px solid var(--border-color);
+                    border-radius: var(--border-radius);
+                    padding: var(--spacing-md);
+                    display: flex;
+                    align-items: center;
+                    gap: var(--spacing-md);
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+                }
+                
+                .course-detail {
+                    display: flex;
+                    flex-direction: column;
+                    gap: var(--spacing-lg);
+                }
+                
+                .course-detail-name {
+                    color: var(--primary-color);
+                    margin-bottom: var(--spacing-xs);
+                }
+                
+                .course-detail-code {
+                    color: var(--text-secondary);
+                    margin-bottom: var(--spacing-md);
+                }
+                
+                .course-detail-section h4 {
+                    color: var(--text-primary);
+                    margin-bottom: var(--spacing-sm);
+                    padding-bottom: var(--spacing-xs);
+                    border-bottom: 1px solid var(--border-color);
+                }
+                
+                .detail-info {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: var(--spacing-sm);
+                }
+                
+                .info-item {
+                    display: flex;
+                    gap: var(--spacing-xs);
+                }
+                
+                .info-label {
+                    font-weight: 500;
+                    color: var(--text-secondary);
+                    min-width: 80px;
+                }
+                
+                .info-value {
+                    font-weight: 500;
+                }
+                
+                .course-description, .prerequisites, .assessment-method {
+                    line-height: 1.6;
+                    color: var(--text-primary);
+                }
+                
+                .grade-chart {
+                    margin-top: var(--spacing-lg);
+                    height: 300px;
+                    position: relative;
+                }
+                
+                #grades-table th.sort-asc::after {
+                    content: ' ↑';
+                    font-size: 0.8em;
+                }
+                
+                #grades-table th.sort-desc::after {
+                    content: ' ↓';
+                    font-size: 0.8em;
+                }
+                
+                .course-detail-info {
+                    display: flex;
+                    flex-direction: column;
+                    gap: var(--spacing-sm);
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // 课表功能增强
+            function enhanceSchedule() {
+                const scheduleItems = document.querySelectorAll('.schedule-item');
+                scheduleItems.forEach(item => {
+                    // 添加点击效果
+                    item.style.cursor = 'pointer';
+                    item.style.transition = 'background-color 0.2s ease';
+                    
+                    item.addEventListener('mouseenter', function() {
+                        this.style.backgroundColor = 'var(--primary-light)';
+                    });
+                    
+                    item.addEventListener('mouseleave', function() {
+                        this.style.backgroundColor = 'var(--gray-100)';
+                    });
+                    
+                    item.addEventListener('click', function() {
+                        const courseName = this.querySelector('.schedule-course')?.textContent || '未知课程';
+                        const courseTime = this.querySelector('.schedule-time')?.textContent || '未知时间';
+                        const courseLocation = this.querySelector('.schedule-location')?.textContent || '未知地点';
+                        
+                        showCourseDetailModal(courseName, courseTime, courseLocation);
+                    });
+                });
+            }
+            
+            // 显示课程详情模态框
+            function showCourseDetailModal(courseName, courseTime, courseLocation) {
+                // 检查是否已有课程详情模态框，如没有则创建
+                let courseModal = document.querySelector('#schedule-course-modal');
+                if (!courseModal) {
+                    courseModal = document.createElement('div');
+                    courseModal.className = 'modal fade';
+                    courseModal.id = 'schedule-course-modal';
+                    courseModal.innerHTML = `
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">课程详情</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="关闭">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="course-detail-info">
+                                        <div class="info-item">
+                                            <span class="info-label">课程名称:</span>
+                                            <span class="info-value" id="modal-course-name"></span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">上课时间:</span>
+                                            <span class="info-value" id="modal-course-time"></span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">上课地点:</span>
+                                            <span class="info-value" id="modal-course-location"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(courseModal);
+                }
+                
+                // 设置模态框内容
+                document.getElementById('modal-course-name').textContent = courseName;
+                document.getElementById('modal-course-time').textContent = courseTime;
+                document.getElementById('modal-course-location').textContent = courseLocation;
+                
+                // 显示模态框
+                $(courseModal).modal('show');
+            }
+            
+            // 成绩查询功能增强
+            function enhanceGradeQuery() {
+                // 为学期下拉框添加筛选功能
+                const semesterFilter = document.querySelector('#grade-semester-filter');
+                if (semesterFilter) {
+                    semesterFilter.addEventListener('change', function() {
+                        const selectedSemester = this.value;
+                        filterGradesBySemester(selectedSemester);
+                    });
+                }
+                
+                // 添加成绩排序功能
+                const gradeTableHeaders = document.querySelectorAll('#grades-table th');
+                gradeTableHeaders.forEach((header, index) => {
+                    if (index > 0 && index < 10) { // 只为数据列添加排序功能
+                        header.style.cursor = 'pointer';
+                        header.addEventListener('click', function() {
+                            sortGradeTable(index);
+                        });
+                    }
+                });
+            }
+            
+            // 根据学期筛选成绩
+            function filterGradesBySemester(semester) {
+                const gradeRows = document.querySelectorAll('#grades-table tbody tr');
+                gradeRows.forEach(row => {
+                    if (semester === 'all' || row.dataset.semester === semester) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                
+                // 更新统计信息
+                updateGradeStatistics();
+            }
+            
+            // 排序成绩表格
+            function sortGradeTable(columnIndex) {
+                const table = document.getElementById('grades-table');
+                const tbody = table.querySelector('tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                const direction = table.dataset.sortDirection === 'asc' ? 'desc' : 'asc';
+                
+                rows.sort((a, b) => {
+                    const aValue = a.cells[columnIndex].textContent.trim();
+                    const bValue = b.cells[columnIndex].textContent.trim();
+                    
+                    // 尝试按数字排序
+                    const aNum = parseFloat(aValue);
+                    const bNum = parseFloat(bValue);
+                    
+                    if (!isNaN(aNum) && !isNaN(bNum)) {
+                        return direction === 'asc' ? aNum - bNum : bNum - aNum;
+                    }
+                    
+                    // 按文本排序
+                    return direction === 'asc' ? 
+                        aValue.localeCompare(bValue) : 
+                        bValue.localeCompare(aValue);
+                });
+                
+                // 重新排列行
+                rows.forEach(row => tbody.appendChild(row));
+                
+                // 更新排序方向
+                table.dataset.sortDirection = direction;
+                
+                // 更新表头样式
+                document.querySelectorAll('#grades-table th').forEach((th, i) => {
+                    th.classList.remove('sort-asc', 'sort-desc');
+                    if (i === columnIndex) {
+                        th.classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
+                    }
+                });
+            }
+            
+            // 更新成绩统计信息
+            function updateGradeStatistics() {
+                const visibleRows = document.querySelectorAll('#grades-table tbody tr:not([style*="display: none"])');
+                let totalCredits = 0;
+                let totalWeightedScore = 0;
+                let totalScore = 0;
+                
+                visibleRows.forEach(row => {
+                    const scoreCell = row.querySelector('td:nth-child(8)'); // 总评成绩
+                    const creditsCell = row.querySelector('td:nth-child(4)'); // 学分
+                    
+                    if (scoreCell && creditsCell) {
+                        const score = parseFloat(scoreCell.textContent);
+                        const credits = parseFloat(creditsCell.textContent);
+                        
+                        if (!isNaN(score) && !isNaN(credits)) {
+                            totalScore += score;
+                            totalCredits += credits;
+                            totalWeightedScore += score * credits;
+                        }
+                    }
+                });
+                
+                // 更新统计显示
+                const avgScore = visibleRows.length > 0 ? (totalScore / visibleRows.length).toFixed(1) : '0.0';
+                const gpa = totalCredits > 0 ? (totalWeightedScore / totalCredits / 20).toFixed(2) : '0.00';
+
+                const el = document.querySelector('.gpa-value');
+                if (el) el.textContent = gpa;
+
+                const el2 = document.querySelector('.avg-score-value');
+                if (el2) el2.textContent = avgScore;
+
+                const el3 = document.querySelector('.completed-credits-value');
+                if (el3) el3.textContent = totalCredits.toString();
+            }
+            
+            // 尝试初始化图表（如果Chart.js可用）
+            function initGradeChart() {
+                if (typeof Chart !== 'undefined') {
+                    try {
+                        const ctx = document.getElementById('gradeDistributionChart');
+                        if (ctx) {
+                            // 从表格数据动态生成图表数据
+                            const gradeCounts = [0, 0, 0, 0, 0]; // 优秀, 良好, 中等, 及格, 不及格
+                            
+                            const gradeRows = document.querySelectorAll('#grades-table tbody tr');
+                            gradeRows.forEach(row => {
+                                const scoreCell = row.querySelector('td:nth-child(8)');
+                                if (scoreCell) {
+                                    const score = parseFloat(scoreCell.textContent);
+                                    if (!isNaN(score)) {
+                                        if (score >= 90) gradeCounts[0]++;
+                                        else if (score >= 80) gradeCounts[1]++;
+                                        else if (score >= 70) gradeCounts[2]++;
+                                        else if (score >= 60) gradeCounts[3]++;
+                                        else gradeCounts[4]++;
+                                    }
+                                }
+                            });
+                            
+                            // 创建图表
+                            new Chart(ctx, {
+                                type: 'bar',
+                                data: {
+                                    labels: ['优秀 (90-100)', '良好 (80-89)', '中等 (70-79)', '及格 (60-69)', '不及格 (0-59)'],
+                                    datasets: [{
+                                        label: '课程数量',
+                                        data: gradeCounts,
+                                        backgroundColor: [
+                                            'rgba(76, 175, 80, 0.6)',
+                                            'rgba(255, 152, 0, 0.6)',
+                                            'rgba(33, 150, 243, 0.6)',
+                                            'rgba(156, 39, 176, 0.6)',
+                                            'rgba(244, 67, 54, 0.6)'
+                                        ],
+                                        borderColor: [
+                                            'rgba(76, 175, 80, 1)',
+                                            'rgba(255, 152, 0, 1)',
+                                            'rgba(33, 150, 243, 1)',
+                                            'rgba(156, 39, 176, 1)',
+                                            'rgba(244, 67, 54, 1)'
+                                        ],
+                                        borderWidth: 1
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            ticks: {
+                                                precision: 0
+                                            }
+                                        }
+                                    },
+                                    plugins: {
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function(context) {
+                                                    return `课程数量: ${context.parsed.y}`;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    } catch (error) {
+                        console.log('Chart initialization failed:', error);
+                    }
+                }
+            }
+            
+            // 初始化所有增强功能
+            function initStudentFeatures() {
+                enhanceSchedule();
+                enhanceGradeQuery();
+                initGradeChart();
+            }
+            
+            // 调用初始化函数
+            initStudentFeatures();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>班级管理 - 网上选课系统</title>
+    <!-- 引入Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css">
+    <!-- 引入公共CSS -->
+    <link rel="stylesheet" href="../css/common.css">
+    <style>
+        /* 班级管理页面专用样式 */
+        .class-table th, .class-table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .class-status-badge {
+            min-width: 60px;
+            display: inline-block;
+            text-align: center;
+        }
+        .search-filter-box {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .operation-buttons {
+            margin-bottom: 15px;
+        }
+        .checkbox-all {
+            margin-right: 5px;
+        }
+        .capacity-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .capacity-progress {
+            height: 100%;
+            background-color: #5cb85c;
+            border-radius: 4px;
+        }
+        .capacity-warning .capacity-progress {
+            background-color: #f0ad4e;
+        }
+        .capacity-danger .capacity-progress {
+            background-color: #d9534f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-sm-3 col-md-2 sidebar">
+                <div class="logo-container">
+                    <h4 class="text-center text-primary">管理系统</h4>
+                </div>
+                <ul class="nav nav-sidebar">
+                    <li><a href="index.html">系统首页</a></li>
+                    <li><a href="student-management.html">学生管理</a></li>
+                    <li><a href="teacher-management.html">教师管理</a></li>
+                    <li><a href="course-management.html">课程管理</a></li>
+                    <li class="active"><a href="class-management.html">班级管理</a></li>
+                    <li><a href="grade-management.html">成绩管理</a></li>
+                    <li><a href="system-settings.html">系统设置</a></li>
+                    <li><a href="system-logs.html">系统日志</a></li>
+                </ul>
+                <div class="user-info">
+                    <div class="dropdown">
+                        <button class="btn btn-default dropdown-toggle" type="button" id="userDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            <span class="glyphicon glyphicon-user"></span> 管理员
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                            <li><a href="javascript:void(0)" onclick="showUserInfo()">用户信息</a></li>
+                            <li><a href="javascript:void(0)" onclick="logout()">退出登录</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主内容区域 -->
+            <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+                <h1 class="page-header">班级管理</h1>
+                
+                <!-- 操作按钮区 -->
+                <div class="operation-buttons">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary" onclick="showAddClassModal()">
+                            <span class="glyphicon glyphicon-plus"></span> 添加班级
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="batchDeleteClasses()">
+                            <span class="glyphicon glyphicon-trash"></span> 批量删除
+                        </button>
+                        <button type="button" class="btn btn-info" onclick="exportClassData()">
+                            <span class="glyphicon glyphicon-export"></span> 导出数据
+                        </button>
+                        <label class="btn btn-warning">
+                            <span class="glyphicon glyphicon-import"></span> 导入数据
+                            <input type="file" id="importClassFile" style="display: none;" accept=".xlsx,.xls,.csv" onchange="importClassData(this.files[0])">
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 搜索和筛选区 -->
+                <div class="search-filter-box">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchClassInput" placeholder="搜索班级编号/名称/学院">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default" type="button" onclick="searchClasses()">
+                                        <span class="glyphicon glyphicon-search"></span>
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <select class="form-control" id="departmentFilter" onchange="filterClasses()">
+                                        <option value="all">所有学院</option>
+                                        <option value="计算机学院">计算机学院</option>
+                                        <option value="电子工程学院">电子工程学院</option>
+                                        <option value="数学与统计学院">数学与统计学院</option>
+                                        <option value="物理学院">物理学院</option>
+                                        <option value="化学学院">化学学院</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-control" id="gradeFilter" onchange="filterClasses()">
+                                        <option value="all">所有年级</option>
+                                        <option value="2023级">2023级</option>
+                                        <option value="2022级">2022级</option>
+                                        <option value="2021级">2021级</option>
+                                        <option value="2020级">2020级</option>
+                                        <option value="2019级">2019级</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-control" id="statusFilter" onchange="filterClasses()">
+                                        <option value="all">所有状态</option>
+                                        <option value="normal">正常</option>
+                                        <option value="graduated">已毕业</option>
+                                        <option value="closed">已关闭</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 班级列表 -->
+                <div class="table-responsive">
+                    <table class="table table-hover class-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" id="selectAll" class="checkbox-all" onclick="toggleSelectAll()">
+                                </th>
+                                <th style="width: 80px;">班级编号</th>
+                                <th>班级名称</th>
+                                <th>所属学院</th>
+                                <th>专业</th>
+                                <th>年级</th>
+                                <th>班主任</th>
+                                <th>学生人数</th>
+                                <th>班长</th>
+                                <th>状态</th>
+                                <th style="width: 150px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="classTableBody">
+                            <!-- 班级列表将通过JavaScript动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 分页 -->
+                <div class="pagination-container">
+                    <nav>
+                        <ul class="pagination" id="classPagination">
+                            <!-- 分页按钮将通过JavaScript动态生成 -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加班级模态框 -->
+    <div class="modal fade" id="addClassModal" tabindex="-1" role="dialog" aria-labelledby="addClassModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="addClassModalLabel">添加班级</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="addClassForm">
+                        <div class="form-group">
+                            <label for="classId">班级编号</label>
+                            <input type="text" class="form-control" id="classId" placeholder="例如：CS2201">
+                        </div>
+                        <div class="form-group">
+                            <label for="className">班级名称</label>
+                            <input type="text" class="form-control" id="className" placeholder="例如：计算机科学与技术2201班">
+                        </div>
+                        <div class="form-group">
+                            <label for="department">所属学院</label>
+                            <select class="form-control" id="department">
+                                <option value="计算机学院">计算机学院</option>
+                                <option value="电子工程学院">电子工程学院</option>
+                                <option value="数学与统计学院">数学与统计学院</option>
+                                <option value="物理学院">物理学院</option>
+                                <option value="化学学院">化学学院</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="major">专业</label>
+                            <input type="text" class="form-control" id="major" placeholder="例如：计算机科学与技术">
+                        </div>
+                        <div class="form-group">
+                            <label for="grade">年级</label>
+                            <select class="form-control" id="grade">
+                                <option value="2023级">2023级</option>
+                                <option value="2022级">2022级</option>
+                                <option value="2021级">2021级</option>
+                                <option value="2020级">2020级</option>
+                                <option value="2019级">2019级</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="headTeacher">班主任</label>
+                            <input type="text" class="form-control" id="headTeacher" placeholder="输入班主任姓名">
+                        </div>
+                        <div class="form-group">
+                            <label for="totalStudents">学生容量</label>
+                            <input type="number" class="form-control" id="totalStudents" placeholder="输入班级容量">
+                        </div>
+                        <div class="form-group">
+                            <label for="monitor">班长</label>
+                            <input type="text" class="form-control" id="monitor" placeholder="输入班长姓名">
+                        </div>
+                        <div class="form-group">
+                            <label for="contactPhone">联系电话</label>
+                            <input type="text" class="form-control" id="contactPhone" placeholder="输入联系电话">
+                        </div>
+                        <div class="form-group">
+                            <label for="createTime">创建时间</label>
+                            <input type="date" class="form-control" id="createTime">
+                        </div>
+                        <div class="form-group">
+                            <label for="status">状态</label>
+                            <select class="form-control" id="status">
+                                <option value="normal">正常</option>
+                                <option value="graduated">已毕业</option>
+                                <option value="closed">已关闭</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="addClass()">确定添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑班级模态框 -->
+    <div class="modal fade" id="editClassModal" tabindex="-1" role="dialog" aria-labelledby="editClassModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="editClassModalLabel">编辑班级</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="editClassForm">
+                        <div class="form-group">
+                            <label for="editClassId">班级编号</label>
+                            <input type="text" class="form-control" id="editClassId" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="editClassName">班级名称</label>
+                            <input type="text" class="form-control" id="editClassName">
+                        </div>
+                        <div class="form-group">
+                            <label for="editDepartment">所属学院</label>
+                            <select class="form-control" id="editDepartment">
+                                <option value="计算机学院">计算机学院</option>
+                                <option value="电子工程学院">电子工程学院</option>
+                                <option value="数学与统计学院">数学与统计学院</option>
+                                <option value="物理学院">物理学院</option>
+                                <option value="化学学院">化学学院</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editMajor">专业</label>
+                            <input type="text" class="form-control" id="editMajor">
+                        </div>
+                        <div class="form-group">
+                            <label for="editGrade">年级</label>
+                            <select class="form-control" id="editGrade">
+                                <option value="2023级">2023级</option>
+                                <option value="2022级">2022级</option>
+                                <option value="2021级">2021级</option>
+                                <option value="2020级">2020级</option>
+                                <option value="2019级">2019级</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editHeadTeacher">班主任</label>
+                            <input type="text" class="form-control" id="editHeadTeacher">
+                        </div>
+                        <div class="form-group">
+                            <label for="editTotalStudents">学生容量</label>
+                            <input type="number" class="form-control" id="editTotalStudents">
+                        </div>
+                        <div class="form-group">
+                            <label for="editMonitor">班长</label>
+                            <input type="text" class="form-control" id="editMonitor">
+                        </div>
+                        <div class="form-group">
+                            <label for="editContactPhone">联系电话</label>
+                            <input type="text" class="form-control" id="editContactPhone">
+                        </div>
+                        <div class="form-group">
+                            <label for="editCreateTime">创建时间</label>
+                            <input type="date" class="form-control" id="editCreateTime">
+                        </div>
+                        <div class="form-group">
+                            <label for="editStatus">状态</label>
+                            <select class="form-control" id="editStatus">
+                                <option value="normal">正常</option>
+                                <option value="graduated">已毕业</option>
+                                <option value="closed">已关闭</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="updateClass()">保存修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 班级详情模态框 -->
+    <div class="modal fade" id="classDetailModal" tabindex="-1" role="dialog" aria-labelledby="classDetailModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="classDetailModalLabel">班级详情</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-striped">
+                                <tbody>
+                                    <tr>
+                                        <td class="col-sm-3">班级编号</td>
+                                        <td id="detailClassId"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>班级名称</td>
+                                        <td id="detailClassName"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>所属学院</td>
+                                        <td id="detailDepartment"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>专业</td>
+                                        <td id="detailMajor"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>年级</td>
+                                        <td id="detailGrade"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>班主任</td>
+                                        <td id="detailHeadTeacher"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>学生人数</td>
+                                        <td id="detailStudents"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>班长</td>
+                                        <td id="detailMonitor"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>联系电话</td>
+                                        <td id="detailContactPhone"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>创建时间</td>
+                                        <td id="detailCreateTime"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>状态</td>
+                                        <td id="detailStatus"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">班级信息</div>
+                                <div class="panel-body">
+                                    <div class="row">
+                                        <div class="col-xs-6">
+                                            <div class="info-box">
+                                                <div class="info-box-content">
+                                                    <span class="info-box-text">班级总人数</span>
+                                                    <span class="info-box-number" id="totalStudentsCount"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-6">
+                                            <div class="info-box">
+                                                <div class="info-box-content">
+                                                    <span class="info-box-text">当前人数</span>
+                                                    <span class="info-box-number" id="currentStudentsCount"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-xs-12">
+                                            <button type="button" class="btn btn-info btn-block" onclick="showClassStudents()">
+                                                <span class="glyphicon glyphicon-user"></span> 查看学生列表
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="row" style="margin-top: 10px;">
+                                        <div class="col-xs-12">
+                                            <button type="button" class="btn btn-primary btn-block" onclick="showClassCourses()">
+                                                <span class="glyphicon glyphicon-book"></span> 查看课程列表
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 班级学生列表模态框 -->
+    <div class="modal fade" id="classStudentsModal" tabindex="-1" role="dialog" aria-labelledby="classStudentsModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="classStudentsModalLabel">班级学生列表</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>学号</th>
+                                    <th>姓名</th>
+                                    <th>性别</th>
+                                    <th>入学时间</th>
+                                    <th>状态</th>
+                                </tr>
+                            </thead>
+                            <tbody id="classStudentsTable">
+                                <!-- 学生列表将通过JavaScript动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 班级课程列表模态框 -->
+    <div class="modal fade" id="classCoursesModal" tabindex="-1" role="dialog" aria-labelledby="classCoursesModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="classCoursesModalLabel">班级课程列表</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>课程编号</th>
+                                    <th>课程名称</th>
+                                    <th>授课教师</th>
+                                    <th>学分</th>
+                                    <th>学期</th>
+                                </tr>
+                            </thead>
+                            <tbody id="classCoursesTable">
+                                <!-- 课程列表将通过JavaScript动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+    <!-- 引入Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+    <!-- 引入公共JS -->
+    <script src="../js/common.js"></script>
+    <script>
+        // 班级数据（模拟数据）
+        let classes = [
+            {
+                id: 'CS1901',
+                name: '计算机科学与技术1901班',
+                department: '计算机学院',
+                major: '计算机科学与技术',
+                grade: '2019级',
+                headTeacher: '张老师',
+                totalStudents: 45,
+                currentStudents: 42,
+                monitor: '李同学',
+                contactPhone: '13800138000',
+                createTime: '2019-09-01',
+                status: 'normal'
+            },
+            {
+                id: 'CS1902',
+                name: '计算机科学与技术1902班',
+                department: '计算机学院',
+                major: '计算机科学与技术',
+                grade: '2019级',
+                headTeacher: '王老师',
+                totalStudents: 45,
+                currentStudents: 44,
+                monitor: '张同学',
+                contactPhone: '13800138001',
+                createTime: '2019-09-01',
+                status: 'normal'
+            },
+            {
+                id: 'CS2001',
+                name: '计算机科学与技术2001班',
+                department: '计算机学院',
+                major: '计算机科学与技术',
+                grade: '2020级',
+                headTeacher: '李老师',
+                totalStudents: 50,
+                currentStudents: 48,
+                monitor: '王同学',
+                contactPhone: '13800138002',
+                createTime: '2020-09-01',
+                status: 'normal'
+            },
+            {
+                id: 'CS2002',
+                name: '计算机科学与技术2002班',
+                department: '计算机学院',
+                major: '计算机科学与技术',
+                grade: '2020级',
+                headTeacher: '赵老师',
+                totalStudents: 50,
+                currentStudents: 47,
+                monitor: '刘同学',
+                contactPhone: '13800138003',
+                createTime: '2020-09-01',
+                status: 'normal'
+            },
+            {
+                id: 'CS2101',
+                name: '计算机科学与技术2101班',
+                department: '计算机学院',
+                major: '计算机科学与技术',
+                grade: '2021级',
+                headTeacher: '张老师',
+                totalStudents: 55,
+                currentStudents: 53,
+                monitor: '陈同学',
+                contactPhone: '13800138004',
+                createTime: '2021-09-01',
+                status: 'normal'
+            },
+            {
+                id: 'CS2102',
+                name: '计算机科学与技术2102班',
+                department: '计算机学院',
+                major: '计算机科学与技术',
+                grade: '2021级',
+                headTeacher: '李老师',
+                totalStudents: 55,
+                currentStudents: 54,
+                monitor: '杨同学',
+                contactPhone: '13800138005',
+                createTime: '2021-09-01',
+                status: 'normal'
+            },
+            {
+                id: 'CS2201',
+                name: '计算机科学与技术2201班',
+                department: '计算机学院',
+                major: '计算机科学与技术',
+                grade: '2022级',
+                headTeacher: '王老师',
+                totalStudents: 60,
+                currentStudents: 58,
+                monitor: '黄同学',
+                contactPhone: '13800138006',
+                createTime: '2022-09-01',
+                status: 'normal'
+            },
+            {
+                id: 'CS2202',
+                name: '计算机科学与技术2202班',
+                department: '计算机学院',
+                major: '计算机科学与技术',
+                grade: '2022级',
+                headTeacher: '赵老师',
+                totalStudents: 60,
+                currentStudents: 59,
+                monitor: '周同学',
+                contactPhone: '13800138007',
+                createTime: '2022-09-01',
+                status: 'normal'
+            }
+        ];
+
+        // 当前页和每页显示数量
+        let currentPage = 1;
+        let pageSize = 10;
+        let filteredClasses = [...classes];
+
+        // 初始化页面
+        $(document).ready(function() {
+            initPage();
+        });
+
+        // 初始化页面
+        function initPage() {
+            renderClassTable();
+            renderPagination();
+        }
+
+        // 渲染班级表格
+        function renderClassTable() {
+            const tableBody = $('#classTableBody');
+            tableBody.empty();
+            
+            // 计算分页数据
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            const currentClasses = filteredClasses.slice(startIndex, endIndex);
+            
+            if (currentClasses.length === 0) {
+                tableBody.append(`
+                    <tr>
+                        <td colspan="11" class="text-center text-muted">暂无符合条件的班级数据</td>
+                    </tr>
+                `);
+                return;
+            }
+            
+            currentClasses.forEach(cls => {
+                let statusText = '正常';
+                let statusClass = 'label-success';
+                
+                if (cls.status === 'graduated') {
+                    statusText = '已毕业';
+                    statusClass = 'label-info';
+                } else if (cls.status === 'closed') {
+                    statusText = '已关闭';
+                    statusClass = 'label-danger';
+                }
+                
+                const row = `
+                    <tr class="class-row" data-id="${cls.id}">
+                        <td><input type="checkbox" class="class-checkbox" value="${cls.id}"></td>
+                        <td>${cls.id}</td>
+                        <td>${cls.name}</td>
+                        <td>${cls.department}</td>
+                        <td>${cls.major}</td>
+                        <td>${cls.grade}</td>
+                        <td>${cls.headTeacher}</td>
+                        <td>${cls.currentStudents}/${cls.totalStudents}</td>
+                        <td>${cls.monitor}</td>
+                        <td><span class="label ${statusClass}">${statusText}</span></td>
+                        <td>
+                            <div class="btn-group btn-group-xs">
+                                <button class="btn btn-info" onclick="showClassDetail('${cls.id}')">详情</button>
+                                <button class="btn btn-primary" onclick="showEditClassModal('${cls.id}')">编辑</button>
+                                <button class="btn btn-danger" onclick="deleteClass('${cls.id}')">删除</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tableBody.append(row);
+            });
+            
+            // 添加行点击事件
+            $('.class-row').click(function(e) {
+                if (!$(e.target).is('input[type="checkbox"]') && !$(e.target).closest('button').length) {
+                    const checkbox = $(this).find('input[type="checkbox"]');
+                    checkbox.prop('checked', !checkbox.prop('checked'));
+                }
+            });
+        }
+
+        // 渲染分页
+        function renderPagination() {
+            const pagination = $('#classPagination');
+            pagination.empty();
+            
+            const totalPages = Math.ceil(filteredClasses.length / pageSize);
+            
+            // 上一页按钮
+            const prevClass = currentPage === 1 ? 'disabled' : '';
+            pagination.append(`
+                <li class="${prevClass}">
+                    <a href="javascript:void(0)" onclick="goToPage(${currentPage - 1})">&laquo;</a>
+                </li>
+            `);
+            
+            // 页码按钮
+            for (let i = 1; i <= totalPages; i++) {
+                const activeClass = i === currentPage ? 'active' : '';
+                pagination.append(`
+                    <li class="${activeClass}">
+                        <a href="javascript:void(0)" onclick="goToPage(${i})"><strong>${i}</strong></a>
+                    </li>
+                `);
+            }
+            
+            // 下一页按钮
+            const nextClass = currentPage === totalPages ? 'disabled' : '';
+            pagination.append(`
+                <li class="${nextClass}">
+                    <a href="javascript:void(0)" onclick="goToPage(${currentPage + 1})">&raquo;</a>
+                </li>
+            `);
+        }
+
+        // 跳转到指定页
+        function goToPage(page) {
+            currentPage = page;
+            renderClassTable();
+            renderPagination();
+            // 滚动到顶部
+            $(window).scrollTop(0);
+        }
+
+        // 搜索班级
+        function searchClasses() {
+            const keyword = $('#searchClassInput').val().toLowerCase();
+            if (!keyword) {
+                filterClasses();
+                return;
+            }
+            
+            filteredClasses = classes.filter(cls => 
+                cls.id.toLowerCase().includes(keyword) ||
+                cls.name.toLowerCase().includes(keyword) ||
+                cls.department.toLowerCase().includes(keyword) ||
+                cls.major.toLowerCase().includes(keyword) ||
+                cls.headTeacher.toLowerCase().includes(keyword)
+            );
+            
+            currentPage = 1;
+            renderClassTable();
+            renderPagination();
+        }
+
+        // 筛选班级
+        function filterClasses() {
+            const department = $('#departmentFilter').val();
+            const grade = $('#gradeFilter').val();
+            const status = $('#statusFilter').val();
+            
+            filteredClasses = classes.filter(cls => {
+                let match = true;
+                
+                if (department !== 'all' && cls.department !== department) {
+                    match = false;
+                }
+                
+                if (match && grade !== 'all' && cls.grade !== grade) {
+                    match = false;
+                }
+                
+                if (match && status !== 'all' && cls.status !== status) {
+                    match = false;
+                }
+                
+                return match;
+            });
+            
+            currentPage = 1;
+            renderClassTable();
+            renderPagination();
+        }
+
+        // 显示添加班级模态框
+        function showAddClassModal() {
+            // 重置表单
+            $('#addClassForm')[0].reset();
+            // 显示模态框
+            $('#addClassModal').modal('show');
+        }
+
+        // 添加班级
+        function addClass() {
+            // 收集表单数据
+            const classId = $('#classId').val();
+            const className = $('#className').val();
+            const department = $('#department').val();
+            const major = $('#major').val();
+            const grade = $('#grade').val();
+            const headTeacher = $('#headTeacher').val();
+            const totalStudents = parseInt($('#totalStudents').val());
+            const monitor = $('#monitor').val();
+            const contactPhone = $('#contactPhone').val();
+            const createTime = $('#createTime').val();
+            const status = $('#status').val();
+            
+            // 简单验证
+            if (!classId || !className || !department || !major || !grade) {
+                alert('请填写必要的班级信息！');
+                return;
+            }
+            
+            // 检查班级编号是否已存在
+            if (classes.some(cls => cls.id === classId)) {
+                alert('班级编号已存在！');
+                return;
+            }
+            
+            // 创建新班级对象
+            const newClass = {
+                id: classId,
+                name: className,
+                department: department,
+                major: major,
+                grade: grade,
+                headTeacher: headTeacher,
+                totalStudents: totalStudents || 0,
+                currentStudents: 0,
+                monitor: monitor,
+                contactPhone: contactPhone,
+                createTime: createTime || new Date().toISOString().split('T')[0],
+                status: status || 'normal'
+            };
+            
+            // 添加到班级列表
+            classes.push(newClass);
+            
+            // 刷新列表
+            filterClasses();
+            
+            // 关闭模态框
+            $('#addClassModal').modal('hide');
+            
+            // 提示成功
+            alert('班级添加成功！');
+        }
+
+        // 显示编辑班级模态框
+        function showEditClassModal(classId) {
+            const cls = classes.find(c => c.id === classId);
+            if (!cls) return;
+            
+            // 填充表单数据
+            $('#editClassId').val(cls.id);
+            $('#editClassName').val(cls.name);
+            $('#editDepartment').val(cls.department);
+            $('#editMajor').val(cls.major);
+            $('#editGrade').val(cls.grade);
+            $('#editHeadTeacher').val(cls.headTeacher);
+            $('#editTotalStudents').val(cls.totalStudents);
+            $('#editMonitor').val(cls.monitor);
+            $('#editContactPhone').val(cls.contactPhone);
+            $('#editCreateTime').val(cls.createTime);
+            $('#editStatus').val(cls.status);
+            
+            // 显示模态框
+            $('#editClassModal').modal('show');
+        }
+
+        // 更新班级
+        function updateClass() {
+            const classId = $('#editClassId').val();
+            const cls = classes.find(c => c.id === classId);
+            if (!cls) return;
+            
+            // 更新班级信息
+            cls.name = $('#editClassName').val();
+            cls.department = $('#editDepartment').val();
+            cls.major = $('#editMajor').val();
+            cls.grade = $('#editGrade').val();
+            cls.headTeacher = $('#editHeadTeacher').val();
+            cls.totalStudents = parseInt($('#editTotalStudents').val());
+            cls.monitor = $('#editMonitor').val();
+            cls.contactPhone = $('#editContactPhone').val();
+            cls.createTime = $('#editCreateTime').val();
+            cls.status = $('#editStatus').val();
+            
+            // 刷新列表
+            filterClasses();
+            
+            // 关闭模态框
+            $('#editClassModal').modal('hide');
+            
+            // 提示成功
+            alert('班级信息更新成功！');
+        }
+
+        // 删除班级
+        function deleteClass(classId) {
+            if (confirm('确定要删除这个班级吗？删除后将无法恢复！')) {
+                const index = classes.findIndex(c => c.id === classId);
+                if (index !== -1) {
+                    classes.splice(index, 1);
+                    filterClasses();
+                    alert('班级删除成功！');
+                }
+            }
+        }
+
+        // 显示班级详情
+        function showClassDetail(classId) {
+            const cls = classes.find(c => c.id === classId);
+            if (!cls) return;
+            
+            // 填充详情信息
+            $('#detailClassId').text(cls.id);
+            $('#detailClassName').text(cls.name);
+            $('#detailDepartment').text(cls.department);
+            $('#detailMajor').text(cls.major);
+            $('#detailGrade').text(cls.grade);
+            $('#detailHeadTeacher').text(cls.headTeacher);
+            $('#detailStudents').text(`${cls.currentStudents}/${cls.totalStudents}人`);
+            $('#detailMonitor').text(cls.monitor);
+            $('#detailContactPhone').text(cls.contactPhone);
+            $('#detailCreateTime').text(cls.createTime);
+            
+            let statusText = '正常';
+            if (cls.status === 'graduated') {
+                statusText = '已毕业';
+            } else if (cls.status === 'closed') {
+                statusText = '已关闭';
+            }
+            $('#detailStatus').text(statusText);
+            
+            // 保存当前选中的班级ID，供查看学生列表使用
+            $('#classStudentsModal').data('class-id', classId);
+            $('#classCoursesModal').data('class-id', classId);
+            
+            // 显示模态框
+            $('#classDetailModal').modal('show');
+        }
+
+        // 查看班级学生列表
+        function showClassStudents() {
+            const classId = $('#classStudentsModal').data('class-id');
+            const cls = classes.find(c => c.id === classId);
+            if (!cls) return;
+            
+            // 设置模态框标题
+            $('#classStudentsModalLabel').text(`${cls.name} - 学生列表`);
+            
+            // 模拟班级学生数据
+            const students = generateMockStudents(classId, cls.currentStudents);
+            
+            // 渲染学生列表
+            const table = $('#classStudentsTable');
+            table.empty();
+            
+            students.forEach(student => {
+                const row = `
+                    <tr>
+                        <td>${student.id}</td>
+                        <td>${student.name}</td>
+                        <td>${student.gender}</td>
+                        <td>${student.admissionTime}</td>
+                        <td>${student.status}</td>
+                    </tr>
+                `;
+                table.append(row);
+            });
+            
+            // 显示模态框
+            $('#classDetailModal').modal('hide');
+            $('#classStudentsModal').modal('show');
+        }
+
+        // 查看班级课程列表
+        function showClassCourses() {
+            const classId = $('#classCoursesModal').data('class-id');
+            const cls = classes.find(c => c.id === classId);
+            if (!cls) return;
+            
+            // 设置模态框标题
+            $('#classCoursesModalLabel').text(`${cls.name} - 课程列表`);
+            
+            // 模拟班级课程数据
+            const courses = generateMockCourses();
+            
+            // 渲染课程列表
+            const table = $('#classCoursesTable');
+            table.empty();
+            
+            courses.forEach(course => {
+                const row = `
+                    <tr>
+                        <td>${course.id}</td>
+                        <td>${course.name}</td>
+                        <td>${course.teacher}</td>
+                        <td>${course.credits}学分</td>
+                        <td>${course.semester}</td>
+                    </tr>
+                `;
+                table.append(row);
+            });
+            
+            // 显示模态框
+            $('#classDetailModal').modal('hide');
+            $('#classCoursesModal').modal('show');
+        }
+
+        // 批量删除班级
+        function batchDeleteClasses() {
+            const selectedIds = [];
+            $('.class-checkbox:checked').each(function() {
+                selectedIds.push($(this).val());
+            });
+            
+            if (selectedIds.length === 0) {
+                alert('请先选择要删除的班级！');
+                return;
+            }
+            
+            if (confirm(`确定要删除选中的${selectedIds.length}个班级吗？删除后将无法恢复！`)) {
+                classes = classes.filter(cls => !selectedIds.includes(cls.id));
+                filterClasses();
+                alert(`成功删除${selectedIds.length}个班级！`);
+            }
+        }
+
+        // 导出班级数据
+        function exportClassData() {
+            alert('班级数据导出功能正在开发中...');
+        }
+
+        // 导入班级数据
+        function importClassData(file) {
+            if (file) {
+                alert(`已选择文件：${file.name}\n导入功能正在开发中...`);
+                // 重置文件输入
+                $('#importClassFile').val('');
+            }
+        }
+
+        // 全选/取消全选
+        function toggleSelectAll() {
+            const isChecked = $('#selectAll').prop('checked');
+            $('.class-checkbox').prop('checked', isChecked);
+        }
+
+        // 生成模拟学生数据
+        function generateMockStudents(classId, count) {
+            const students = [];
+            for (let i = 1; i <= count; i++) {
+                students.push({
+                    id: `${classId.slice(2)}${String(i).padStart(3, '0')}`,
+                    name: `学生${i}`,
+                    gender: i % 2 === 0 ? '男' : '女',
+                    admissionTime: classId.slice(2, 4) === '19' ? '2019-09-01' : 
+                                  classId.slice(2, 4) === '20' ? '2020-09-01' :
+                                  classId.slice(2, 4) === '21' ? '2021-09-01' : '2022-09-01',
+                    status: '在读'
+                });
+            }
+            return students;
+        }
+
+        // 生成模拟课程数据
+        function generateMockCourses() {
+            return [
+                { id: 'CS101', name: '计算机科学基础', teacher: '张老师', credits: 4, semester: '2024春季' },
+                { id: 'CS102', name: '程序设计基础', teacher: '李老师', credits: 3, semester: '2024春季' },
+                { id: 'CS301', name: '数据结构', teacher: '王老师', credits: 4, semester: '2024春季' },
+                { id: 'CS302', name: '操作系统原理', teacher: '赵老师', credits: 4, semester: '2024春季' },
+                { id: 'MA201', name: '高等数学', teacher: '刘老师', credits: 5, semester: '2024春季' }
+            ];
+        }
+
+        // 显示用户信息
+        function showUserInfo() {
+            alert('当前用户：系统管理员');
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                alert('已退出登录！');
+                // 实际应用中应该跳转到登录页面
+                // window.location.href = '../login.html';
+            }
+        }
+    </script>
+</body>
+</html>

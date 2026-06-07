@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的课表 - 学生选课系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../css/common.css">
+    <script src="../../js/common.js"></script>
+    <style>
+        /* 课表样式 */
+        .schedule-container {
+            background: var(--glass-bg);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            backdrop-filter: var(--glass-backdrop);
+            box-shadow: var(--shadow);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            overflow-x: auto;
+        }
+        
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+        
+        .schedule-title {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-primary);
+        }
+        
+        .schedule-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .semester-selector {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            background: var(--white);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .semester-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: var(--font-size-md);
+            padding: 0.25rem 0.5rem;
+            transition: color var(--transition-normal);
+        }
+        
+        .semester-button.active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .semester-navigation {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .navigation-button {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: background-color var(--transition-normal), color var(--transition-normal);
+        }
+        
+        .navigation-button:hover {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .current-week {
+            min-width: 100px;
+            text-align: center;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .today-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 0.25rem 0.75rem;
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+            transition: background-color var(--transition-normal);
+        }
+        
+        .today-button:hover {
+            background-color: var(--primary-color-dark);
+        }
+        
+        /* 课程表格样式 */
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        
+        .schedule-table th,
+        .schedule-table td {
+            border: 1px solid var(--border-color);
+            text-align: center;
+            vertical-align: top;
+            min-width: 120px;
+            height: 80px;
+        }
+        
+        .schedule-table th {
+            background-color: var(--primary-color-light);
+            color: var(--primary-color);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        
+        .schedule-table .time-column {
+            width: 80px;
+            background-color: var(--gray-100);
+            position: sticky;
+            left: 0;
+            z-index: 1;
+        }
+        
+        .schedule-table .today-column {
+            background-color: rgba(240, 247, 255, 0.8);
+        }
+        
+        .schedule-table .time-slot {
+            height: 80px;
+            position: relative;
+            padding: 2px;
+        }
+        
+        .schedule-table .time-slot-today {
+            background-color: rgba(240, 247, 255, 0.4);
+        }
+        
+        /* 课程块样式 */
+        .course-block {
+            position: absolute;
+            left: 2px;
+            right: 2px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: var(--radius-sm);
+            padding: 4px;
+            cursor: pointer;
+            font-size: var(--font-size-xs);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow: hidden;
+            transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .course-block:hover {
+            transform: scale(1.02);
+            box-shadow: var(--shadow);
+            z-index: 10;
+        }
+        
+        .course-block-title {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+        
+        .course-block-location {
+            font-size: calc(var(--font-size-xs) - 1px);
+            opacity: 0.9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* 课程类型颜色 */
+        .course-block.required {
+            background-color: var(--primary-color);
+        }
+        
+        .course-block.elective {
+            background-color: var(--success-color);
+        }
+        
+        .course-block.general {
+            background-color: var(--warning-color);
+        }
+        
+        .course-block.professional {
+            background-color: var(--info-color);
+        }
+        
+        /* 空课提示 */
+        .empty-slot {
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        
+        /* 图例说明 */
+        .schedule-legend {
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+            margin-top: var(--spacing-lg);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-size: var(--font-size-sm);
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+        
+        /* 移动端响应式 */
+        @media (max-width: 768px) {
+            .schedule-container {
+                padding: var(--spacing-sm);
+            }
+            
+            .schedule-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .schedule-controls {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .schedule-table {
+                font-size: var(--font-size-xs);
+            }
+            
+            .schedule-table th,
+            .schedule-table td {
+                min-width: 80px;
+                height: 60px;
+            }
+            
+            .time-column {
+                min-width: 60px !important;
+            }
+            
+            .course-block {
+                font-size: calc(var(--font-size-xs) - 2px);
+            }
+            
+            .schedule-legend {
+                justify-content: center;
+            }
+        }
+        
+        /* 打印样式 */
+        @media print {
+            .sidebar,
+            .top-navbar,
+            .schedule-controls {
+                display: none;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 0;
+            }
+            
+            .schedule-container {
+                box-shadow: none;
+                border: 1px solid var(--border-color);
+            }
+            
+            .course-block {
+                break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid rgba(0, 0, 0, 0.3);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="sidebar-brand">
+                    <div class="sidebar-brand-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <span class="sidebar-brand-text">选课系统学生端</span>
+                </a>
+                <button class="sidebar-toggle" aria-label="收起侧边栏">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <div class="nav-item">
+                        <a href="index.html" class="nav-link">
+                            <i class="nav-icon fas fa-home"></i>
+                            <span class="nav-text">首页</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="my-courses.html" class="nav-link">
+                            <i class="nav-icon fas fa-book"></i>
+                            <span class="nav-text">我的课程</span>
+                        </a>
+                    <div class="nav-item">
+                        <a href="course-selection.html" class="nav-link">
+                            <i class="nav-icon fas fa-search"></i>
+                            <span class="nav-text">课程选择</span>
+                        </a>
+                    <div class="nav-item">
+                        <a href="schedule.html" class="nav-link active">
+                            <i class="nav-icon fas fa-calendar-alt"></i>
+                            <span class="nav-text">我的课表</span>
+                        </a>
+                    <div class="nav-item">
+                        <a href="grades.html" class="nav-link">
+                            <i class="nav-icon fas fa-chart-line"></i>
+                            <span class="nav-text">成绩查询</span>
+                        </a>
+                    <div class="nav-item">
+                        <a href="evaluations.html" class="nav-link">
+                            <i class="nav-icon fas fa-star"></i>
+                            <span class="nav-text">课程评价</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="nav-group">
+                    <div class="nav-item">
+                        <a href="profile.html" class="nav-link">
+                            <i class="nav-icon fas fa-user"></i>
+                            <span class="nav-text">个人信息</span>
+                        </a>
+                    <div class="nav-item">
+                        <a href="messages.html" class="nav-link">
+                            <i class="nav-icon fas fa-envelope"></i>
+                            <span class="nav-text">消息通知</span>
+                            <span class="nav-badge">5</span>
+                        </a>
+                    <div class="nav-item">
+                        <a href="settings.html" class="nav-link">
+                            <i class="nav-icon fas fa-cog"></i>
+                            <span class="nav-text">设置</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- 主内容区 --<main class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="top-navbar">
+                <div class="nav-left">
+                    <button class="mobile-sidebar-toggle" aria-label="切换侧边栏">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">我的课表</h1>
+                </div>
+                
+                <div class="nav-right">
+                    <div class="breadcrumb">
+                        <a href="index.html">首页</a>
+                        <span class="breadcrumb-separator">/</span>
+                        <span class="breadcrumb-current">我的课表</span>
+                    </div>
+                    
+                    <button class="nav-icon-btn" aria-label="通知">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">5</span>
+                    </button>
+                    
+                    <div class="dropdown">
+                        <button class="user-profile dropdown-toggle">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="user-info">
+                                <span class="user-name">张三</span>
+                                <span class="user-role">计算机科学与技术</span>
+                            </div>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a href="profile.html" class="dropdown-item">
+                                <i class="fas fa-user"></i> 个人信息
+                            </a>
+                            <a href="settings.html" class="dropdown-item">
+                                <i class="fas fa-cog"></i> 设置
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="../login.html" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i> 退出登录
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 页面内容 --<div class="content-wrapper">
+                <div class="schedule-container">
+                    <div class="schedule-header">
+                        <h3 class="schedule-title">2024年春季学期课表>
+                        <div class="schedule-controls">
+                            <div class="semester-selector">
+                                <button class="semester-button active">春季学期>
+                                <button class="semester-button">秋季学期>
+                            </div>
+                            
+                            <div class="semester-navigation">
+                                <button class="navigation-button" aria-label="上一周">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <div class="current-week">第7周 (3.18-3.24)>
+                                <button class="navigation-button" aria-label="下一周">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            
+                            <button class="today-button">
+                                <i class="fas fa-calendar-day"></i> 今天
+                            </button>
+                            
+                            <button class="btn btn-outline-secondary">
+                                <i class="fas fa-print"></i> 打印
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <table class="schedule-table">
+                        <thead>
+                            <tr>
+                                <th class="time-column">时间>
+                                <th>周一>
+                                <th class="today-column">周二>
+                                <th>周三>
+                                <th>周四>
+                                <th>周五>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 第一大节 8:00-9:40 -->
+                            <tr>
+                                <td class="time-column">8:00\n9:40>
+                                <td class="time-slot">
+                                    <div class="course-block required" style="top: 0; height: 100%;">
+                                        <div class="course-block-title">数据结构与算法>
+                                        <div class="course-block-location">A301
+                                        </div>
+                                    </div>
+                                <td class="time-slot time-slot-today">
+                                    <div class="empty-slot">无课
+                                </td>
+                                <td class="time-slot">
+                                    <div class="course-block required" style="top: 0; height: 100%;">
+                                        <div class="course-block-title">操作系统原理>
+                                        <div class="course-block-location">B205
+                                        </div>
+                                    </div>
+                                <td class="time-slot">
+                                    <div class="course-block elective" style="top: 0; height: 100%;">
+                                        <div class="course-block-title">人工智能导论>
+                                        <div class="course-block-location">C101
+                                        </div>
+                                    </div>
+                                <td class="time-slot">
+                                    <div class="empty-slot">无课
+                                </td>
+                            </tr>
+                            <!-- 第二大节 10:00-11:40 -->
+                            <tr>
+                                <td class="time-column">10:00\n11:40>
+                                <td class="time-slot">
+                                    <div class="empty-slot">无课
+                                </td>
+                                <td class="time-slot time-slot-today">
+                                    <div class="course-block required" style="top: 0; height: 100%;">
+                                        <div class="course-block-title">计算机网络>
+                                        <div class="course-block-location">A402
+                                        </div>
+                                    </div>
+                                <td class="time-slot">
+                                    <div class="course-block professional" style="top: 0; height: 100%;">
+                                        <div class="course-block-title">数据库系统原理>
+                                        <div class="course-block-location">B301
+                                        </div>
+                                    </div>
+                                <td class="time-slot">
+                                    <div class="empty-slot">无课
+                                </td>
+                                <td class="time-slot">
+                                    <div class="course-block elective" style="top: 0; height: 100%;">
+                                        <div class="course-block-title">区块链技术及应用>
+                                        <div class="course-block-location">C205
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- 第三大节 14:00-15:40 -->
+                            <tr>
+                                <td class="time-column">14:00\n15:40>
+                                <td class="time-slot">
+                                    <div class="course-block general" style="top: 0; height: 100%;">
+                                        <div class="course-block-title">大学物理B>
+                                        <div class="course-block-location">物理楼201
+                                        </div>
+                                    </div>
+                                <td class="time-slot time-slot-today">
+                                    <div class="course-block required" style="top: 0; height: 100%;">
+                                        <div class="course-block-title">软件工程导论>
+                                        <div class="course-block-location">A203
+                                        </div>
+                                    </div>
+                                <td class="time-slot">
+                                    <div class="empty-slot">无课
+                                </td>
+                                <td class="time-slot">
+                                    <div class="course-block professional" style="top: 0; height: 100%;">
+                                        <div class="course-block-title">云计算技术与应用>
+                                        <div class="course-block-location">A302
+                                        </div>
+                                    </div>
+                                <td class="time-slot">
+                                    <div class="empty-slot">无课
+                                </td>
+                            </tr>
+                            <!-- 第四大节 16:00-17:40 -->
+                            <tr>
+                                <td class="time-column">16:00\n17:40>
+                                <td class="time-slot">
+                                    <div class="empty-slot">无课
+                                </td>
+                                <td class="time-slot time-slot-today">
+                                    <div class="empty-slot">无课
+                                </td>
+                                <td class="time-slot">
+                                    <div class="course-block required" style="top: 0; height: 100%;">
+                                        <div class="course-block-title">面向对象程序设计
+                                        </div>
+                                        <div class="course-block-location">机房C301
+                                        </div>
+                                    </div>
+                                <td class="time-slot">
+                                    <div class="empty-slot">无课
+                                </td>
+                                <td class="time-slot">
+                                    <div class="course-block general" style="top: 0; height: 100%;">
+                                        <div class="course-block-title">马克思主义原理
+                                        </div>
+                                        <div class="course-block-location">思政楼103
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- 第五大节 19:00-20:40 -->
+                            <tr>
+                                <td class="time-column">19:00\n20:40>
+                                <td class="time-slot">
+                                    <div class="course-block elective" style="top: 0; height: 100%;">
+                                        <div class="course-block-title">移动应用开发
+                                        </div>
+                                        <div class="course-block-location">机房B402
+                                        </div>
+                                    </div>
+                                <td class="time-slot time-slot-today">
+                                    <div class="empty-slot">无课
+                                </td>
+                                <td class="time-slot">
+                                    <div class="empty-slot">无课
+                                </td>
+                                <td class="time-slot">
+                                    <div class="course-block professional" style="top: 0; height: 100%;">
+                                        <div class="course-block-title">大数据分析与应用
+                                        </div>
+                                        <div class="course-block-location">C201
+                                        </div>
+                                    </div>
+                                <td class="time-slot">
+                                    <div class="empty-slot">无课
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="schedule-legend">
+                        <div class="legend-item">
+                            <div class="legend-color required"></div>
+                            <span>必修课>
+                        <div class="legend-item">
+                            <div class="legend-color elective"></div>
+                            <span>选修课>
+                        <div class="legend-item">
+                            <div class="legend-color general"></div>
+                            <span>通识课>
+                        <div class="legend-item">
+                            <div class="legend-color professional"></div>
+                            <span>专业课>
+                        <div class="legend-item">
+                            <i class="fas fa-circle text-xs text-primary"></i>
+                            <span>当前日期 (周二)>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        // 课表交互功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 学期切换
+            const semesterButtons = document.querySelectorAll('.semester-button');
+            semesterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    semesterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // 周导航
+            const prevWeekBtn = document.querySelector('.navigation-button:first-of-type');
+            const nextWeekBtn = document.querySelector('.navigation-button:last-of-type');
+            const currentWeekEl = document.querySelector('.current-week');
+            
+            prevWeekBtn.addEventListener('click', function() {
+                // 在实际应用中，这里应该加载上一周的数据
+                alert('加载上一周课表');
+            });
+            
+            nextWeekBtn.addEventListener('click', function() {
+                // 在实际应用中，这里应该加载下一周的数据
+                alert('加载下一周课表');
+            });
+            
+            // 今天按钮
+            const todayButton = document.querySelector('.today-button');
+            todayButton.addEventListener('click', function() {
+                // 在实际应用中，这里应该跳转到本周
+                alert('跳转到本周');
+            });
+            
+            // 打印按钮
+            const printButton = document.querySelector('.btn-outline-secondary');
+            printButton.addEventListener('click', function() {
+                window.print();
+            });
+            
+            // 课程块点击事件
+            const courseBlocks = document.querySelectorAll('.course-block');
+            courseBlocks.forEach(block => {
+                block.addEventListener('click', function() {
+                    const courseName = this.querySelector('.course-block-title').textContent;
+                    alert(`课程详情:\n${courseName}`);
+                });
+            });
+            
+            // 图例颜色初始化
+            const legendColors = document.querySelectorAll('.legend-color');
+            legendColors.forEach(color => {
+                const classList = color.classList;
+                if (classList.contains('required')) color.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
+                if (classList.contains('elective')) color.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--success-color');
+                if (classList.contains('general')) color.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--warning-color');
+                if (classList.contains('professional')) color.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--info-color');
+            });
+        });
+    </script>
+</body>
+</html>

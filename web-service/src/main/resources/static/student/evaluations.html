@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课程评价 - 学生选课系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../css/common.css">
+    <script src="../../js/common.js"></script>
+    <style>
+        /* 评价统计卡片样式 */
+        .evaluation-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .stat-card {
+            background: var(--glass-bg);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            backdrop-filter: var(--glass-backdrop);
+            box-shadow: var(--shadow);
+            padding: var(--spacing-lg);
+            text-align: center;
+            transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .stat-icon {
+            font-size: 1.8rem;
+            margin-bottom: var(--spacing-sm);
+            color: var(--primary-color);
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .stat-label {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+        }
+        
+        /* 筛选栏样式 */
+        .filter-bar {
+            background: var(--glass-bg);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            backdrop-filter: var(--glass-backdrop);
+            box-shadow: var(--shadow);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+        
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            min-width: 150px;
+        }
+        
+        .filter-label {
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .filter-select {
+            padding: var(--spacing-sm);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background-color: var(--white);
+            font-size: var(--font-size-sm);
+            transition: border-color var(--transition-normal);
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-left: auto;
+        }
+        
+        /* 评价列表样式 */
+        .evaluations-container {
+            background: var(--glass-bg);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            backdrop-filter: var(--glass-backdrop);
+            box-shadow: var(--shadow);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .evaluations-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+        
+        .evaluations-title {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            background-color: var(--gray-100);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-xs);
+            gap: var(--spacing-xs);
+        }
+        
+        .tab-button {
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border: none;
+            border-radius: var(--radius-md);
+            background-color: transparent;
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            transition: all var(--transition-normal);
+        }
+        
+        .tab-button.active {
+            background-color: var(--white);
+            box-shadow: var(--shadow-sm);
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        
+        /* 评价卡片样式 */
+        .evaluation-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: var(--spacing-lg);
+        }
+        
+        .evaluation-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: var(--spacing-lg);
+            transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+        }
+        
+        .evaluation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+        }
+        
+        .course-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .course-info h4 {
+            font-size: var(--font-size-md);
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 var(--spacing-xs) 0;
+        }
+        
+        .course-info p {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        
+        .course-status {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: 50px;
+            font-size: var(--font-size-xs);
+            font-weight: 600;
+        }
+        
+        .course-status.not-evaluated {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .course-status.evaluated {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--success-color);
+        }
+        
+        .evaluation-rating {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .rating-stars {
+            display: flex;
+            gap: var(--spacing-xs);
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+        
+        .evaluation-date {
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
+            margin-top: var(--spacing-xs);
+        }
+        
+        .evaluation-content {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .evaluation-content p {
+            font-size: var(--font-size-sm);
+            color: var(--text-primary);
+            line-height: 1.5;
+            margin: 0;
+        }
+        
+        .evaluation-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+        
+        /* 评价表单样式 */
+        .evaluation-form-container {
+            background: var(--glass-bg);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            backdrop-filter: var(--glass-backdrop);
+            box-shadow: var(--shadow);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            display: none;
+        }
+        
+        .evaluation-form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .evaluation-form-title {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        .close-form-button {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: var(--spacing-xs);
+            transition: color var(--transition-normal);
+        }
+        
+        .close-form-button:hover {
+            color: var(--text-primary);
+        }
+        
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .form-label {
+            display: block;
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .form-input, 
+        .form-textarea {
+            width: 100%;
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background-color: var(--white);
+            font-size: var(--font-size-sm);
+            transition: border-color var(--transition-normal);
+        }
+        
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .form-textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        
+        .rating-container {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .rating-label {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+        }
+        
+        .rating-stars-input {
+            display: flex;
+            gap: var(--spacing-xs);
+            color: var(--gray-300);
+            font-size: 2rem;
+            cursor: pointer;
+        }
+        
+        .rating-stars-input .star {
+            transition: color var(--transition-normal);
+        }
+        
+        .rating-stars-input .star.active {
+            color: var(--primary-color);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        
+        .checkbox-group label {
+            font-size: var(--font-size-sm);
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: var(--spacing-md);
+            justify-content: flex-end;
+        }
+        
+        /* 分页样式 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: var(--spacing-lg);
+            gap: var(--spacing-xs);
+        }
+        
+        .pagination-button {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background-color: var(--white);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            transition: all var(--transition-normal);
+        }
+        
+        .pagination-button:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .pagination-button.active {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+        
+        .pagination-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* 移动端响应式 */
+        @media (max-width: 768px) {
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-item {
+                width: 100%;
+            }
+            
+            .filter-actions {
+                margin-left: 0;
+                justify-content: center;
+            }
+            
+            .evaluations-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .tab-buttons {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .evaluation-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .rating-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--spacing-sm);
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="sidebar-brand">
+                    <div class="sidebar-brand-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <span class="sidebar-brand-text">选课系统学生端</span>
+                </a>
+                <button class="sidebar-toggle" aria-label="收起侧边栏">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <div class="nav-item">
+                        <a href="index.html" class="nav-link">
+                            <i class="nav-icon fas fa-home"></i>
+                            <span class="nav-text">首页</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="my-courses.html" class="nav-link">
+                            <i class="nav-icon fas fa-book"></i>
+                            <span class="nav-text">我的课程</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="course-selection.html" class="nav-link">
+                            <i class="nav-icon fas fa-search"></i>
+                            <span class="nav-text">课程选择</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="schedule.html" class="nav-link">
+                            <i class="nav-icon fas fa-calendar-alt"></i>
+                            <span class="nav-text">我的课表</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="grades.html" class="nav-link">
+                            <i class="nav-icon fas fa-chart-line"></i>
+                            <span class="nav-text">成绩查询</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="evaluations.html" class="nav-link active">
+                            <i class="nav-icon fas fa-star"></i>
+                            <span class="nav-text">课程评价</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="nav-group">
+                    <div class="nav-item">
+                        <a href="profile.html" class="nav-link">
+                            <i class="nav-icon fas fa-user"></i>
+                            <span class="nav-text">个人信息</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="messages.html" class="nav-link">
+                            <i class="nav-icon fas fa-envelope"></i>
+                            <span class="nav-text">消息通知</span>
+                            <span class="nav-badge">5</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="settings.html" class="nav-link">
+                            <i class="nav-icon fas fa-cog"></i>
+                            <span class="nav-text">设置</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="top-navbar">
+                <div class="nav-left">
+                    <button class="mobile-sidebar-toggle" aria-label="切换侧边栏">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">课程评价</h1>
+                </div>
+                
+                <div class="nav-right">
+                    <div class="breadcrumb">
+                        <a href="index.html">首页</a>
+                        <span class="breadcrumb-separator">/</span>
+                        <span class="breadcrumb-current">课程评价</span>
+                    </div>
+                    
+                    <button class="nav-icon-btn" aria-label="通知">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">5</span>
+                    </button>
+                    
+                    <div class="dropdown">
+                        <button class="user-profile dropdown-toggle">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="user-info">
+                                <span class="user-name">张三</span>
+                                <span class="user-role">计算机科学与技术</span>
+                            </div>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a href="profile.html" class="dropdown-item">
+                                <i class="fas fa-user"></i> 个人信息
+                            </a>
+                            <a href="settings.html" class="dropdown-item">
+                                <i class="fas fa-cog"></i> 设置
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="../login.html" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i> 退出登录
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 页面内容 -->
+            <div class="content-wrapper">
+                <!-- 评价统计卡片 -->
+                <div class="evaluation-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="stat-value">12/15</div>
+                        <div class="stat-label">已完成评价</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <div class="stat-value">4.5</div>
+                        <div class="stat-label">平均评分</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-value">7天</div>
+                        <div class="stat-label">评价截止剩余</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-comment-alt"></i>
+                        </div>
+                        <div class="stat-value">3</div>
+                        <div class="stat-label">待评价课程</div>
+                    </div>
+                </div>
+                
+                <!-- 筛选栏 -->
+                <div class="filter-bar">
+                    <div class="filter-item">
+                        <div class="filter-label">学期选择</div>
+                        <select class="filter-select" id="semester-filter">
+                            <option value="2024-spring">2024年春季学期</option>
+                            <option value="2023-autumn">2023年秋季学期</option>
+                            <option value="2023-spring">2023年春季学期</option>
+                            <option value="all">全部学期</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <div class="filter-label">评价状态</div>
+                        <select class="filter-select" id="status-filter">
+                            <option value="all">全部状态</option>
+                            <option value="evaluated">已评价</option>
+                            <option value="not-evaluated">未评价</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <div class="filter-label">课程类型</div>
+                        <select class="filter-select" id="course-type-filter">
+                            <option value="all">全部类型</option>
+                            <option value="required">必修课</option>
+                            <option value="elective">选修课</option>
+                            <option value="general">通识课</option>
+                            <option value="professional">专业课</option>
+                        </select>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="btn btn-primary" id="search-button">查询</button>
+                        <button class="btn btn-outline-secondary" id="reset-button">重置</button>
+                    </div>
+                </div>
+                
+                <!-- 评价列表 -->
+                <div class="evaluations-container">
+                    <div class="evaluations-header">
+                        <h3 class="evaluations-title">课程评价列表</h3>
+                        <div class="tab-buttons">
+                            <button class="tab-button active" data-tab="all">全部</button>
+                            <button class="tab-button" data-tab="not-evaluated">待评价</button>
+                            <button class="tab-button" data-tab="evaluated">已评价</button>
+                        </div>
+                    </div>
+                    
+                    <div class="evaluation-cards">
+                        <!-- 未评价课程卡片 -->
+                        <div class="evaluation-card" data-status="not-evaluated">
+                            <div class="course-header">
+                                <div class="course-info">
+                                    <h4>数据结构与算法</h4>
+                                    <p>CS101 | 王教授 | 必修课</p>
+                                </div>
+                                <div class="course-status not-evaluated">未评价</div>
+                            </div>
+                            <div class="evaluation-actions">
+                                <button class="btn btn-sm btn-primary start-evaluation" data-course-id="CS101">开始评价</button>
+                            </div>
+                        </div>
+                        
+                        <div class="evaluation-card" data-status="not-evaluated">
+                            <div class="course-header">
+                                <div class="course-info">
+                                    <h4>操作系统原理</h4>
+                                    <p>CS202 | 李教授 | 必修课</p>
+                                </div>
+                                <div class="course-status not-evaluated">未评价</div>
+                            </div>
+                            <div class="evaluation-actions">
+                                <button class="btn btn-sm btn-primary start-evaluation" data-course-id="CS202">开始评价</button>
+                            </div>
+                        </div>
+                        
+                        <!-- 已评价课程卡片 -->
+                        <div class="evaluation-card" data-status="evaluated">
+                            <div class="course-header">
+                                <div class="course-info">
+                                    <h4>计算机网络</h4>
+                                    <p>CS301 | 张教授 | 必修课</p>
+                                </div>
+                                <div class="course-status evaluated">已评价</div>
+                            </div>
+                            <div class="evaluation-rating">
+                                <div class="rating-stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                                <div class="evaluation-date">评价时间：2024-04-10</div>
+                            </div>
+                            <div class="evaluation-content">
+                                <p>课程内容丰富，老师讲解清晰，作业安排合理，能够很好地掌握网络相关知识和技能。</p>
+                            </div>
+                            <div class="evaluation-actions">
+                                <button class="btn btn-sm btn-outline-primary view-evaluation">查看详情</button>
+                                <button class="btn btn-sm btn-outline-secondary edit-evaluation">修改评价</button>
+                            </div>
+                        </div>
+                        
+                        <div class="evaluation-card" data-status="evaluated">
+                            <div class="course-header">
+                                <div class="course-info">
+                                    <h4>人工智能导论</h4>
+                                    <p>CS402 | 刘教授 | 选修课</p>
+                                </div>
+                                <div class="course-status evaluated">已评价</div>
+                            </div>
+                            <div class="evaluation-rating">
+                                <div class="rating-stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div class="evaluation-date">评价时间：2024-04-08</div>
+                            </div>
+                            <div class="evaluation-content">
+                                <p>非常棒的一门课程，内容新颖，紧跟行业前沿，实践项目很有挑战性，收获很大。</p>
+                            </div>
+                            <div class="evaluation-actions">
+                                <button class="btn btn-sm btn-outline-primary view-evaluation">查看详情</button>
+                                <button class="btn btn-sm btn-outline-secondary edit-evaluation">修改评价</button>
+                            </div>
+                        </div>
+                        
+                        <div class="evaluation-card" data-status="evaluated">
+                            <div class="course-header">
+                                <div class="course-info">
+                                    <h4>数据库系统原理</h4>
+                                    <p>CS501 | 赵教授 | 专业课</p>
+                                </div>
+                                <div class="course-status evaluated">已评价</div>
+                            </div>
+                            <div class="evaluation-rating">
+                                <div class="rating-stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                </div>
+                                <div class="evaluation-date">评价时间：2024-04-05</div>
+                            </div>
+                            <div class="evaluation-content">
+                                <p>课程内容系统全面，老师经验丰富，案例教学效果好，对数据库有了深入的理解。</p>
+                            </div>
+                            <div class="evaluation-actions">
+                                <button class="btn btn-sm btn-outline-primary view-evaluation">查看详情</button>
+                                <button class="btn btn-sm btn-outline-secondary edit-evaluation">修改评价</button>
+                            </div>
+                        </div>
+                        
+                        <div class="evaluation-card" data-status="not-evaluated">
+                            <div class="course-header">
+                                <div class="course-info">
+                                    <h4>软件工程导论</h4>
+                                    <p>CS602 | 钱教授 | 必修课</p>
+                                </div>
+                                <div class="course-status not-evaluated">未评价</div>
+                            </div>
+                            <div class="evaluation-actions">
+                                <button class="btn btn-sm btn-primary start-evaluation" data-course-id="CS602">开始评价</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 分页 -->
+                    <div class="pagination">
+                        <button class="pagination-button" disabled>
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="pagination-button active">1</button>
+                        <button class="pagination-button">2</button>
+                        <button class="pagination-button">3</button>
+                        <button class="pagination-button">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 评价表单 -->
+                <div class="evaluation-form-container" id="evaluation-form-container">
+                    <div class="evaluation-form-header">
+                        <h3 class="evaluation-form-title">评价课程：<span id="current-course-name">数据结构与算法</span></h3>
+                        <button class="close-form-button" id="close-form-button">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <form id="evaluation-form">
+                        <div class="form-group">
+                            <label class="form-label">总体评分</label>
+                            <div class="rating-container">
+                                <div class="rating-stars-input">
+                                    <span class="star" data-rating="1"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="2"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="3"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="4"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="5"><i class="far fa-star"></i></span>
+                                </div>
+                                <span class="rating-label">请选择评分 (1-5星)</span>
+                            </div>
+                            <input type="hidden" id="overall-rating" name="overall-rating" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">分项评分</label>
+                            <div class="rating-container">
+                                <div class="rating-stars-input">
+                                    <span class="star" data-rating="1" data-category="teaching"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="2" data-category="teaching"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="3" data-category="teaching"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="4" data-category="teaching"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="5" data-category="teaching"><i class="far fa-star"></i></span>
+                                </div>
+                                <span class="rating-label">教学水平</span>
+                            </div>
+                            <input type="hidden" id="teaching-rating" name="teaching-rating" value="0">
+                            
+                            <div class="rating-container">
+                                <div class="rating-stars-input">
+                                    <span class="star" data-rating="1" data-category="content"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="2" data-category="content"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="3" data-category="content"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="4" data-category="content"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="5" data-category="content"><i class="far fa-star"></i></span>
+                                </div>
+                                <span class="rating-label">课程内容</span>
+                            </div>
+                            <input type="hidden" id="content-rating" name="content-rating" value="0">
+                            
+                            <div class="rating-container">
+                                <div class="rating-stars-input">
+                                    <span class="star" data-rating="1" data-category="assignment"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="2" data-category="assignment"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="3" data-category="assignment"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="4" data-category="assignment"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="5" data-category="assignment"><i class="far fa-star"></i></span>
+                                </div>
+                                <span class="rating-label">作业与考核</span>
+                            </div>
+                            <input type="hidden" id="assignment-rating" name="assignment-rating" value="0">
+                            
+                            <div class="rating-container">
+                                <div class="rating-stars-input">
+                                    <span class="star" data-rating="1" data-category="interaction"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="2" data-category="interaction"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="3" data-category="interaction"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="4" data-category="interaction"><i class="far fa-star"></i></span>
+                                    <span class="star" data-rating="5" data-category="interaction"><i class="far fa-star"></i></span>
+                                </div>
+                                <span class="rating-label">互动与反馈</span>
+                            </div>
+                            <input type="hidden" id="interaction-rating" name="interaction-rating" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">评价内容</label>
+                            <textarea class="form-textarea" name="evaluation-content" placeholder="请输入您对本课程的评价意见和建议..." rows="5"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">课程亮点（可多选）</label>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="highlight-teaching" name="highlights" value="teaching">
+                                <label for="highlight-teaching">教学水平高</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="highlight-content" name="highlights" value="content">
+                                <label for="highlight-content">内容丰富实用</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="highlight-materials" name="highlights" value="materials">
+                                <label for="highlight-materials">教材/资料优质</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="highlight-assignment" name="highlights" value="assignment">
+                                <label for="highlight-assignment">作业设计合理</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="highlight-interaction" name="highlights" value="interaction">
+                                <label for="highlight-interaction">互动性强</label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">改进建议</label>
+                            <textarea class="form-textarea" name="improvement-suggestions" placeholder="请输入对本课程的改进建议（选填）..." rows="3"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="anonymous-evaluation" name="anonymous-evaluation" value="1">
+                                <label for="anonymous-evaluation">匿名评价（您的个人信息将不会显示给教师）</label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-outline-secondary" id="cancel-evaluation">取消</button>
+                            <button type="submit" class="btn btn-primary">提交评价</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const evaluationFormContainer = document.getElementById('evaluation-form-container');
+            const closeFormButton = document.getElementById('close-form-button');
+            const cancelEvaluationButton = document.getElementById('cancel-evaluation');
+            const startEvaluationButtons = document.querySelectorAll('.start-evaluation');
+            const editEvaluationButtons = document.querySelectorAll('.edit-evaluation');
+            const currentCourseNameElement = document.getElementById('current-course-name');
+            const evaluationForm = document.getElementById('evaluation-form');
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const evaluationCards = document.querySelectorAll('.evaluation-card');
+            const searchButton = document.getElementById('search-button');
+            const resetButton = document.getElementById('reset-button');
+            
+            // 星级评分功能
+            function initRatingStars() {
+                const starGroups = document.querySelectorAll('.rating-stars-input');
+                
+                starGroups.forEach(group => {
+                    const stars = group.querySelectorAll('.star');
+                    const isOverallRating = !stars[0].dataset.category;
+                    const hiddenInputId = isOverallRating ? 'overall-rating' : `${stars[0].dataset.category}-rating`;
+                    const hiddenInput = document.getElementById(hiddenInputId);
+                    
+                    stars.forEach(star => {
+                        star.addEventListener('click', function() {
+                            const rating = parseInt(this.dataset.rating);
+                            
+                            // 更新星级显示
+                            stars.forEach(s => {
+                                const sRating = parseInt(s.dataset.rating);
+                                if (sRating <= rating) {
+                                    s.innerHTML = '<i class="fas fa-star"></i>';
+                                    s.classList.add('active');
+                                } else {
+                                    s.innerHTML = '<i class="far fa-star"></i>';
+                                    s.classList.remove('active');
+                                }
+                            });
+                            
+                            // 更新隐藏输入值
+                            if (hiddenInput) {
+                                hiddenInput.value = rating;
+                            }
+                        });
+                        
+                        star.addEventListener('mouseover', function() {
+                            const rating = parseInt(this.dataset.rating);
+                            
+                            stars.forEach(s => {
+                                const sRating = parseInt(s.dataset.rating);
+                                if (sRating <= rating) {
+                                    s.innerHTML = '<i class="fas fa-star"></i>';
+                                }
+                            });
+                        });
+                        
+                        group.addEventListener('mouseleave', function() {
+                            const currentRating = parseInt(hiddenInput ? hiddenInput.value : '0');
+                            
+                            stars.forEach(s => {
+                                const sRating = parseInt(s.dataset.rating);
+                                if (sRating <= currentRating) {
+                                    s.innerHTML = '<i class="fas fa-star"></i>';
+                                    s.classList.add('active');
+                                } else {
+                                    s.innerHTML = '<i class="far fa-star"></i>';
+                                    s.classList.remove('active');
+                                }
+                            });
+                        });
+                    });
+                });
+            }
+            
+            // 初始化星级评分
+            initRatingStars();
+            
+            // 打开评价表单
+            function openEvaluationForm(courseId, courseName) {
+                currentCourseNameElement.textContent = courseName || '数据结构与算法';
+                evaluationFormContainer.style.display = 'block';
+                // 滚动到表单位置
+                evaluationFormContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // 关闭评价表单
+            function closeEvaluationForm() {
+                evaluationFormContainer.style.display = 'none';
+                // 重置表单
+                evaluationForm.reset();
+                // 重置星级显示
+                document.querySelectorAll('.rating-stars-input .star').forEach(star => {
+                    star.innerHTML = '<i class="far fa-star"></i>';
+                    star.classList.remove('active');
+                });
+                document.querySelectorAll('input[type="hidden"][id$="-rating"]').forEach(input => {
+                    input.value = '0';
+                });
+            }
+            
+            // 开始评价按钮点击事件
+            startEvaluationButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const courseId = this.dataset.courseId;
+                    const courseCard = this.closest('.evaluation-card');
+                    const courseName = courseCard.querySelector('.course-info h4').textContent;
+                    openEvaluationForm(courseId, courseName);
+                });
+            });
+            
+            // 修改评价按钮点击事件
+            editEvaluationButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const courseCard = this.closest('.evaluation-card');
+                    const courseName = courseCard.querySelector('.course-info h4').textContent;
+                    openEvaluationForm(null, courseName);
+                    // 在实际应用中，这里应该加载已有的评价数据
+                });
+            });
+            
+            // 关闭表单按钮点击事件
+            closeFormButton.addEventListener('click', closeEvaluationForm);
+            cancelEvaluationButton.addEventListener('click', closeEvaluationForm);
+            
+            // 提交评价表单
+            evaluationForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // 验证是否已评分
+                const overallRating = parseInt(document.getElementById('overall-rating').value);
+                if (overallRating === 0) {
+                    alert('请至少选择总体评分');
+                    return;
+                }
+                
+                // 收集表单数据
+                const formData = {
+                    courseName: currentCourseNameElement.textContent,
+                    overallRating: overallRating,
+                    teachingRating: parseInt(document.getElementById('teaching-rating').value),
+                    contentRating: parseInt(document.getElementById('content-rating').value),
+                    assignmentRating: parseInt(document.getElementById('assignment-rating').value),
+                    interactionRating: parseInt(document.getElementById('interaction-rating').value),
+                    evaluationContent: document.querySelector('textarea[name="evaluation-content"]').value,
+                    highlights: Array.from(document.querySelectorAll('input[name="highlights"]:checked')).map(cb => cb.value),
+                    improvementSuggestions: document.querySelector('textarea[name="improvement-suggestions"]').value,
+                    anonymousEvaluation: document.getElementById('anonymous-evaluation').checked
+                };
+                
+                // 在实际应用中，这里应该发送表单数据到服务器
+                console.log('评价数据:', formData);
+                
+                alert('评价提交成功！');
+                closeEvaluationForm();
+                
+                // 模拟更新课程卡片状态
+                const courseCard = document.querySelector(`.evaluation-card .course-info h4:contains("${formData.courseName}")`).closest('.evaluation-card');
+                if (courseCard) {
+                    courseCard.dataset.status = 'evaluated';
+                    // 在实际应用中，这里应该重新渲染卡片内容
+                }
+            });
+            
+            // 标签切换功能
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // 更新标签按钮状态
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 筛选评价卡片
+                    const tabType = this.dataset.tab;
+                    evaluationCards.forEach(card => {
+                        if (tabType === 'all' || card.dataset.status === tabType) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            });
+            
+            // 查询按钮点击事件
+            searchButton.addEventListener('click', function() {
+                const semester = document.getElementById('semester-filter').value;
+                const status = document.getElementById('status-filter').value;
+                const courseType = document.getElementById('course-type-filter').value;
+                
+                // 在实际应用中，这里应该根据筛选条件查询数据
+                console.log('查询条件:', { semester, status, courseType });
+                alert('正在查询评价数据...');
+            });
+            
+            // 重置按钮点击事件
+            resetButton.addEventListener('click', function() {
+                document.getElementById('semester-filter').value = '2024-spring';
+                document.getElementById('status-filter').value = 'all';
+                document.getElementById('course-type-filter').value = 'all';
+            });
+            
+            // 查看评价详情按钮点击事件
+            document.querySelectorAll('.view-evaluation').forEach(button => {
+                button.addEventListener('click', function() {
+                    const courseCard = this.closest('.evaluation-card');
+                    const courseName = courseCard.querySelector('.course-info h4').textContent;
+                    alert(`查看 ${courseName} 的评价详情`);
+                    // 在实际应用中，这里应该打开详情模态框
+                });
+            });
+        });
+    </script>
+</body>
+</html>

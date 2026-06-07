@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教学统计 - 教师管理系统>
+    <!-- 引入公共CSS -->
+    <link rel="stylesheet" href="../css/common.css">
+    <!-- 引入Bootstrap CSS --<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 引入Font Awesome --<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- 引入Chart.js --<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <style>
+        /* 教学统计页面特定样式 */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-backdrop);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            margin-right: 1rem;
+        }
+        
+        .stat-info h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+        
+        .stat-info p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .chart-container {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-backdrop);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .chart-title {
+            margin: 0;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .chart-selector {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .selector-btn {
+            padding: 0.3rem 0.8rem;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+        
+        .selector-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .data-table {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-backdrop);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .data-table h3 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            align-items: center;
+        }
+        
+        .filter-item {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .filter-label {
+            display: block;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .filter-select,
+        .filter-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .custom-date-range {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .date-input {
+            flex: 1;
+        }
+        
+        .btn-export {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        .btn-export:hover {
+            background: #1a73e8;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .chart-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="sidebar-brand">
+                    <div class="sidebar-brand-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <div class="sidebar-brand-text">教师管理系统</div>
+                </a>
+                <button class="sidebar-toggle">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-item">
+                    <a href="index.html" class="nav-link">
+                        <i class="nav-icon fas fa-home"></i>
+                        <span class="nav-text">首页</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="course-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-book"></i>
+                        <span class="nav-text">课程管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="student-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-users"></i>
+                        <span class="nav-text">学生管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="grade-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-graduation-cap"></i>
+                        <span class="nav-text">成绩管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="teaching-statistics.html" class="nav-link active">
+                        <i class="nav-icon fas fa-chart-bar"></i>
+                        <span class="nav-text">教学统计</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="personal-info.html" class="nav-link">
+                        <i class="nav-icon fas fa-user-circle"></i>
+                        <span class="nav-text">个人信息</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- 主内容区 --<main class="main-content">
+            <!-- 顶部导航栏 --<nav class="top-navbar">
+                <div class="nav-left">
+                    <button class="mobile-sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">教学统计分析</h1>
+                </div>
+                <div class="nav-right">
+                    <button class="nav-icon-btn">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <button class="nav-icon-btn">
+                        <i class="fas fa-envelope"></i>
+                    </button>
+                    <div class="user-profile dropdown">
+                        <div class="dropdown-toggle">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="user-info">
+                                <span class="user-name">张教授>
+                                <span class="user-role">计算机科学与技术>
+                            </div>
+                        </div>
+                        <div class="dropdown-menu">
+                            <a href="personal-info.html" class="dropdown-item">
+                                <i class="fas fa-user-circle"></i> 个人信息
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-cog"></i> 设置
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="../login.html" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i> 退出登录
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            
+            <!-- 页面内容 --<div class="content-wrapper">
+                <!-- 筛选栏 --<div class="filter-bar">
+                    <div class="filter-item">
+                        <label for="course-select" class="filter-label">选择课程>
+                        <select id="course-select" class="filter-select">
+                            <option value="all">全部课程>
+                            <option value="CS305">人工智能导论 (CS305)>
+                            <option value="CS403">机器学习 (CS403)>
+                            <option value="CS405">深度学习 (CS405)>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label for="semester-select" class="filter-label">选择学期>
+                        <select id="semester-select" class="filter-select">
+                            <option value="current">当前学期 (2024春季)>
+                            <option value="previous">上一学期 (2023秋季)>
+                            <option value="last-year">2023学年全年>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label class="filter-label">自定义日期范围>
+                        <div class="custom-date-range">
+                            <input type="date" id="start-date" class="filter-input date-input">
+                            <span style="margin: 0 0.5rem; color: var(--text-secondary);">至>
+                            <input type="date" id="end-date" class="filter-input date-input">
+                        </div>
+                    </div>
+                    <button id="btn-export" class="btn-export ml-auto">
+                        <i class="fas fa-download"></i> 导出报告
+                    </button>
+                </div>
+                
+                <!-- 统计卡片 --<div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: #1e88e5;">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>3</h3>
+                            <p>当前授课门数</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: #43a047;">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>192</h3>
+                            <p>当前授课学生数</p>
+                        </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: #fb8c00;">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>120学时</h3>
+                            <p>本学期教学时长</p>
+                        </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background-color: #e53935;">
+                            <i class="fas fa-star"></i>
+                        <div class="stat-info">
+                            <h3>96.5分</h3>
+                            <p>学生评教平均分</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 图表区域 --<div class="row">
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h3 class="chart-title">成绩分布统计>
+                                <div class="chart-selector">
+                                    <button class="selector-btn active" data-chart="score-distribution">按等级</button>
+                                    <button class="selector-btn" data-chart="score-range">按分数段</button>
+                                </div>
+                            <div class="chart-area">
+                                <canvas id="scoreDistributionChart" height="300"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h3 class="chart-title">出勤率统计>
+                            <div class="chart-area">
+                                <canvas id="attendanceChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h3 class="chart-title">课程评分趋势>
+                            <div class="chart-area">
+                                <canvas id="ratingTrendChart" height="300"></canvas>
+                            </div>
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h3 class="chart-title">学生成绩对比分析>
+                            <div class="chart-area">
+                                <canvas id="gradeComparisonChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 详细数据表格 --<div class="data-table">
+                    <h3>课程详细统计数据</h3>
+                    <div class="table-container">
+                        <table class="table table-hover table-responsive">
+                            <thead>
+                                <tr>
+                                    <th>课程编号>
+                                    <th>课程名称>
+                                    <th>学生总数>
+                                    <th>平均分>
+                                    <th>优秀率(≥90分)>
+                                    <th>及格率(≥60分)>
+                                    <th>出勤率(%)>
+                                    <th>评教分数>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>cs305>
+                                    <td>人工智能导论>
+                                    <td>96>
+                                    <td>85.2>
+                                    <td>35.4%>
+                                    <td>92.7%>
+                                    <td>94.2%>
+                                    <td>4.8/5.0>
+                                </tr>
+                                <tr>
+                                    <td>cs403>
+                                    <td>机器学习>
+                                    <td>64>
+                                    <td>82.7>
+                                    <td>28.1%>
+                                    <td>89.1%>
+                                    <td>95.8%>
+                                    <td>4.9/5.0>
+                                </tr>
+                                <tr>
+                                    <td>cs405>
+                                    <td>深度学习>
+                                    <td>32>
+                                    <td>88.5>
+                                    <td>46.9%>
+                                    <td>96.9%>
+                                    <td>97.4%>
+                                    <td>4.7/5.0>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 引入公共JS --<script src="../js/common.js"></script>
+    <!-- 引入Bootstrap JS --<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 侧边栏导航高亮
+            const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === 'teaching-statistics.html') {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+            
+            // 初始化日期范围选择器
+            const today = new Date();
+            const startOfSemester = new Date(today.getFullYear(), 2, 1); // 当前学期假设从3月1日开始
+            document.getElementById('start-date').valueAsDate = startOfSemester;
+            document.getElementById('end-date').valueAsDate = today;
+            
+            // 初始化统计图表
+            
+            // 1. 成绩分布图表
+            const scoreCtx = document.getElementById('scoreDistributionChart').getContext('2d');
+            let scoreDistributionChart = new Chart(scoreCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['优秀 (90-100)', '良好 (80-89)', '中等 (70-79)', '及格 (60-69)', '不及格 (<60)'],
+                    datasets: [{
+                        data: [32, 45, 28, 12, 5],
+                        backgroundColor: [
+                            '#43a047', // 绿色 - 优秀
+                            '#1e88e5', // 蓝色 - 良好
+                            '#fb8c00', // 橙色 - 中等
+                            '#fdd835', // 黄色 - 及格
+                            '#e53935'  // 红色 - 不及格
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // 2. 出勤率图表
+            const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+            new Chart(attendanceCtx, {
+                type: 'line',
+                data: {
+                    labels: ['第1周', '第2周', '第3周', '第4周', '第5周', '第6周', '第7周', '第8周'],
+                    datasets: [
+                        {
+                            label: '人工智能导论',
+                            data: [96, 94, 95, 93, 97, 95, 94, 96],
+                            borderColor: '#1e88e5',
+                            backgroundColor: 'rgba(30, 136, 229, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: '机器学习',
+                            data: [98, 97, 96, 95, 97, 98, 96, 97],
+                            borderColor: '#43a047',
+                            backgroundColor: 'rgba(67, 160, 71, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: '深度学习',
+                            data: [99, 98, 99, 97, 98, 99, 97, 99],
+                            borderColor: '#fb8c00',
+                            backgroundColor: 'rgba(251, 140, 0, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 85,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 3. 课程评分趋势图表
+            const ratingCtx = document.getElementById('ratingTrendChart').getContext('2d');
+            new Chart(ratingCtx, {
+                type: 'line',
+                data: {
+                    labels: ['2020春季', '2020秋季', '2021春季', '2021秋季', '2022春季', '2022秋季', '2023春季', '2023秋季', '2024春季'],
+                    datasets: [
+                        {
+                            label: '人工智能导论',
+                            data: [4.2, 4.3, 4.5, 4.4, 4.6, 4.7, 4.8, 4.8, 4.8],
+                            borderColor: '#1e88e5',
+                            backgroundColor: 'rgba(30, 136, 229, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: '机器学习',
+                            data: [null, null, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 4.9],
+                            borderColor: '#43a047',
+                            backgroundColor: 'rgba(67, 160, 71, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: '深度学习',
+                            data: [null, null, null, null, 4.3, 4.4, 4.5, 4.6, 4.7],
+                            borderColor: '#fb8c00',
+                            backgroundColor: 'rgba(251, 140, 0, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 3.5,
+                            max: 5,
+                            ticks: {
+                                stepSize: 0.5
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 4. 学生成绩对比分析图表
+            const comparisonCtx = document.getElementById('gradeComparisonChart').getContext('2d');
+            new Chart(comparisonCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['期中考试', '平时作业', '实验项目', '期末考试'],
+                    datasets: [
+                        {
+                            label: '人工智能导论',
+                            data: [82, 88, 85, 86],
+                            backgroundColor: '#1e88e5'
+                        },
+                        {
+                            label: '机器学习',
+                            data: [80, 85, 82, 83],
+                            backgroundColor: '#43a047'
+                        },
+                        {
+                            label: '深度学习',
+                            data: [85, 90, 88, 89],
+                            backgroundColor: '#fb8c00'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 60,
+                            max: 100
+                        }
+                    }
+                }
+            });
+            
+            // 成绩分布切换功能
+            const selectorButtons = document.querySelectorAll('.chart-selector .selector-btn');
+            selectorButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // 移除所有按钮的active类
+                    selectorButtons.forEach(btn => btn.classList.remove('active'));
+                    // 为当前按钮添加active类
+                    this.classList.add('active');
+                    
+                    // 根据选择的图表类型更新图表数据
+                    if (this.dataset.chart === 'score-distribution') {
+                        // 更新为按等级分布的饼图
+                        scoreDistributionChart.data.labels = ['优秀 (90-100)', '良好 (80-89)', '中等 (70-79)', '及格 (60-69)', '不及格 (<60)'];
+                        scoreDistributionChart.data.datasets[0].data = [32, 45, 28, 12, 5];
+                        scoreDistributionChart.data.datasets[0].backgroundColor = [
+                            '#43a047', '#1e88e5', '#fb8c00', '#fdd835', '#e53935'
+                        ];
+                        scoreDistributionChart.config.type = 'pie';
+                        scoreDistributionChart.update();
+                    } else if (this.dataset.chart === 'score-range') {
+                        // 更新为按分数段分布的条形图
+                        scoreDistributionChart.data.labels = ['90-100', '80-89', '70-79', '60-69', '<60'];
+                        scoreDistributionChart.data.datasets[0].data = [32, 45, 28, 12, 5];
+                        scoreDistributionChart.data.datasets[0].backgroundColor = '#1e88e5';
+                        scoreDistributionChart.config.type = 'bar';
+                        scoreDistributionChart.update();
+                    }
+                });
+            });
+            
+            // 导出报告功能
+            document.getElementById('btn-export').addEventListener('click', function() {
+                alert('报告导出功能已触发！在实际项目中，这里会生成并下载PDF或Excel格式的统计报告。');
+            });
+            
+            // 筛选器变更监听器
+            const filters = ['course-select', 'semester-select', 'start-date', 'end-date'];
+            filters.forEach(filterId => {
+                document.getElementById(filterId).addEventListener('change', function() {
+                    // 在实际项目中，这里会根据筛选条件更新数据和图表
+                    console.log('筛选条件已变更:', {
+                        course: document.getElementById('course-select').value,
+                        semester: document.getElementById('semester-select').value,
+                        startDate: document.getElementById('start-date').value,
+                        endDate: document.getElementById('end-date').value
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

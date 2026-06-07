@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生管理 - 管理员控制台</title>
+    <!-- 引入第三方库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.3.0/chart.min.css">
+    <!-- 引入公共样式 -->
+    <link rel="stylesheet" href="/static/css/common.css">
+</head>
+<body>
+    <div class="page-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/admin" class="sidebar-brand">
+                    <div class="sidebar-brand-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <span class="sidebar-brand-text">管理员控制台</span>
+                </a>
+                <button class="sidebar-toggle">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item">
+                    <a href="/admin" class="nav-link">
+                        <i class="nav-icon fas fa-tachometer-alt"></i>
+                        <span class="nav-text">控制台首页</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/student-management.html" class="nav-link active">
+                        <i class="nav-icon fas fa-user-graduate"></i>
+                        <span class="nav-text">学生管理</span>
+                        <span class="nav-badge">128</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/teacher-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-chalkboard-teacher"></i>
+                        <span class="nav-text">教师管理</span>
+                        <span class="nav-badge">32</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/course-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-book"></i>
+                        <span class="nav-text">课程管理</span>
+                        <span class="nav-badge">86</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/class-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-users"></i>
+                        <span class="nav-text">班级管理</span>
+                        <span class="nav-badge">16</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/grade-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-chart-line"></i>
+                        <span class="nav-text">成绩管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/system-settings.html" class="nav-link">
+                        <i class="nav-icon fas fa-cog"></i>
+                        <span class="nav-text">系统设置</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/system-logs.html" class="nav-link">
+                        <i class="nav-icon fas fa-history"></i>
+                        <span class="nav-text">系统日志</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="top-navbar">
+                <div class="nav-left">
+                    <button class="mobile-sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">学生管理</h1>
+                </div>
+                <div class="nav-right">
+                    <button class="nav-icon-btn" id="notification-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge"></span>
+                    </button>
+                    <div class="user-profile">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-info">
+                            <span class="user-name">管理员</span>
+                            <span class="user-role">Admin</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 页面内容区 -->
+            <div class="content-wrapper">
+                <!-- 功能操作区 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">学生管理</h3>
+                        <div class="card-actions">
+                            <button class="btn btn-primary" data-toggle="modal" data-target="#addStudentModal">
+                                <i class="fas fa-plus"></i>
+                                添加学生
+                            </button>
+                            <button class="btn btn-secondary" data-toggle="modal" data-target="#importStudentsModal">
+                                <i class="fas fa-file-import"></i>
+                                批量导入
+                            </button>
+                            <button class="btn btn-secondary" id="exportStudentsBtn">
+                                <i class="fas fa-file-export"></i>
+                                导出学生
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- 搜索和筛选 -->
+                        <div class="search-filter">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">搜索</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="studentSearch" placeholder="搜索学号/姓名">
+                                            <button class="btn btn-primary" id="searchStudentBtn">
+                                                <i class="fas fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">筛选条件</label>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <select class="form-control" id="studentCollegeFilter">
+                                                    <option value="">所有学院</option>
+                                                    <option value="computer">计算机学院</option>
+                                                    <option value="electronic">电子工程学院</option>
+                                                    <option value="mechanical">机械工程学院</option>
+                                                    <option value="civil">土木工程学院</option>
+                                                    <option value="business">商学院</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <select class="form-control" id="studentStatusFilter">
+                                                    <option value="">所有状态</option>
+                                                    <option value="active">在读</option>
+                                                    <option value="suspended">休学</option>
+                                                    <option value="graduated">毕业</option>
+                                                    <option value="dropout">退学</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <button class="btn btn-secondary" id="filterStudentBtn">
+                                                    <i class="fas fa-filter"></i>
+                                                    筛选
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 数据表格 -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th data-sortable>学号</th>
+                                        <th data-sortable>姓名</th>
+                                        <th data-sortable>性别</th>
+                                        <th data-sortable>学院</th>
+                                        <th data-sortable>专业</th>
+                                        <th data-sortable>班级</th>
+                                        <th data-sortable>状态</th>
+                                        <th data-sortable>入学时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>20210001</td>
+                                        <td>张三</td>
+                                        <td>男</td>
+                                        <td>计算机学院</td>
+                                        <td>软件工程</td>
+                                        <td>软件2101</td>
+                                        <td><span class="badge badge-success">在读</span></td>
+                                        <td>2021-09-01</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editStudentModal" data-id="20210001">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="20210001">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteStudentModal" data-id="20210001">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>20210002</td>
+                                        <td>李四</td>
+                                        <td>女</td>
+                                        <td>计算机学院</td>
+                                        <td>网络工程</td>
+                                        <td>网络2101</td>
+                                        <td><span class="badge badge-success">在读</span></td>
+                                        <td>2021-09-01</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editStudentModal" data-id="20210002">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="20210002">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteStudentModal" data-id="20210002">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>20200001</td>
+                                        <td>王五</td>
+                                        <td>男</td>
+                                        <td>电子工程学院</td>
+                                        <td>电子信息工程</td>
+                                        <td>电子2001</td>
+                                        <td><span class="badge badge-success">在读</span></td>
+                                        <td>2020-09-01</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editStudentModal" data-id="20200001">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="20200001">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteStudentModal" data-id="20200001">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>20190001</td>
+                                        <td>赵六</td>
+                                        <td>男</td>
+                                        <td>商学院</td>
+                                        <td>工商管理</td>
+                                        <td>工商1901</td>
+                                        <td><span class="badge badge-info">毕业</span></td>
+                                        <td>2019-09-01</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editStudentModal" data-id="20190001">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-secondary" disabled>
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteStudentModal" data-id="20190001">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>20210003</td>
+                                        <td>钱七</td>
+                                        <td>女</td>
+                                        <td>机械工程学院</td>
+                                        <td>机械设计制造及其自动化</td>
+                                        <td>机械2101</td>
+                                        <td><span class="badge badge-warning">休学</span></td>
+                                        <td>2021-09-01</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editStudentModal" data-id="20210003">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="20210003">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteStudentModal" data-id="20210003">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- 分页 -->
+                        <div class="pagination">
+                            <button class="btn btn-secondary pagination-btn" disabled>
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button class="btn btn-primary pagination-btn">1</button>
+                            <button class="btn btn-secondary pagination-btn">2</button>
+                            <button class="btn btn-secondary pagination-btn">3</button>
+                            <span class="pagination-ellipsis">...</span>
+                            <button class="btn btn-secondary pagination-btn">12</button>
+                            <button class="btn btn-secondary pagination-btn">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 添加学生模态框 -->
+    <div class="modal" id="addStudentModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加学生</h5>
+                    <button class="close" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="addStudentForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="studentId">学号 *</label>
+                                    <input type="text" class="form-control" id="studentId" name="studentId" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="studentName">姓名 *</label>
+                                    <input type="text" class="form-control" id="studentName" name="studentName" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="studentGender">性别 *</label>
+                                    <select class="form-control" id="studentGender" name="studentGender" required>
+                                        <option value="male">男</option>
+                                        <option value="female">女</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="studentCollege">学院 *</label>
+                                    <select class="form-control" id="studentCollege" name="studentCollege" required>
+                                        <option value="">请选择学院</option>
+                                        <option value="computer">计算机学院</option>
+                                        <option value="electronic">电子工程学院</option>
+                                        <option value="mechanical">机械工程学院</option>
+                                        <option value="civil">土木工程学院</option>
+                                        <option value="business">商学院</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="studentMajor">专业 *</label>
+                                    <select class="form-control" id="studentMajor" name="studentMajor" required>
+                                        <option value="">请先选择学院</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="studentClass">班级 *</label>
+                                    <select class="form-control" id="studentClass" name="studentClass" required>
+                                        <option value="">请先选择专业</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="enrollmentDate">入学时间 *</label>
+                                    <input type="date" class="form-control" id="enrollmentDate" name="enrollmentDate" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="studentStatus">状态 *</label>
+                                    <select class="form-control" id="studentStatus" name="studentStatus" required>
+                                        <option value="active">在读</option>
+                                        <option value="suspended">休学</option>
+                                        <option value="graduated">毕业</option>
+                                        <option value="dropout">退学</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="studentEmail">电子邮箱</label>
+                            <input type="email" class="form-control" id="studentEmail" name="studentEmail">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="studentPhone">手机号码</label>
+                            <input type="tel" class="form-control" id="studentPhone" name="studentPhone">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button class="btn btn-primary" id="submitAddStudent">添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑学生模态框 -->
+    <div class="modal" id="editStudentModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑学生</h5>
+                    <button class="close" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="editStudentForm">
+                        <input type="hidden" id="editStudentId">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="editStudentName">姓名 *</label>
+                                    <input type="text" class="form-control" id="editStudentName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="editStudentGender">性别 *</label>
+                                    <select class="form-control" id="editStudentGender" required>
+                                        <option value="male">男</option>
+                                        <option value="female">女</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="editStudentCollege">学院 *</label>
+                                    <select class="form-control" id="editStudentCollege" required>
+                                        <option value="computer">计算机学院</option>
+                                        <option value="electronic">电子工程学院</option>
+                                        <option value="mechanical">机械工程学院</option>
+                                        <option value="civil">土木工程学院</option>
+                                        <option value="business">商学院</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="editStudentMajor">专业 *</label>
+                                    <select class="form-control" id="editStudentMajor" required>
+                                        <option value="">请选择专业</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="editStudentClass">班级 *</label>
+                                    <select class="form-control" id="editStudentClass" required>
+                                        <option value="">请选择班级</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="editStudentStatus">状态 *</label>
+                                    <select class="form-control" id="editStudentStatus" required>
+                                        <option value="active">在读</option>
+                                        <option value="suspended">休学</option>
+                                        <option value="graduated">毕业</option>
+                                        <option value="dropout">退学</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editStudentEmail">电子邮箱</label>
+                            <input type="email" class="form-control" id="editStudentEmail">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editStudentPhone">手机号码</label>
+                            <input type="tel" class="form-control" id="editStudentPhone">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button class="btn btn-primary" id="submitEditStudent">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 重置密码模态框 -->
+    <div class="modal" id="resetPasswordModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">重置密码</h5>
+                    <button class="close" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="resetPasswordStudentId">
+                    <p>确定要将 <span id="resetPasswordStudentName" class="font-weight-bold"></span> 的密码重置为默认密码吗？</p>
+                    <p class="text-warning">默认密码为：<code>123456</code>，请提醒学生登录后及时修改密码。</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button class="btn btn-primary" id="confirmResetPassword">确定重置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除学生模态框 -->
+    <div class="modal" id="deleteStudentModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">删除学生</h5>
+                    <button class="close" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="deleteStudentId">
+                    <p class="text-danger">警告：删除操作不可撤销！</p>
+                    <p>确定要删除学生 <span id="deleteStudentName" class="font-weight-bold"></span> 吗？</p>
+                    <p class="text-sm">删除学生将同时删除该学生的所有选课记录和成绩信息。</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button class="btn btn-danger" id="confirmDeleteStudent">删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量导入学生模态框 -->
+    <div class="modal" id="importStudentsModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">批量导入学生</h5>
+                    <button class="close" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">下载模板</label>
+                        <a href="#" class="btn btn-secondary">
+                            <i class="fas fa-download"></i>
+                            学生信息导入模板.xlsx
+                        </a>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">上传文件</label>
+                        <div class="file-upload">
+                            <input type="file" class="form-control-file" id="importFile" accept=".xlsx,.xls">
+                            <p class="text-sm text-muted mt-2">请上传Excel格式的学生信息文件，支持.xlsx和.xls格式</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button class="btn btn-primary" id="confirmImportStudents">开始导入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入公共JavaScript -->
+    <script src="/static/js/common.js"></script>
+    <script>
+        // 页面特定的JavaScript逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            // 筛选和搜索功能
+            document.getElementById('searchStudentBtn').addEventListener('click', function() {
+                const searchText = document.getElementById('studentSearch').value.trim();
+                // 实现搜索逻辑
+                notifications.info('搜索', `搜索学生: ${searchText}`);
+            });
+
+            document.getElementById('filterStudentBtn').addEventListener('click', function() {
+                const college = document.getElementById('studentCollegeFilter').value;
+                const status = document.getElementById('studentStatusFilter').value;
+                // 实现筛选逻辑
+                notifications.info('筛选', `筛选条件: 学院=${college}, 状态=${status}`);
+            });
+
+            // 导出学生数据
+            document.getElementById('exportStudentsBtn').addEventListener('click', function() {
+                notifications.info('导出', '正在导出学生数据...');
+                // 模拟导出延迟
+                setTimeout(() => {
+                    notifications.success('导出成功', '学生数据已成功导出');
+                }, 1500);
+            });
+
+            // 添加学生表单提交
+            document.getElementById('submitAddStudent').addEventListener('click', function() {
+                const form = document.getElementById('addStudentForm');
+                if (validateForm(form)) {
+                    notifications.info('添加', '正在添加学生...');
+                    // 模拟添加延迟
+                    setTimeout(() => {
+                        closeModal(document.getElementById('addStudentModal'));
+                        notifications.success('添加成功', '学生信息已成功添加');
+                        form.reset();
+                    }, 1500);
+                }
+            });
+
+            // 编辑学生模态框
+            const editButtons = document.querySelectorAll('[data-target="#editStudentModal"]');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const studentId = this.getAttribute('data-id');
+                    document.getElementById('editStudentId').value = studentId;
+                    // 这里应该根据studentId加载学生数据
+                    // 模拟数据加载
+                    setTimeout(() => {
+                        document.getElementById('editStudentName').value = '示例学生';
+                        document.getElementById('editStudentGender').value = 'male';
+                        // 其他字段...
+                    }, 300);
+                });
+            });
+
+            // 提交编辑表单
+            document.getElementById('submitEditStudent').addEventListener('click', function() {
+                const form = document.getElementById('editStudentForm');
+                if (validateForm(form)) {
+                    notifications.info('保存', '正在保存学生信息...');
+                    // 模拟保存延迟
+                    setTimeout(() => {
+                        closeModal(document.getElementById('editStudentModal'));
+                        notifications.success('保存成功', '学生信息已成功更新');
+                    }, 1500);
+                }
+            });
+
+            // 重置密码模态框
+            const resetButtons = document.querySelectorAll('[data-target="#resetPasswordModal"]');
+            resetButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const studentId = this.getAttribute('data-id');
+                    document.getElementById('resetPasswordStudentId').value = studentId;
+                    document.getElementById('resetPasswordStudentName').textContent = studentId;
+                });
+            });
+
+            // 确认重置密码
+            document.getElementById('confirmResetPassword').addEventListener('click', function() {
+                notifications.info('重置密码', '正在重置密码...');
+                // 模拟重置延迟
+                setTimeout(() => {
+                    closeModal(document.getElementById('resetPasswordModal'));
+                    notifications.success('重置成功', '密码已重置为默认密码');
+                }, 1500);
+            });
+
+            // 删除学生模态框
+            const deleteButtons = document.querySelectorAll('[data-target="#deleteStudentModal"]');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const studentId = this.getAttribute('data-id');
+                    document.getElementById('deleteStudentId').value = studentId;
+                    document.getElementById('deleteStudentName').textContent = studentId;
+                });
+            });
+
+            // 确认删除学生
+            document.getElementById('confirmDeleteStudent').addEventListener('click', function() {
+                notifications.info('删除', '正在删除学生...');
+                // 模拟删除延迟
+                setTimeout(() => {
+                    closeModal(document.getElementById('deleteStudentModal'));
+                    notifications.success('删除成功', '学生已成功删除');
+                }, 1500);
+            });
+
+            // 批量导入学生
+            document.getElementById('confirmImportStudents').addEventListener('click', function() {
+                const fileInput = document.getElementById('importFile');
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    notifications.error('导入失败', '请选择要导入的文件');
+                    return;
+                }
+                
+                notifications.info('导入', '正在导入学生数据...');
+                // 模拟导入延迟
+                setTimeout(() => {
+                    closeModal(document.getElementById('importStudentsModal'));
+                    notifications.success('导入成功', '学生数据已成功导入');
+                    fileInput.value = '';
+                }, 2000);
+            });
+
+            // 学院选择联动专业
+            document.getElementById('studentCollege').addEventListener('change', function() {
+                const college = this.value;
+                const majorSelect = document.getElementById('studentMajor');
+                
+                // 清空专业选项
+                majorSelect.innerHTML = '<option value="">请选择专业</option>';
+                
+                // 根据学院加载专业
+                if (college === 'computer') {
+                    const majors = ['软件工程', '网络工程', '计算机科学与技术', '数据科学与大数据技术'];
+                    majors.forEach(major => {
+                        const option = document.createElement('option');
+                        option.value = major;
+                        option.textContent = major;
+                        majorSelect.appendChild(option);
+                    });
+                } else if (college === 'electronic') {
+                    const majors = ['电子信息工程', '通信工程', '人工智能'];
+                    majors.forEach(major => {
+                        const option = document.createElement('option');
+                        option.value = major;
+                        option.textContent = major;
+                        majorSelect.appendChild(option);
+                    });
+                }
+                // 其他学院的专业...
+            });
+
+            // 专业选择联动班级
+            document.getElementById('studentMajor').addEventListener('change', function() {
+                const major = this.value;
+                const classSelect = document.getElementById('studentClass');
+                
+                // 清空班级选项
+                classSelect.innerHTML = '<option value="">请选择班级</option>';
+                
+                // 根据专业加载班级
+                if (major) {
+                    const year = new Date().getFullYear();
+                    for (let i = 0; i < 4; i++) {
+                        const classYear = year - i;
+                        const classNum = 1;
+                        const className = `${major.substring(0, 2)}${classYear.toString().substring(2)}0${classNum}`;
+                        
+                        const option = document.createElement('option');
+                        option.value = className;
+                        option.textContent = className;
+                        classSelect.appendChild(option);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

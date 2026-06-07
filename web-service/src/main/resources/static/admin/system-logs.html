@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统日志 - 网上选课系统</title>
+    <!-- 引入Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css">
+    <!-- 引入公共CSS -->
+    <link rel="stylesheet" href="../css/common.css">
+    <style>
+        /* 系统日志页面专用样式 */
+        .logs-container {
+            padding: 20px;
+        }
+        .logs-filter {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .logs-table-container {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .logs-table {
+            margin-bottom: 0;
+        }
+        .logs-table th, .logs-table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .logs-table tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+        .logs-pagination {
+            padding: 15px;
+            text-align: right;
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
+        .logs-actions {
+            margin-top: 10px;
+        }
+        .logs-actions .btn {
+            margin-left: 10px;
+        }
+        .logs-actions .btn:first-child {
+            margin-left: 0;
+        }
+        .log-level-info {
+            color: #17a2b8;
+            font-weight: bold;
+        }
+        .log-level-warning {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        .log-level-error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .log-level-success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .log-type {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .log-type-auth {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        .log-type-operation {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .log-type-system {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .log-type-data {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .date-range-picker {
+            display: flex;
+            align-items: center;
+        }
+        .date-range-picker input {
+            width: 150px;
+        }
+        .date-range-picker span {
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">切换导航</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html">网上选课系统</a>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="javascript:void(0)" onclick="showUserInfo()"><span class="glyphicon glyphicon-user"></span> 用户信息</a></li>
+                    <li><a href="javascript:void(0)" onclick="logout()"><span class="glyphicon glyphicon-log-out"></span> 退出登录</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏导航 -->
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-3 col-md-2 sidebar">
+                <ul class="nav nav-sidebar">
+                    <li><a href="index.html"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
+                    <li><a href="student-management.html"><span class="glyphicon glyphicon-user"></span> 学生管理</a></li>
+                    <li><a href="teacher-management.html"><span class="glyphicon glyphicon-book"></span> 教师管理</a></li>
+                    <li><a href="course-management.html"><span class="glyphicon glyphicon-book"></span> 课程管理</a></li>
+                    <li><a href="class-management.html"><span class="glyphicon glyphicon-th-list"></span> 班级管理</a></li>
+                    <li><a href="grade-management.html"><span class="glyphicon glyphicon-education"></span> 成绩管理</a></li>
+                    <li><a href="system-settings.html"><span class="glyphicon glyphicon-cog"></span> 系统设置</a></li>
+                    <li class="active"><a href="system-logs.html"><span class="glyphicon glyphicon-list-alt"></span> 系统日志</a></li>
+                </ul>
+            </div>
+
+            <!-- 主内容区域 --<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+                <div class="logs-container">
+                    <h2 class="sub-header">系统日志</h2>
+                    
+                    <!-- 日志筛选区域 --<div class="logs-filter">
+                        <form id="logsFilterForm">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="logLevel">日志级别：</label>
+                                    <select class="form-control" id="logLevel">
+                                        <option value="all">全部级别>
+                                        <option value="info">信息(Info)>
+                                        <option value="warning">警告(Warning)>
+                                        <option value="error">错误(Error)>
+                                        <option value="success">成功(Success)>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="logType">操作类型：</label>
+                                    <select class="form-control" id="logType">
+                                        <option value="all">全部类型>
+                                        <option value="auth">认证相关>
+                                        <option value="operation">用户操作>
+                                        <option value="system">系统事件>
+                                        <option value="data">数据变更>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="logUser">操作用户：</label>
+                                    <input type="text" class="form-control" id="logUser" placeholder="请输入用户名">
+                                </div>
+                            </div>
+                            <div class="row" style="margin-top: 15px;">
+                                <div class="col-md-5">
+                                    <label for="dateRangeStart">时间范围：</label>
+                                    <div class="date-range-picker">
+                                        <input type="date" class="form-control" id="dateRangeStart">
+                                        <span>至</span>
+                                        <input type="date" class="form-control" id="dateRangeEnd">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="logKeyword">关键词搜索：>
+                                    <input type="text" class="form-control" id="logKeyword" placeholder="请输入关键词">
+                                </div>
+                                <div class="col-md-3">
+                                    <label style="visibility: hidden;">搜索按钮</label>
+                                    <div class="logs-actions">
+                                        <button type="button" class="btn btn-primary" onclick="filterLogs()">
+                                            <span class="glyphicon glyphicon-search"></span> 搜索
+                                        </button>
+                                        <button type="button" class="btn btn-default" onclick="resetFilters()">
+                                            <span class="glyphicon glyphicon-refresh"></span> 重置
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row" style="margin-top: 15px;">
+                                <div class="col-md-12 text-right">
+                                    <button type="button" class="btn btn-success" onclick="exportLogs()">
+                                        <span class="glyphicon glyphicon-export"></span> 导出日志
+                                    </button>
+                                    <button type="button" class="btn btn-danger" onclick="clearLogs()">
+                                        <span class="glyphicon glyphicon-trash"></span> 清空日志
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- 日志统计概览 --<div class="row" style="margin-bottom: 20px;">
+                        <div class="col-md-3">
+                            <div class="panel panel-info">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">总日志数</h3>
+                                </div>
+                                <div class="panel-body text-center">
+                                    <span class="h2" id="totalLogCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="panel panel-success">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">成功操作</h3>
+                                </div>
+                                <div class="panel-body text-center">
+                                    <span class="h2" id="successLogCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="panel panel-warning">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">警告日志</h3>
+                                </div>
+                                <div class="panel-body text-center">
+                                    <span class="h2" id="warningLogCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="panel panel-danger">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">错误日志</h3>
+                                </div>
+                                <div class="panel-body text-center">
+                                    <span class="h2" id="errorLogCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 日志表格区域 --<div class="logs-table-container">
+                        <table class="table table-striped logs-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;">ID</th>
+                                    <th style="width: 180px;">时间戳</th>
+                                    <th style="width: 100px;">级别</th>
+                                    <th style="width: 100px;">类型</th>
+                                    <th style="width: 120px;">用户</th>
+                                    <th style="width: 120px;">IP地址</th>
+                                    <th>操作详情</th>
+                                    <th style="width: 80px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsTableBody">
+                                <!-- 日志数据将通过JavaScript动态生成 -->
+                            </tbody>
+                        </table>
+                        
+                        <!-- 分页区域 --<div class="logs-pagination">
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination" id="logsPagination">
+                                    <!-- 分页按钮将通过JavaScript动态生成 -->
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日志详情模态框 --<div class="modal fade" id="logDetailModal" tabindex="-1" role="dialog" aria-labelledby="logDetailModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="logDetailModalLabel">日志详情</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">日志ID：</label>
+                            <div class="col-sm-10">
+                                <p class="form-control-static" id="detailLogId">--</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">时间戳：</label>
+                            <div class="col-sm-10">
+                                <p class="form-control-static" id="detailLogTime">--</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">日志级别：</label>
+                            <div class="col-sm-10">
+                                <p class="form-control-static" id="detailLogLevel">--</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">操作类型：</label>
+                            <div class="col-sm-10">
+                                <p class="form-control-static" id="detailLogType">--</p>
+                            </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">操作用户：</label>
+                            <div class="col-sm-10">
+                                <p class="form-control-static" id="detailLogUser">--</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">IP地址：</label>
+                            <div class="col-sm-10">
+                                <p class="form-control-static" id="detailLogIp">--</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">操作详情：</label>
+                            <div class="col-sm-10">
+                                <p class="form-control-static" id="detailLogContent">--</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">请求路径：</label>
+                            <div class="col-sm-10">
+                                <p class="form-control-static" id="detailLogPath">--</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">浏览器信息：</label>
+                            <div class="col-sm-10">
+                                <p class="form-control-static" id="detailLogBrowser">--</p>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 成功提示框 --<div class="alert alert-success fade in" role="alert" id="successAlert" style="display:none;">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <strong>成功！</strong> <span id="successMessage"></span>
+    </div>
+
+    <!-- 错误提示框 --<div class="alert alert-danger fade in" role="alert" id="errorAlert" style="display:none;">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <strong>错误！</strong> <span id="errorMessage"></span>
+    </div>
+
+    <!-- 引入jQuery和Bootstrap JS --<script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+    <!-- 引入公共JS --<script src="../js/common.js"></script>
+    <script>
+        // 模拟日志数据
+        let logsData = [];
+        let currentPage = 1;
+        const pageSize = 10;
+        let filteredLogs = [];
+
+        // 初始化页面
+        $(document).ready(function() {
+            // 生成模拟日志数据
+            generateMockLogs();
+            // 设置默认时间范围（过去7天）
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 7);
+            
+            document.getElementById("dateRangeStart").valueAsDate = startDate;
+            document.getElementById("dateRangeEnd").valueAsDate = endDate;
+            
+            // 初始加载日志数据
+            filterLogs();
+        });
+
+        // 生成模拟日志数据
+        function generateMockLogs() {
+            const logLevels = ['info', 'warning', 'error', 'success'];
+            const logTypes = ['auth', 'operation', 'system', 'data'];
+            const logUsers = ['admin', 'teacher1', 'teacher2', 'student1', 'student2', 'system'];
+            const logContents = [
+                '用户登录系统',
+                '用户修改密码',
+                '用户添加了新课程',
+                '用户修改了学生信息',
+                '用户删除了课程',
+                '系统启动',
+                '系统执行定时任务',
+                '系统备份数据库',
+                '数据导入成功',
+                '权限校验失败',
+                '参数验证错误',
+                '数据库连接异常',
+                '文件上传成功',
+                '系统资源占用过高',
+                '选课操作完成'
+            ];
+            const ipAddresses = [
+                '192.168.1.1',
+                '192.168.1.2',
+                '10.0.0.1',
+                '10.0.0.2',
+                '127.0.0.1'
+            ];
+            const paths = [
+                '/login',
+                '/admin/courses/add',
+                '/admin/students/edit',
+                '/api/select-course',
+                '/api/grade/update',
+                '/system/backup',
+                '/admin/users/profile'
+            ];
+            const browsers = [
+                'Chrome/91.0.4472.124',
+                'Firefox/89.0',
+                'Safari/14.1.1',
+                'Edge/91.0.864.59',
+                'Unknown'
+            ];
+
+            // 生成100条模拟日志
+            for (let i = 100; i >= 1; i--) {
+                const timestamp = new Date();
+                timestamp.setHours(timestamp.getHours() - Math.floor(Math.random() * 24 * 7)); // 随机过去7天内的时间
+                
+                const level = logLevels[Math.floor(Math.random() * logLevels.length)];
+                const type = logTypes[Math.floor(Math.random() * logTypes.length)];
+                const user = logUsers[Math.floor(Math.random() * logUsers.length)];
+                const content = logContents[Math.floor(Math.random() * logContents.length)];
+                const ip = ipAddresses[Math.floor(Math.random() * ipAddresses.length)];
+                const path = paths[Math.floor(Math.random() * paths.length)];
+                const browser = browsers[Math.floor(Math.random() * browsers.length)];
+                
+                logsData.push({
+                    id: i,
+                    timestamp: timestamp.toISOString(),
+                    level: level,
+                    type: type,
+                    user: user,
+                    ip: ip,
+                    content: content,
+                    path: path,
+                    browser: browser
+                });
+            }
+            
+            // 按时间戳排序（最新的在前）
+            logsData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        }
+
+        // 过滤日志
+        function filterLogs() {
+            const levelFilter = document.getElementById("logLevel").value;
+            const typeFilter = document.getElementById("logType").value;
+            const userFilter = document.getElementById("logUser").value.toLowerCase();
+            const keywordFilter = document.getElementById("logKeyword").value.toLowerCase();
+            const startDate = document.getElementById("dateRangeStart").value;
+            const endDate = document.getElementById("dateRangeEnd").value;
+            
+            filteredLogs = logsData.filter(log => {
+                // 级别过滤
+                if (levelFilter !== 'all' && log.level !== levelFilter) {
+                    return false;
+                }
+                
+                // 类型过滤
+                if (typeFilter !== 'all' && log.type !== typeFilter) {
+                    return false;
+                }
+                
+                // 用户过滤
+                if (userFilter && !log.user.toLowerCase().includes(userFilter)) {
+                    return false;
+                }
+                
+                // 关键词过滤
+                if (keywordFilter && !log.content.toLowerCase().includes(keywordFilter)) {
+                    return false;
+                }
+                
+                // 日期范围过滤
+                if (startDate || endDate) {
+                    const logDate = new Date(log.timestamp).toISOString().split('T')[0];
+                    if (startDate && logDate < startDate) return false;
+                    if (endDate && logDate > endDate) return false;
+                }
+                
+                return true;
+            });
+            
+            // 重置页码并重新渲染表格
+            currentPage = 1;
+            renderLogsTable();
+            updateLogStatistics();
+        }
+
+        // 重置筛选条件
+        function resetFilters() {
+            document.getElementById("logsFilterForm").reset();
+            // 重置默认时间范围（过去7天）
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 7);
+            
+            document.getElementById("dateRangeStart").valueAsDate = startDate;
+            document.getElementById("dateRangeEnd").valueAsDate = endDate;
+        }
+
+        // 渲染日志表格
+        function renderLogsTable() {
+            const tableBody = document.getElementById("logsTableBody");
+            tableBody.innerHTML = "";
+            
+            // 计算当前页要显示的日志数据
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, filteredLogs.length);
+            const currentLogs = filteredLogs.slice(startIndex, endIndex);
+            
+            if (currentLogs.length === 0) {
+                // 显示空数据提示
+                const emptyRow = document.createElement("tr");
+                emptyRow.innerHTML = `
+                    <td colspan="8" class="text-center" style="padding: 30px; color: #888;">
+                        <span class="glyphicon glyphicon-inbox" style="font-size: 24px; margin-bottom: 10px; display: block;"></span>
+                        没有找到符合条件的日志记录
+                    </td>
+                `;
+                tableBody.appendChild(emptyRow);
+            } else {
+                // 渲染日志数据行
+                currentLogs.forEach(log => {
+                    const row = document.createElement("tr");
+                    const formattedTime = new Date(log.timestamp).toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                    
+                    // 根据日志级别和类型设置样式和文本
+                    const levelClass = `log-level-${log.level}`;
+                    const levelText = getLogLevelText(log.level);
+                    const typeClass = `log-type log-type-${log.type}`;
+                    const typeText = getLogTypeText(log.type);
+                    
+                    row.innerHTML = `
+                        <td>${log.id}</td>
+                        <td>${formattedTime}</td>
+                        <td><span class="${levelClass}">${levelText}</span></td>
+                        <td><span class="${typeClass}">${typeText}</span></td>
+                        <td>${log.user}</td>
+                        <td>${log.ip}</td>
+                        <td title="${log.content}">${log.content}</td>
+                        <td>
+                            <button type="button" class="btn btn-xs btn-info" onclick="showLogDetail(${log.id})">详情</button>
+                        </td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                });
+            }
+            
+            // 更新分页控件
+            renderPagination();
+        }
+
+        // 渲染分页控件
+        function renderPagination() {
+            const pagination = document.getElementById("logsPagination");
+            pagination.innerHTML = "";
+            
+            const totalPages = Math.ceil(filteredLogs.length / pageSize);
+            
+            // 上一页按钮
+            const prevItem = document.createElement("li");
+            prevItem.className = currentPage === 1 ? "disabled" : "";
+            prevItem.innerHTML = `
+                <a href="javascript:void(0)" aria-label="Previous" onclick="${currentPage === 1 ? '' : 'changePage(' + (currentPage - 1) + ')'}">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            `;
+            pagination.appendChild(prevItem);
+            
+            // 页码按钮
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageItem = document.createElement("li");
+                pageItem.className = i === currentPage ? "active" : "";
+                pageItem.innerHTML = `
+                    <a href="javascript:void(0)" onclick="changePage(${i})">${i}</a>
+                `;
+                pagination.appendChild(pageItem);
+            }
+            
+            // 下一页按钮
+            const nextItem = document.createElement("li");
+            nextItem.className = currentPage === totalPages ? "disabled" : "";
+            nextItem.innerHTML = `
+                <a href="javascript:void(0)" aria-label="Next" onclick="${currentPage === totalPages ? '' : 'changePage(' + (currentPage + 1) + ')'}">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            `;
+            pagination.appendChild(nextItem);
+        }
+
+        // 切换到指定页码
+        function changePage(page) {
+            if (page <= 0 || page > Math.ceil(filteredLogs.length / pageSize)) {
+                return;
+            }
+            
+            currentPage = page;
+            renderLogsTable();
+        }
+
+        // 导出日志
+        function exportLogs() {
+            if (filteredLogs.length === 0) {
+                showErrorMessage("没有符合条件的日志可以导出！");
+                return;
+            }
+            
+            // 创建CSV内容
+            let csvContent = "ID,时间戳,级别,类型,用户,IP地址,操作详情\n";
+            
+            filteredLogs.forEach(log => {
+                const formattedTime = new Date(log.timestamp).toLocaleString('zh-CN');
+                const levelText = getLogLevelText(log.level);
+                const typeText = getLogTypeText(log.type);
+                
+                // 转义CSV中的特殊字符
+                const escapedContent = log.content.replace(/"/g, '""');
+                
+                csvContent += `"${log.id}","${formattedTime}","${levelText}","${typeText}","${log.user}","${log.ip}","${escapedContent}"\n`;
+            });
+            
+            // 创建下载链接
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute("href", url);
+            link.setAttribute("download", `logs_export_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showSuccessMessage("日志导出成功！");
+        }
+
+        // 清空日志
+        function clearLogs() {
+            if (confirm("确定要清空所有日志记录吗？此操作不可逆！")) {
+                // 在实际应用中，这里应该调用后端API清空日志
+                logsData = [];
+                filteredLogs = [];
+                renderLogsTable();
+                updateLogStatistics();
+                showSuccessMessage("日志已全部清空！");
+            }
+        }
+
+        // 显示日志详情
+        function showLogDetail(logId) {
+            const log = logsData.find(l => l.id === logId);
+            if (!log) return;
+            
+            // 填充详情模态框
+            document.getElementById("detailLogId").textContent = log.id;
+            document.getElementById("detailLogTime").textContent = new Date(log.timestamp).toLocaleString('zh-CN');
+            document.getElementById("detailLogLevel").innerHTML = `<span class="log-level-${log.level}">${getLogLevelText(log.level)}</span>`;
+            document.getElementById("detailLogType").innerHTML = `<span class="log-type log-type-${log.type}">${getLogTypeText(log.type)}</span>`;
+            document.getElementById("detailLogUser").textContent = log.user;
+            document.getElementById("detailLogIp").textContent = log.ip;
+            document.getElementById("detailLogContent").textContent = log.content;
+            document.getElementById("detailLogPath").textContent = log.path;
+            document.getElementById("detailLogBrowser").textContent = log.browser;
+            
+            // 显示模态框
+            $("#logDetailModal").modal("show");
+        }
+
+        // 更新日志统计信息
+        function updateLogStatistics() {
+            document.getElementById("totalLogCount").textContent = filteredLogs.length;
+            document.getElementById("successLogCount").textContent = filteredLogs.filter(l => l.level === 'success').length;
+            document.getElementById("warningLogCount").textContent = filteredLogs.filter(l => l.level === 'warning').length;
+            document.getElementById("errorLogCount").textContent = filteredLogs.filter(l => l.level === 'error').length;
+        }
+
+        // 获取日志级别文本
+        function getLogLevelText(level) {
+            const levelMap = {
+                'info': '信息',
+                'warning': '警告',
+                'error': '错误',
+                'success': '成功'
+            };
+            return levelMap[level] || level;
+        }
+
+        // 获取日志类型文本
+        function getLogTypeText(type) {
+            const typeMap = {
+                'auth': '认证',
+                'operation': '操作',
+                'system': '系统',
+                'data': '数据'
+            };
+            return typeMap[type] || type;
+        }
+
+        // 显示成功消息
+        function showSuccessMessage(message) {
+            document.getElementById("successMessage").textContent = message;
+            const alert = document.getElementById("successAlert");
+            alert.style.display = "block";
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                alert.style.display = "none";
+            }, 3000);
+        }
+
+        // 显示错误消息
+        function showErrorMessage(message) {
+            document.getElementById("errorMessage").textContent = message;
+            const alert = document.getElementById("errorAlert");
+            alert.style.display = "block";
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                alert.style.display = "none";
+            }, 3000);
+        }
+
+        // 显示用户信息
+        function showUserInfo() {
+            alert("当前用户：系统管理员\n权限：全部权限");
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm("确定要退出登录吗？")) {
+                alert("已退出登录！");
+                // 实际应用中应该跳转到登录页面
+                // window.location.href = '../login.html';
+            }
+        }
+    </script>
+</body>
+</html>

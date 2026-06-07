@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课程管理系统 - 登录</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS 变量和设计系统 */
+        :root {
+            /* 颜色系统 */
+            --primary-gradient: linear-gradient(135deg, #6e8efb, #a777e3);
+            --primary-color: #6e8efb;
+            --secondary-color: #a777e3;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-light: #ffffff;
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --border-color: rgba(255, 255, 255, 0.2);
+            --shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            --shadow-hover: 0 12px 48px rgba(31, 38, 135, 0.25);
+            --error-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            
+            /* 间距系统 */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-xxl: 3rem;
+            
+            /* 边框圆角 */
+            --radius-sm: 0.25rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 1rem;
+            --radius-xl: 1.5rem;
+            --radius-full: 50%;
+            
+            /* 过渡动画 */
+            --transition-fast: 0.2s ease;
+            --transition-normal: 0.3s ease;
+            --transition-slow: 0.5s ease;
+            
+            /* 字体 */
+            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-size-xs: 0.75rem;
+            --font-size-sm: 0.875rem;
+            --font-size-md: 1rem;
+            --font-size-lg: 1.125rem;
+            --font-size-xl: 1.25rem;
+            --font-size-xxl: 2rem;
+            
+            /* 玻璃拟态效果 */
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-backdrop: blur(10px);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        /* 基础样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: var(--font-family);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* 渐变背景和装饰元素 */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: var(--spacing-lg);
+            background: var(--bg-primary);
+            overflow: hidden;
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--primary-gradient);
+            opacity: 0.05;
+            z-index: 0;
+        }
+
+        .decorative-circle {
+            position: absolute;
+            border-radius: var(--radius-full);
+            filter: blur(80px);
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        .decorative-circle:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            background: var(--primary-color);
+            top: -150px;
+            right: -150px;
+            animation: float 15s ease-in-out infinite;
+        }
+
+        .decorative-circle:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            background: var(--secondary-color);
+            bottom: -100px;
+            left: -100px;
+            animation: float 12s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(20px, 20px) scale(1.05); }
+        }
+
+        /* 登录卡片样式 - 玻璃拟态效果 */
+        .login-card {
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-backdrop);
+            -webkit-backdrop-filter: var(--glass-backdrop);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            padding: var(--spacing-xl);
+            box-shadow: var(--shadow);
+            z-index: 1;
+            transition: box-shadow var(--transition-normal), transform var(--transition-normal);
+        }
+
+        .login-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-5px);
+        }
+
+        /* 登录表单头部 */
+        .login-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .login-title {
+            font-size: var(--font-size-xxl);
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: fadeIn var(--transition-normal);
+        }
+
+        .login-subtitle {
+            font-size: var(--font-size-md);
+            color: var(--text-secondary);
+            font-weight: 400;
+            animation: fadeIn var(--transition-normal) 0.2s ease-out;
+        }
+
+        /* 角色选择样式 */
+        .role-selector {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-lg);
+            gap: var(--spacing-md);
+            animation: fadeIn var(--transition-normal) 0.3s ease-out;
+        }
+
+        .role-option {
+            flex: 1;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .role-input {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .role-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            border: 2px solid transparent;
+            background: rgba(255, 255, 255, 0.8);
+            transition: all var(--transition-fast);
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .role-input:checked + .role-label {
+            border-color: var(--primary-color);
+            background: rgba(110, 142, 251, 0.1);
+            color: var(--primary-color);
+        }
+
+        .role-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .role-icon {
+            font-size: 1.5rem;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: var(--spacing-md);
+            animation: fadeIn var(--transition-normal) 0.4s ease-out;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: var(--spacing-xs);
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: var(--font-size-sm);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.8);
+            font-size: var(--font-size-md);
+            transition: all var(--transition-fast);
+            color: var(--text-primary);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(110, 142, 251, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        /* 密码输入框 */
+        .password-container {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: var(--spacing-md);
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color var(--transition-fast);
+        }
+
+        .toggle-password:hover {
+            color: var(--primary-color);
+        }
+
+        /* 验证码样式 */
+        .captcha-container {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+
+        .captcha-input {
+            flex: 1;
+        }
+
+        .captcha-image {
+            flex-shrink: 0;
+            width: 100px;
+            height: 45px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all var(--transition-fast);
+        }
+
+        .captcha-image:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 错误提示样式 */
+        .error-message {
+            color: var(--error-color);
+            font-size: var(--font-size-xs);
+            margin-top: var(--spacing-xs);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: opacity var(--transition-fast), transform var(--transition-fast);
+        }
+
+        .error-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 提交按钮样式 */
+        .login-button {
+            width: 100%;
+            padding: var(--spacing-md);
+            background: var(--primary-gradient);
+            color: var(--text-light);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            margin-top: var(--spacing-md);
+            animation: fadeIn var(--transition-normal) 0.5s ease-out;
+        }
+
+        .login-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(110, 142, 251, 0.4);
+        }
+
+        .login-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .login-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* 加载动画 */
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--radius-full);
+            border-top-color: var(--text-light);
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 动画效果 */
+        keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 页脚样式 */
+        .login-footer {
+            text-align: center;
+            margin-top: var(--spacing-xl);
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            animation: fadeIn var(--transition-normal) 0.6s ease-out;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 576px) {
+            .login-container {
+                padding: var(--spacing-md);
+            }
+
+            .login-card {
+                padding: var(--spacing-lg);
+            }
+
+            .login-title {
+                font-size: 1.75rem;
+            }
+
+            .role-selector {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+            }
+
+            .captcha-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .captcha-image {
+                width: 100%;
+            }
+        }
+
+        /* 辅助类 */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* 减少动画偏好支持 */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="decorative-circle"></div>
+        <div class="decorative-circle"></div>
+        
+        <div class="login-card">
+            <div class="login-header">
+                <h1 class="login-title">课程管理系统</h1>
+                <p class="login-subtitle">请选择您的身份并登录</p>
+            </div>
+
+            <form id="loginForm" method="post" action="/doLogin">
+                <!-- 角色选择 -->
+                <div class="role-selector">
+                    <div class="role-option">
+                        <input type="radio" id="role-admin" name="role" value="admin" class="role-input" checked>
+                        <label for="role-admin" class="role-label">
+                            <i class="fas fa-user-shield role-icon"></i>
+                            <span>管理员</span>
+                        </label>
+                    </div>
+                    <div class="role-option">
+                        <input type="radio" id="role-teacher" name="role" value="teacher" class="role-input">
+                        <label for="role-teacher" class="role-label">
+                            <i class="fas fa-chalkboard-teacher role-icon"></i>
+                            <span>教师</span>
+                        </label>
+                    </div>
+                    <div class="role-option">
+                        <input type="radio" id="role-student" name="role" value="student" class="role-input">
+                        <label for="role-student" class="role-label">
+                            <i class="fas fa-user-graduate role-icon"></i>
+                            <span>学生</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 用户名 -->
+                <div class="form-group">
+                    <label for="username" class="form-label">用户名</label>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="请输入用户名" required>
+                    <div id="usernameError" class="error-message"><i class="fas fa-exclamation-circle"></i> <span>用户名不能为空</span></div>
+                </div>
+
+                <!-- 密码 -->
+                <div class="form-group">
+                    <label for="password" class="form-label">密码</label>
+                    <div class="password-container">
+                        <input type="password" id="password" name="password" class="form-control" placeholder="请输入密码" required>
+                        <span class="toggle-password" id="togglePassword">
+                            <i class="fas fa-eye-slash"></i>
+                        </span>
+                    </div>
+                    <div id="passwordError" class="error-message"><i class="fas fa-exclamation-circle"></i> <span>密码不能为空</span></div>
+                </div>
+
+                <!-- 验证码 -->
+                <div class="form-group">
+                    <label for="captcha" class="form-label">验证码</label>
+                    <div class="captcha-container">
+                        <input type="text" id="captcha" name="captcha" class="form-control captcha-input" placeholder="请输入验证码" required>
+                        <canvas id="captchaCanvas" class="captcha-image" width="100" height="45"></canvas>
+                    </div>
+                    <div id="captchaError" class="error-message"><i class="fas fa-exclamation-circle"></i> <span>验证码不能为空</span></div>
+                </div>
+
+                <!-- 全局错误信息 -->
+                <div id="globalError" class="error-message"></div>
+
+                <!-- 登录按钮 -->
+                <button type="submit" class="login-button" id="loginButton">
+                    <span id="buttonText">登录</span>
+                    <span id="buttonLoader" class="loading-spinner" style="display: none;"></span>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p>© 2023 课程管理系统 版权所有</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量存储生成的验证码文本
+        // 使用全局变量存储验证码
+        window.generatedCaptcha = '';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化验证码
+            try {
+                // 立即生成验证码，不使用延迟
+                generateCaptcha();
+            } catch (error) {
+                console.error('初始化验证码失败:', error);
+            }
+            
+            // 验证码点击刷新功能
+            const captchaCanvas = document.getElementById('captchaCanvas');
+            if (captchaCanvas) {
+                captchaCanvas.addEventListener('click', function() {
+                    // 刷新验证码
+                    generateCaptcha();
+                    
+                    // 清空输入框并隐藏错误信息
+                    const captchaInput = document.getElementById('captcha');
+                    const captchaError = document.getElementById('captchaError');
+                    
+                    if (captchaInput) {
+                        captchaInput.value = '';
+                    }
+                    
+                    if (captchaError) {
+                        hideError(captchaError);
+                    }
+                });
+            }
+            
+            // 密码显示/隐藏切换
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.querySelector('i').classList.toggle('fa-eye');
+                this.querySelector('i').classList.toggle('fa-eye-slash');
+            });
+            
+            // 表单验证
+            const loginForm = document.getElementById('loginForm');
+            const usernameInput = document.getElementById('username');
+            // passwordInput变量已在前面声明，直接使用
+            const captchaInput = document.getElementById('captcha');
+            const loginButton = document.getElementById('loginButton');
+            const buttonText = document.getElementById('buttonText');
+            const buttonLoader = document.getElementById('buttonLoader');
+            
+            // 输入验证事件监听
+            usernameInput.addEventListener('input', validateUsername);
+            passwordInput.addEventListener('input', validatePassword);
+            captchaInput.addEventListener('input', validateCaptcha);
+            
+            // 表单提交处理
+            loginForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                // 验证所有字段
+                const isUsernameValid = validateUsername();
+                const isPasswordValid = validatePassword();
+                const isCaptchaValid = validateCaptcha();
+                
+                if (isUsernameValid && isPasswordValid && isCaptchaValid) {
+                    // 禁用按钮并显示加载
+                    loginButton.disabled = true;
+                    buttonText.textContent = '登录中';
+                    buttonLoader.style.display = 'inline-block';
+                    
+                    // 获取选择的角色和表单数据
+                    const selectedRole = document.querySelector('input[name="role"]:checked').value;
+                    
+                    // 创建表单数据对象
+                    const formData = new FormData();
+                    formData.append('username', usernameInput.value);
+                    formData.append('password', passwordInput.value);
+                    formData.append('role', selectedRole);
+                    
+                    // 发送AJAX请求到后端登录接口
+                    fetch('/doLogin', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络请求失败');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // 恢复按钮状态
+                        loginButton.disabled = false;
+                        buttonText.textContent = '登录';
+                        buttonLoader.style.display = 'none';
+                        
+                        if (data.code === 200) {
+                            // 登录成功，保存角色信息到localStorage
+                            localStorage.setItem('selectedRole', selectedRole);
+                            localStorage.setItem('username', usernameInput.value);
+                            
+                            // 根据角色跳转到相应页面
+                            let redirectPath = '';
+                            switch(selectedRole) {
+                                case 'admin':
+                                    redirectPath = '/admin/index.html';
+                                    break;
+                                case 'teacher':
+                                    redirectPath = '/teacher/index.html';
+                                    break;
+                                case 'student':
+                                    redirectPath = '/student/index.html';
+                                    break;
+                                default:
+                                    redirectPath = '/login.html';
+                            }
+                            
+                            // 延迟跳转，提供加载体验
+                            setTimeout(function() {
+                                window.location.href = redirectPath;
+                            }, 800);
+                        } else {
+                            // 登录失败，显示错误信息
+                            showGlobalError(data.message || '用户名或密码错误');
+                            // 刷新验证码
+                            generateCaptcha();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('登录请求错误:', error);
+                        // 恢复按钮状态
+                        loginButton.disabled = false;
+                        buttonText.textContent = '登录';
+                        buttonLoader.style.display = 'none';
+                        showGlobalError('登录失败，请稍后重试');
+                    });
+                } else {
+                    // 显示全局错误消息
+                    showGlobalError('请检查并填写所有必填字段');
+                }
+            });
+        });
+
+        // 超简化版验证码生成函数
+        function generateCaptcha() {
+            try {
+                // 获取Canvas元素和上下文
+                const canvas = document.getElementById('captchaCanvas');
+                if (!canvas) {
+                    console.error('找不到验证码画布元素');
+                    return;
+                }
+                
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    console.error('无法获取画布上下文');
+                    return;
+                }
+                
+                // 设置Canvas大小
+                canvas.width = 120;
+                canvas.height = 40;
+                
+                // 清空画布并设置背景
+                ctx.fillStyle = '#f5f5f5';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 生成验证码文本
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+                let captchaText = '';
+                for (let i = 0; i < 4; i++) {
+                    captchaText += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                
+                // 存储验证码
+                window.generatedCaptcha = captchaText;
+                
+                // 绘制验证码文本
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#333333';
+                ctx.fillText(captchaText, canvas.width / 2, canvas.height / 2);
+                
+                // 添加简单干扰线
+                ctx.strokeStyle = '#cccccc';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 2; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                    ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                    ctx.stroke();
+                }
+            } catch (error) {
+                console.error('验证码生成错误:', error);
+                // 出错时尝试显示简单的错误信息
+                const canvas = document.getElementById('captchaCanvas');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.fillStyle = '#f5f5f5';
+                        ctx.fillRect(0, 0, 120, 40);
+                        ctx.fillStyle = '#ff0000';
+                        ctx.font = '12px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('验证码错误', 60, 20);
+                    }
+                }
+            }
+        }
+
+        // 表单验证函数
+        function validateUsername() {
+            const username = document.getElementById('username').value.trim();
+            const errorElement = document.getElementById('usernameError');
+            
+            if (username === '') {
+                showError(errorElement, '用户名不能为空');
+                return false;
+            } else {
+                hideError(errorElement);
+                return true;
+            }
+        }
+
+        function validatePassword() {
+            const password = document.getElementById('password').value;
+            const errorElement = document.getElementById('passwordError');
+            
+            if (password === '') {
+                showError(errorElement, '密码不能为空');
+                return false;
+            } else {
+                hideError(errorElement);
+                return true;
+            }
+        }
+
+        function validateCaptcha() {
+            const captchaInput = document.getElementById('captcha');
+            const errorElement = document.getElementById('captchaError');
+            const generatedCode = window.generatedCaptcha || '';
+            
+            // 检查元素是否存在
+            if (!captchaInput || !errorElement) {
+                console.error('验证码元素未找到');
+                return false;
+            }
+            
+            const userInput = captchaInput.value.trim().toLowerCase();
+            console.log('验证码验证:', {userInput, generatedCode});
+            
+            if (userInput === '') {
+                showError(errorElement, '请输入验证码');
+                return false;
+            } else if (generatedCode === '') {
+                // 如果没有生成验证码，提示用户刷新
+                showError(errorElement, '验证码无效，请点击刷新');
+                return false;
+            } else if (userInput !== generatedCode.toLowerCase()) {
+                showError(errorElement, '验证码不正确，请重新输入');
+                return false;
+            } else {
+                hideError(errorElement);
+                return true;
+            }
+        }
+
+        // 错误显示辅助函数
+        function showError(element, message) {
+            element.querySelector('span').textContent = message;
+            element.classList.add('show');
+        }
+
+        function hideError(element) {
+            element.classList.remove('show');
+        }
+
+        function showGlobalError(message) {
+            const globalError = document.getElementById('globalError');
+            globalError.innerHTML = `<i class="fas fa-exclamation-circle"></i> <span>${message}</span>`;
+            globalError.classList.add('show');
+            
+            // 3秒后自动隐藏
+            setTimeout(function() {
+                hideError(globalError);
+            }, 3000);
+        }
+
+        // 键盘可访问性
+        document.querySelectorAll('.role-option input').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.nextElementSibling.classList.add('focused');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.nextElementSibling.classList.remove('focused');
+            });
+        });
+    </script>
+</body>
+</html>

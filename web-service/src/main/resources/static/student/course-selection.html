@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课程选择 - 学生选课系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../css/common.css">
+    <script src="../../js/common.js"></script>
+    <style>
+        /* 课程卡片样式 */
+        .course-card {
+            background: var(--glass-bg);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            backdrop-filter: var(--glass-backdrop);
+            box-shadow: var(--shadow);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+        }
+        
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .course-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .course-title {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-primary);
+        }
+        
+        .course-code {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+        }
+        
+        .course-badge {
+            background: var(--success-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+        }
+        
+        .course-info {
+            display: flex;
+            gap: var(--spacing-lg);
+            flex-wrap: wrap;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .course-info-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            color: var(--text-secondary);
+        }
+        
+        .course-info-icon {
+            color: var(--primary-color);
+        }
+        
+        .course-description {
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-md);
+            line-height: 1.6;
+        }
+        
+        .course-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .course-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+        
+        .course-stats {
+            display: flex;
+            gap: var(--spacing-md);
+        }
+        
+        .course-stat {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+        }
+        
+        /* 容量条样式 */
+        .capacity-bar {
+            width: 100px;
+            height: 6px;
+            background-color: var(--gray-200);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .capacity-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width var(--transition-normal);
+        }
+        
+        .capacity-fill.high-capacity {
+            background: linear-gradient(90deg, var(--danger-color), var(--warning-color));
+        }
+        
+        .capacity-fill.medium-capacity {
+            background: linear-gradient(90deg, var(--warning-color), var(--primary-color));
+        }
+        
+        .capacity-fill.low-capacity {
+            background: linear-gradient(90deg, var(--success-color), var(--primary-color));
+        }
+        
+        /* 搜索和筛选样式 */
+        .search-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 3rem 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            font-size: var(--font-size-md);
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-backdrop);
+            transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .search-button {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color var(--transition-normal);
+        }
+        
+        .search-button:hover {
+            background-color: var(--primary-color-dark);
+        }
+        
+        /* 筛选面板样式 */
+        .filter-panel {
+            background: var(--glass-bg);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            backdrop-filter: var(--glass-backdrop);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .filter-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            margin-bottom: var(--spacing-md);
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .filter-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+        
+        .filter-label {
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .filter-select, 
+        .filter-input {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-md);
+            background: transparent;
+            transition: border-color var(--transition-normal);
+        }
+        
+        .filter-select:focus,
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: flex-end;
+        }
+        
+        /* 选课状态标签 */
+        .enrollment-status {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-sm);
+        }
+        
+        .enrollment-status.available {
+            background-color: var(--success-color-light);
+            color: var(--success-color);
+        }
+        
+        .enrollment-status.limited {
+            background-color: var(--warning-color-light);
+            color: var(--warning-color);
+        }
+        
+        .enrollment-status.full {
+            background-color: var(--danger-color-light);
+            color: var(--danger-color);
+        }
+        
+        /* 选课提示样式 */
+        .selection-summary {
+            background: var(--info-color-light);
+            border: 1px solid var(--info-color);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .selection-summary-icon {
+            font-size: var(--font-size-xl);
+            color: var(--info-color);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .course-footer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--spacing-md);
+            }
+            
+            .course-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .filter-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .selection-summary {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="sidebar-brand">
+                    <div class="sidebar-brand-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <span class="sidebar-brand-text">选课系统学生端</span>
+                </a>
+                <button class="sidebar-toggle" aria-label="收起侧边栏">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <div class="nav-item">
+                        <a href="index.html" class="nav-link">
+                            <i class="nav-icon fas fa-home"></i>
+                            <span class="nav-text">首页</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="my-courses.html" class="nav-link">
+                            <i class="nav-icon fas fa-book"></i>
+                            <span class="nav-text">我的课程</span>
+                        </a>
+                    <div class="nav-item">
+                        <a href="course-selection.html" class="nav-link active">
+                            <i class="nav-icon fas fa-search"></i>
+                            <span class="nav-text">课程选择</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="schedule.html" class="nav-link">
+                            <i class="nav-icon fas fa-calendar-alt"></i>
+                            <span class="nav-text">我的课表</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="grades.html" class="nav-link">
+                            <i class="nav-icon fas fa-chart-line"></i>
+                            <span class="nav-text">成绩查询</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="evaluations.html" class="nav-link">
+                            <i class="nav-icon fas fa-star"></i>
+                            <span class="nav-text">课程评价</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="nav-group">
+                    <div class="nav-item">
+                        <a href="profile.html" class="nav-link">
+                            <i class="nav-icon fas fa-user"></i>
+                            <span class="nav-text">个人信息</span>
+                        </a>
+                    <div class="nav-item">
+                        <a href="messages.html" class="nav-link">
+                            <i class="nav-icon fas fa-envelope"></i>
+                            <span class="nav-text">消息通知</span>
+                            <span class="nav-badge">5</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="settings.html" class="nav-link">
+                            <i class="nav-icon fas fa-cog"></i>
+                            <span class="nav-text">设置</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="top-navbar">
+                <div class="nav-left">
+                    <button class="mobile-sidebar-toggle" aria-label="切换侧边栏">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">课程选择</h1>
+                </div>
+                
+                <div class="nav-right">
+                    <div class="breadcrumb">
+                        <a href="index.html">首页</a>
+                        <span class="breadcrumb-separator">/</span>
+                        <span class="breadcrumb-current">课程选择</span>
+                    </div>
+                    
+                    <button class="nav-icon-btn" aria-label="通知">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">5</span>
+                    </button>
+                    
+                    <div class="dropdown">
+                        <button class="user-profile dropdown-toggle">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="user-info">
+                                <span class="user-name">张三</span>
+                                <span class="user-role">计算机科学与技术</span>
+                            </div>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a href="profile.html" class="dropdown-item">
+                                <i class="fas fa-user"></i> 个人信息
+                            </a>
+                            <a href="settings.html" class="dropdown-item">
+                                <i class="fas fa-cog"></i> 设置
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="../login.html" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i> 退出登录
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 页面内容 --<div class="content-wrapper">
+                <!-- 选课提示 --<div class="selection-summary">
+                    <i class="fas fa-info-circle selection-summary-icon"></i>
+                    <div class="selection-summary-content">
+                        <h4 class="selection-summary-title">选课须知>
+                        <p class="selection-summary-text">当前学期选课时间为2024年3月1日-3月15日，请在规定时间内完成选课。您还可选择 <span class="text-primary font-weight-bold">5</span> 门课程，总计最多可选 <span class="text-primary font-weight-bold">25</span> 学分。</p>
+                    </div>
+                </div>
+                
+                <!-- 卡片标题栏 --<div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">可选课程列表</h3>
+                        <div class="card-header-actions">
+                            <div class="search-container">
+                                <input type="text" id="course-search" placeholder="搜索课程名称、教师或代码..." class="search-input">
+                                <button class="search-button">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- 筛选面板 --<div class="filter-panel">
+                            <div class="filter-title">
+                                <h4 class="mb-0">高级筛选 <span class="text-muted font-weight-normal">(点击展开/收起)</span></h4>
+                                <i class="fas fa-chevron-down filter-toggle"></i>
+                            </div>
+                            <div class="filter-options">
+                                <div class="filter-group">
+                                    <label class="filter-label" for="course-category">课程类别:>
+                                    <select id="course-category" class="filter-select">
+                                        <option value="">全部类别>
+                                        <option value="required">必修课>
+                                        <option value="elective">选修课>
+                                        <option value="general">通识课>
+                                        <option value="professional">专业课>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label class="filter-label" for="course-department">开课部门:>
+                                    <select id="course-department" class="filter-select">
+                                        <option value="">全部部门>
+                                        <option value="computer">计算机学院>
+                                        <option value="math">数学学院>
+                                        <option value="physics">物理学院>
+                                        <option value="english">外语学院>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label class="filter-label" for="course-credit">学分:>
+                                    <select id="course-credit" class="filter-select">
+                                        <option value="">全部学分>
+                                        <option value="2">2学分>
+                                        <option value="3">3学分>
+                                        <option value="4">4学分>
+                                        <option value="5">5学分及以上>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label class="filter-label" for="course-teacher">任课教师:>
+                                    <input type="text" id="course-teacher" placeholder="输入教师姓名" class="filter-input">
+                                </div>
+                                <div class="filter-group">
+                                    <label class="filter-label" for="course-time">上课时间:>
+                                    <select id="course-time" class="filter-select">
+                                        <option value="">全部时间>
+                                        <option value="morning">上午(1-4节)>
+                                        <option value="afternoon">下午(5-8节)>
+                                        <option value="evening">晚上(9-12节)>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="filter-actions">
+                                <button class="btn btn-secondary">
+                                    <i class="fas fa-redo-alt"></i> 重置筛选
+                                </button>
+                                <button class="btn btn-primary">
+                                    <i class="fas fa-filter"></i> 应用筛选
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 课程列表 --<div class="courses-list">
+                            <!-- 课程卡片 1 --<div class="course-card">
+                                <div class="course-header">
+                                    <h4 class="course-title">人工智能导论>
+                                    <div class="course-header-right">
+                                        <span class="course-code">CS401>
+                                        <span class="course-badge ml-2">3学分>
+                                    </div>
+                                </div>
+                                <div class="course-body">
+                                    <div class="course-info">
+                                        <div class="course-info-item">
+                                            <i class="course-info-icon fas fa-user"></i>
+                                            <span>陈教授>
+                                        </div>
+                                        <div class="course-info-item">
+                                            <i class="course-info-icon fas fa-clock"></i>
+                                            <span>周一、三 5-6节>
+                                        <div class="course-info-item">
+                                            <i class="course-info-icon fas fa-map-marker-alt"></i>
+                                            <span>计算机楼 A401>
+                                        </div>
+                                        <div class="course-info-item">
+                                            <i class="course-info-icon fas fa-tags"></i>
+                                            <span>专业课、选修课>
+                                        </div>
+                                    </div>
+                                    <p class="course-description">本课程介绍人工智能的基本概念、原理和方法，包括机器学习、深度学习、自然语言处理、计算机视觉等领域的基础知识和应用案例。通过实践项目培养学生对AI技术的理解和应用能力。>
+                                    <div class="course-footer">
+                                        <div class="course-stats">
+                                            <div class="course-stat">
+                                                <i class="fas fa-users"></i>
+                                                <span>已选: 28/40>
+                                            </div>
+                                            <div class="course-stat">
+                                                <div class="capacity-bar">
+                                                    <div class="capacity-fill low-capacity" style="width: 70%"></div>
+                                                </div>
+                                            <div class="course-stat">
+                                                <span class="enrollment-status available">
+                                                    <i class="fas fa-check-circle"></i> 可选
+                                                </span>
+                                            </div>
+                                        <div class="course-actions">
+                                            <button class="btn btn-primary">
+                                                <i class="fas fa-plus"></i> 选课
+                                            </button>
+                                            <button class="btn btn-outline-secondary">
+                                                <i class="fas fa-info-circle"></i> 详情
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 课程卡片 2 --<div class="course-card">
+                                <div class="course-header">
+                                    <h4 class="course-title">区块链技术及应用>
+                                    <div class="course-header-right">
+                                        <span class="course-code">CS405>
+                                        <span class="course-badge ml-2">3学分>
+                                    </div>
+                                </div>
+                                <div class="course-body">
+                                    <div class="course-info">
+                                        <div class="course-info-item">
+                                            <i class="course-info-icon fas fa-user"></i>
+                                            <span>赵教授>
+                                        </div>
+                                        <div class="course-info-item">
+                                            <i class="course-info-icon fas fa-clock"></i>
+                                            <span>周二、四 3-4节>
+                                        <div class="course-info-item">
+                                            <i class="course-info-icon fas fa-map-marker-alt"></i>
+                                            <span>计算机楼 B302>
+                                        </div>
+                                        <div class="course-info-item">
+                                            <i class="course-info-icon fas fa-tags"></i>
+                                            <span>专业课、选修课>
+                                        </div>
+                                    <div class="course-description">本课程介绍区块链技术的基本原理、技术架构和应用场景。包括密码学基础、共识机制、智能合约、区块链平台开发与应用等内容。通过项目实践培养学生对区块链技术的理解和应用能力。>
+                                    <div class="course-footer">
+                                        <div class="course-stats">
+                                            <div class="course-stat">
+                                                <i class="fas fa-users"></i>
+                                                <span>已选: 36/40>
+                                            <div class="course-stat">
+                                                <div class="capacity-bar">
+                                                    <div class="capacity-fill medium-capacity" style="width: 90%"></div>
+                                                </div>
+                                            <div class="course-stat">
+                                                <span class="enrollment-status limited">
+                                                    <i class="fas fa-exclamation-triangle"></i> 名额紧张
+                                                </span>
+                                            <div class="course-actions">
+                                                <button class="btn btn-primary">
+                                                    <i class="fas fa-plus"></i> 选课
+                                                </button>
+                                                <button class="btn btn-outline-secondary">
+                                                    <i class="fas fa-info-circle"></i> 详情
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <div class="course-card">
+                                <div class="course-header">
+                                    <h4 class="course-title">大数据分析与应用>
+                                    <div class="course-header-right">
+                                        <span class="course-code">CS408>
+                                        <span class="course-badge ml-2">4学分>
+                                    </div>
+                                </div>
+                                <div class="course-body">
+                                    <div class="course-info">
+                                        <div class="course-info-item">
+                                            <i class="course-info-icon fas fa-user"></i>
+                                            <span>林教授>
+                                        </div>
+                                        <div class="course-info-item">
+                                            <i class="course-info-icon fas fa-clock"></i>
+                                            <span>周三、五 7-8节>
+                                        <div class="course-info-item">
+                                            <i class="course-info-icon fas fa-map-marker-alt"></i>
+                                            <span>计算机楼 C201>
+                                        </div>
+                                        <div class="course-info-item">
+                                            <i class="course-info-icon fas fa-tags"></i>
+                                            <span>专业课、必修课>
+                                        </div>
+                                    </div>
+                                    <p class="course-description">本课程介绍大数据处理的基本概念、技术架构和分析方法。包括Hadoop、Spark等大数据处理框架，数据清洗、转换、分析和可视化等技术。通过实践项目培养学生大数据分析和应用开发能力。>
+                                    <div class="course-footer">
+                                        <div class="course-stats">
+                                            <div class="course-stat">
+                                                <i class="fas fa-users"></i>
+                                                <span>已选: 40/40>
+                                            <div class="course-stat">
+                                                <div class="capacity-bar">
+                                                    <div class="capacity-fill high-capacity" style="width: 100%"></div>
+                                                </div>
+                                            <div class="course-stat">
+                                                <span class="enrollment-status full">
+                                                    <i class="fas fa-times-circle"></i> 已满
+                                                </span>
+                                            <div class="course-actions">
+                                                <button class="btn btn-secondary" disabled>
+                                                    <i class="fas fa-plus"></i> 选课
+                                                </button>
+                                                <button class="btn btn-outline-secondary">
+                                                    <i class="fas fa-info-circle"></i> 详情
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 课程卡片 4 --<div class="course-card">
+                                <div class="course-header">
+                                    <h4 class="course-title">云计算技术与应用>
+                                    <div class="course-header-right">
+                                        <span class="course-code">CS410>
+                                        <span class="course-badge ml-2">3学分>
+                                    </div>
+                                </div>
+                                <div class="course-body">
+                                    <div class="course-info">
+                                        <div class="course-info-item">
+                                            <i class="course-info-icon fas fa-user"></i>
+                                            <span>黄教授>
+                                        <div class="course-info-item">
+                                            <i class="course-info-icon fas fa-clock"></i>
+                                            <span>周四、五 1-2节>
+                                        <div class="course-info-item">
+                                            <i class="course-info-icon fas fa-map-marker-alt"></i>
+                                            <span>计算机楼 A302>
+                                        <div class="course-info-item">
+                                            <i class="course-info-icon fas fa-tags"></i>
+                                            <span>专业课、选修课>
+                                        </div>
+                                    <div class="course-description">本课程介绍云计算的基本概念、技术架构和服务模式。包括虚拟化技术、云存储、云数据库、云安全等内容，以及AWS、Azure、阿里云等主流云平台的使用和开发。通过实践培养学生云计算系统管理和应用开发能力。>
+                                    <div class="course-footer">
+                                        <div class="course-stats">
+                                            <div class="course-stat">
+                                                <i class="fas fa-users"></i>
+                                                <span>已选: 22/40>
+                                            <div class="course-stat">
+                                                <div class="capacity-bar">
+                                                    <div class="capacity-fill low-capacity" style="width: 55%"></div>
+                                                <div class="course-stat">
+                                                    <span class="enrollment-status available">
+                                                        <i class="fas fa-check-circle"></i> 可选
+                                                    </span>
+                                                <div class="course-actions">
+                                                    <button class="btn btn-primary">
+                                                        <i class="fas fa-plus"></i> 选课
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary">
+                                                        <i class="fas fa-info-circle"></i> 详情
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <div class="course-card">
+                                <div class="course-header">
+                                    <h4 class="course-title">移动应用开发>
+                                    <div class="course-header-right">
+                                        <span class="course-code">CS415>
+                                        <span class="course-badge ml-2">4学分>
+                                    <div class="course-body">
+                                        <div class="course-info">
+                                            <div class="course-info-item">
+                                                <i class="course-info-icon fas fa-user"></i>
+                                                <span>周教授>
+                                            <div class="course-info-item">
+                                                <i class="course-info-icon fas fa-clock"></i>
+                                                <span>周二、四 9-10节>
+                                            <div class="course-info-item">
+                                                <i class="course-info-icon fas fa-map-marker-alt"></i>
+                                                <span>计算机楼 B401>
+                                            <div class="course-info-item">
+                                                <i class="course-info-icon fas fa-tags"></i>
+                                                <span>专业课、选修课>
+                                            <div class="course-description">本课程介绍移动应用开发的基本概念、技术和方法。包括Android和iOS平台的开发环境搭建、界面设计、数据存储、网络通信、多线程编程等内容。通过项目实践培养学生移动应用开发和发布能力。>
+                                            <div class="course-footer">
+                                                <div class="course-stats">
+                                                    <div class="course-stat">
+                                                        <i class="fas fa-users"></i>
+                                                        <span>已选: 32/40>
+                                                    <div class="course-stat">
+                                                        <div class="capacity-bar">
+                                                            <div class="capacity-fill medium-capacity" style="width: 80%"></div>
+                                                        <div class="course-stat">
+                                                            <span class="enrollment-status available">
+                                                                <i class="fas fa-check-circle"></i> 可选
+                                                            </span>
+                                                        <div class="course-actions">
+                                                            <button class="btn btn-primary">
+                                                                <i class="fas fa-plus"></i> 选课
+                                                            <button class="btn btn-outline-secondary">
+                                                                <i class="fas fa-info-circle"></i> 详情
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        // 筛选面板展开/收起功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterTitle = document.querySelector('.filter-title');
+            const filterOptions = document.querySelector('.filter-options');
+            const filterToggle = document.querySelector('.filter-toggle');
+            
+            // 默认展开筛选面板
+            filterOptions.style.display = 'grid';
+            
+            filterTitle.addEventListener('click', function() {
+                if (filterOptions.style.display === 'grid') {
+                    filterOptions.style.display = 'none';
+                    filterToggle.classList.remove('fa-chevron-down');
+                    filterToggle.classList.add('fa-chevron-up');
+                } else {
+                    filterOptions.style.display = 'grid';
+                    filterToggle.classList.remove('fa-chevron-up');
+                    filterToggle.classList.add('fa-chevron-down');
+                }
+            });
+            
+            // 简单的选课按钮点击效果
+            const enrollButtons = document.querySelectorAll('.btn-primary');
+            enrollButtons.forEach(button => {
+                if (!button.disabled) {
+                    button.addEventListener('click', function() {
+                        alert('选课成功！');
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

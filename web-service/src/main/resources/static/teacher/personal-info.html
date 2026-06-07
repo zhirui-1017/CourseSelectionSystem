@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人信息 - 教师管理系统>
+    <!-- 引入公共CSS -->
+    <link rel="stylesheet" href="../css/common.css">
+    <!-- 引入Bootstrap CSS --<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 引入Font Awesome --<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 个人信息页面特定样式 */
+        .profile-card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-backdrop);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            padding: 2rem;
+        }
+        
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-right: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .profile-info {
+            flex: 1;
+        }
+        
+        .profile-info h2 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .profile-info p {
+            margin: 0;
+            color: var(--text-secondary);
+        }
+        
+        .info-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .info-label {
+            display: block;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-value {
+            display: block;
+            color: var(--text-primary);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .save-btn {
+            margin-top: 1rem;
+        }
+        
+        .tab-content {
+            padding: 1.5rem 0;
+        }
+        
+        .change-password-form {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .teaching-info-card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-backdrop);
+            border-radius: var(--radius-lg);
+            border: var(--glass-border);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .teaching-info-card h3 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .teaching-info-card .teaching-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .teaching-info-card .teaching-item:last-child {
+            border-bottom: none;
+        }
+        
+        .teaching-info-card .teaching-item-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .teaching-info-card .teaching-item-value {
+            color: var(--text-secondary);
+        }
+        
+        .edit-form {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="sidebar-brand">
+                    <div class="sidebar-brand-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <div class="sidebar-brand-text">教师管理系统</div>
+                </a>
+                <button class="sidebar-toggle">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-item">
+                    <a href="index.html" class="nav-link">
+                        <i class="nav-icon fas fa-home"></i>
+                        <span class="nav-text">首页</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="course-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-book"></i>
+                        <span class="nav-text">课程管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="student-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-users"></i>
+                        <span class="nav-text">学生管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="grade-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-graduation-cap"></i>
+                        <span class="nav-text">成绩管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="teaching-statistics.html" class="nav-link">
+                        <i class="nav-icon fas fa-chart-bar"></i>
+                        <span class="nav-text">教学统计</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="personal-info.html" class="nav-link active">
+                        <i class="nav-icon fas fa-user-circle"></i>
+                        <span class="nav-text">个人信息</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- 主内容区 --<main class="main-content">
+            <!-- 顶部导航栏 --<nav class="top-navbar">
+                <div class="nav-left">
+                    <button class="mobile-sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">个人信息</h1>
+                </div>
+                <div class="nav-right">
+                    <button class="nav-icon-btn">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <button class="nav-icon-btn">
+                        <i class="fas fa-envelope"></i>
+                    </button>
+                    <div class="user-profile dropdown">
+                        <div class="dropdown-toggle">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="user-info">
+                                <span class="user-name">张教授>
+                                <span class="user-role">计算机科学与技术>
+                            </div>
+                        </div>
+                        <div class="dropdown-menu">
+                            <a href="personal-info.html" class="dropdown-item">
+                                <i class="fas fa-user-circle"></i> 个人信息
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-cog"></i> 设置
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="../login.html" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i> 退出登录
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            
+            <!-- 页面内容 --<div class="content-wrapper">
+                <!-- 标签页导航 --<nav class="nav nav-tabs mb-4">
+                    <a class="nav-item nav-link active" data-bs-toggle="tab" href="#basic-info">基本信息</a>
+                    <a class="nav-item nav-link" data-bs-toggle="tab" href="#teaching-info">教学信息</a>
+                    <a class="nav-item nav-link" data-bs-toggle="tab" href="#change-password">修改密码</a>
+                </nav>
+                
+                <!-- 标签页内容 --<div class="tab-content">
+                    <!-- 基本信息标签页 --<div id="basic-info" class="tab-pane fade show active">
+                        <div class="profile-card">
+                            <div class="profile-header">
+                                <div class="profile-avatar">
+                                    <i class="fas fa-user-tie"></i>
+                                </div>
+                                <div class="profile-info">
+                                    <h2 id="display-name">张教授</h2>
+                                    <p id="display-department">计算机科学与技术学院 / 教授</p>
+                                </div>
+                                <div class="profile-actions ml-auto">
+                                    <button id="edit-profile-btn" class="btn btn-primary">
+                                        <i class="fas fa-edit mr-2"></i>编辑资料
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- 显示模式 --<div id="display-mode">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="info-group">
+                                            <span class="info-label">姓名>
+                                            <span id="display-teacher-name" class="info-value">张教授</span>
+                                        </div>
+                                        <div class="info-group">
+                                            <span class="info-label">工号>
+                                            <span id="display-teacher-id" class="info-value">2001001</span>
+                                        </div>
+                                        <div class="info-group">
+                                            <span class="info-label">性别>
+                                            <span id="display-gender" class="info-value">男>
+                                        </div>
+                                        <div class="info-group">
+                                            <span class="info-label">出生日期>
+                                            <span id="display-birth-date" class="info-value">1975-06-15>
+                                        </div>
+                                        <div class="info-group">
+                                            <span class="info-label">学历>
+                                            <span id="display-education" class="info-value">博士研究生>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="info-group">
+                                            <span class="info-label">所在学院>
+                                            <span id="display-college" class="info-value">计算机科学与技术学院>
+                                        </div>
+                                        <div class="info-group">
+                                            <span class="info-label">专业方向>
+                                            <span id="display-major" class="info-value">人工智能与机器学习>
+                                        </div>
+                                        <div class="info-group">
+                                            <span class="info-label">联系电话>
+                                            <span id="display-phone" class="info-value">13800138000>
+                                        </div>
+                                        <div class="info-group">
+                                            <span class="info-label">电子邮箱>
+                                            <span id="display-email" class="info-value">zhang@example.edu.cn>
+                                        </div>
+                                        <div class="info-group">
+                                            <span class="info-label">入职日期>
+                                            <span id="display-join-date" class="info-value">2005-09-01>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-4">
+                                    <div class="col-md-12">
+                                        <div class="info-group">
+                                            <span class="info-label">个人简介>
+                                            <p id="display-bio" class="info-value">张教授长期从事人工智能与机器学习领域的教学与研究工作，主持多项国家级科研项目，发表SCI/EI论文50余篇，出版专著3部，获得多项省级以上教学科研奖励。在计算机科学与技术学院主要承担《人工智能导论》、《机器学习》等课程的教学工作。</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 编辑模式表单 --<div id="edit-mode" class="edit-form">
+                                <form id="edit-profile-form">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="edit-name" class="form-label">姓名 *>
+                                                <input type="text" id="edit-name" class="form-control" value="张教授" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit-teacher-id" class="form-label">工号 *>
+                                                <input type="text" id="edit-teacher-id" class="form-control" value="2001001" disabled required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit-gender" class="form-label">性别 *>
+                                                <select id="edit-gender" class="form-control" required>
+                                                    <option value="男" selected>男>
+                                                    <option value="女">女>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit-birth-date" class="form-label">出生日期 *>
+                                                <input type="date" id="edit-birth-date" class="form-control" value="1975-06-15" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit-education" class="form-label">学历 *>
+                                                <select id="edit-education" class="form-control" required>
+                                                    <option value="本科">本科>
+                                                    <option value="硕士研究生">硕士研究生>
+                                                    <option value="博士研究生" selected>博士研究生>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="edit-college" class="form-label">所在学院 *>
+                                                <input type="text" id="edit-college" class="form-control" value="计算机科学与技术学院" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit-major" class="form-label">专业方向 *>
+                                                <input type="text" id="edit-major" class="form-control" value="人工智能与机器学习" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit-phone" class="form-label">联系电话 *>
+                                                <input type="tel" id="edit-phone" class="form-control" value="13800138000" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit-email" class="form-label">电子邮箱 *>
+                                                <input type="email" id="edit-email" class="form-control" value="zhang@example.edu.cn" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit-join-date" class="form-label">入职日期 *>
+                                                <input type="date" id="edit-join-date" class="form-control" value="2005-09-01" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-4">
+                                        <div class="col-md-12">
+                                            <div class="form-group">
+                                                <label for="edit-bio" class="form-label">个人简介>
+                                                <textarea id="edit-bio" class="form-control" rows="4" required>张教授长期从事人工智能与机器学习领域的教学与研究工作，主持多项国家级科研项目，发表SCI/EI论文50余篇，出版专著3部，获得多项省级以上教学科研奖励。在计算机科学与技术学院主要承担《人工智能导论》、《机器学习》等课程的教学工作。</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-actions mt-4 d-flex justify-content-end">
+                                        <button type="button" id="cancel-edit-btn" class="btn btn-secondary mr-2">取消</button>
+                                        <button type="submit" class="btn btn-primary">保存修改</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 教学信息标签页 --<div id="teaching-info" class="tab-pane fade">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="teaching-info-card">
+                                    <h3>教学统计信息</h3>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">总授课门数>
+                                        <span class="teaching-item-value">12门>
+                                    </div>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">本学期授课门数>
+                                        <span class="teaching-item-value">3门>
+                                    </div>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">累计教学时长>
+                                        <span class="teaching-item-value">3200学时>
+                                    </div>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">累计指导学生数>
+                                        <span class="teaching-item-value">1200名>
+                                    </div>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">学生评教平均分>
+                                        <span class="teaching-item-value">96.5分>
+                                    </div>
+                                </div>
+                                
+                                <div class="teaching-info-card">
+                                    <h3>研究方向及成果>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">主要研究方向>
+                                        <span class="teaching-item-value">人工智能、机器学习、数据挖掘>
+                                    </div>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">发表论文数>
+                                        <span class="teaching-item-value">SCI/EI 50余篇>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">出版著作数>
+                                        <span class="teaching-item-value">3部>
+                                    </div>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">主持科研项目数>
+                                        <span class="teaching-item-value">国家级5项，省部级8项>
+                                    </div>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">获得奖励数>
+                                        <span class="teaching-item-value">省级以上12项>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="teaching-info-card">
+                                    <h3>本学期授课信息>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">人工智能导论 (CS305)>
+                                        <span class="teaching-item-value">3个班 / 96人>
+                                    </div>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">机器学习 (CS403)>
+                                        <span class="teaching-item-value">2个班 / 64人>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">深度学习 (CS405)>
+                                        <span class="teaching-item-value">1个班 / 32人>
+                                    </div>
+                                </div>
+                                
+                                <div class="teaching-info-card">
+                                    <h3>培养研究生情况>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">在读博士研究生>
+                                        <span class="teaching-item-value">8名>
+                                    </div>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">在读硕士研究生>
+                                        <span class="teaching-item-value">12名>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">已毕业博士研究生>
+                                        <span class="teaching-item-value">15名>
+                                    </div>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">已毕业硕士研究生>
+                                        <span class="teaching-item-value">45名>
+                                    </div>
+                                </div>
+                                
+                                <div class="teaching-info-card">
+                                    <h3>其他信息>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">学术兼职>
+                                        <span class="teaching-item-value">多个国际期刊审稿人，学术会议程序委员会委员>
+                                    </div>
+                                    <div class="teaching-item">
+                                        <span class="teaching-item-name">社会兼职>
+                                        <span class="teaching-item-value">中国计算机学会人工智能专业委员会委员，多个学术组织会员>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 修改密码标签页 --<div id="change-password" class="tab-pane fade">
+                        <div class="profile-card change-password-form">
+                            <h3 class="mb-4">修改密码</h3>
+                            <form id="change-password-form">
+                                <div class="form-group">
+                                    <label for="current-password" class="form-label">当前密码 *>
+                                    <input type="password" id="current-password" class="form-control" placeholder="请输入当前密码" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="new-password" class="form-label">新密码 *>
+                                    <input type="password" id="new-password" class="form-control" placeholder="请输入新密码" required minlength="8">
+                                    <small class="form-text text-muted mt-1">密码长度至少8位，包含字母和数字。</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="confirm-password" class="form-label">确认新密码 *>
+                                    <input type="password" id="confirm-password" class="form-control" placeholder="请再次输入新密码" required minlength="8">
+                                </div>
+                                <div class="form-actions mt-4 d-flex justify-content-end">
+                                    <button type="reset" class="btn btn-secondary mr-2">取消>
+                                    <button type="submit" class="btn btn-primary">修改密码>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 引入公共JS --<script src="../js/common.js"></script>
+    <!-- 引入Bootstrap JS --<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 侧边栏导航高亮
+            const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === 'personal-info.html') {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+            
+            // 个人信息编辑功能
+            const editProfileBtn = document.getElementById('edit-profile-btn');
+            const displayMode = document.getElementById('display-mode');
+            const editMode = document.getElementById('edit-mode');
+            const cancelEditBtn = document.getElementById('cancel-edit-btn');
+            const editProfileForm = document.getElementById('edit-profile-form');
+            
+            // 编辑按钮点击事件
+            editProfileBtn.addEventListener('click', function() {
+                displayMode.style.display = 'none';
+                editMode.style.display = 'block';
+            });
+            
+            // 取消编辑按钮点击事件
+            cancelEditBtn.addEventListener('click', function() {
+                editMode.style.display = 'none';
+                displayMode.style.display = 'block';
+            });
+            
+            // 表单提交事件
+            editProfileForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // 获取表单数据
+                const name = document.getElementById('edit-name').value;
+                const gender = document.getElementById('edit-gender').value;
+                const birthDate = document.getElementById('edit-birth-date').value;
+                const education = document.getElementById('edit-education').value;
+                const college = document.getElementById('edit-college').value;
+                const major = document.getElementById('edit-major').value;
+                const phone = document.getElementById('edit-phone').value;
+                const email = document.getElementById('edit-email').value;
+                const joinDate = document.getElementById('edit-join-date').value;
+                const bio = document.getElementById('edit-bio').value;
+                
+                // 在实际项目中，这里会发送AJAX请求保存数据
+                console.log('保存个人资料:', {
+                    name,
+                    gender,
+                    birthDate,
+                    education,
+                    college,
+                    major,
+                    phone,
+                    email,
+                    joinDate,
+                    bio
+                });
+                
+                // 更新显示模式的值
+                document.getElementById('display-name').textContent = name;
+                document.getElementById('display-teacher-name').textContent = name;
+                document.getElementById('display-gender').textContent = gender;
+                document.getElementById('display-birth-date').textContent = birthDate;
+                document.getElementById('display-education').textContent = education;
+                document.getElementById('display-college').textContent = college;
+                document.getElementById('display-major').textContent = major;
+                document.getElementById('display-phone').textContent = phone;
+                document.getElementById('display-email').textContent = email;
+                document.getElementById('display-join-date').textContent = joinDate;
+                document.getElementById('display-bio').textContent = bio;
+                document.getElementById('display-department').textContent = college + ' / ' + '教授';
+                
+                // 切换回显示模式
+                editMode.style.display = 'none';
+                displayMode.style.display = 'block';
+                
+                // 显示成功提示
+                alert('个人资料更新成功！');
+            });
+            
+            // 修改密码表单提交事件
+            const changePasswordForm = document.getElementById('change-password-form');
+            changePasswordForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const currentPassword = document.getElementById('current-password').value;
+                const newPassword = document.getElementById('new-password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
+                
+                // 验证密码
+                if (newPassword !== confirmPassword) {
+                    alert('两次输入的新密码不一致！');
+                    return;
+                }
+                
+                if (newPassword.length < 8) {
+                    alert('密码长度至少为8位！');
+                    return;
+                }
+                
+                if (!/[a-zA-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+                    alert('密码必须包含字母和数字！');
+                    return;
+                }
+                
+                // 在实际项目中，这里会发送AJAX请求修改密码
+                console.log('修改密码:', { currentPassword, newPassword });
+                
+                // 显示成功提示
+                alert('密码修改成功！请使用新密码重新登录。');
+                
+                // 清空表单
+                changePasswordForm.reset();
+                
+                // 在实际项目中，这里可能会自动登出用户
+            });
+        });
+    </script>
+</body>
+</html>
