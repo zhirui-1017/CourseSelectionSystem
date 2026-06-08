@@ -196,9 +196,9 @@
         };
         try {
             if (role === 'teacher') {
-                await api.post('/admin/addTeacher', body);
+                await api.post('/api/v1/teachers/from-map', body);
             } else {
-                await api.post('/admin/addStudent', body);
+                await api.post('/api/v1/students/from-map', body);
             }
             window.closeModal?.(document.getElementById('addUserModal'));
             form.reset();
@@ -232,7 +232,7 @@
             status: 1
         };
         try {
-            await api.post('/admin/addCourse', body);
+            await api.post('/api/v1/courses', body);
             window.closeModal?.(document.getElementById('addCourseModal'));
             form.reset();
             api.notify('success', '添加成功', '课程已写入数据库');
@@ -245,9 +245,9 @@
     async function handleDeleteUser(role, id) {
         try {
             if (role === 'teacher') {
-                await api.post('/admin/deleteTeacher', null, { teacherId: id });
+                await api.del(`/api/v1/teachers/${encodeURIComponent(id)}`);
             } else {
-                await api.post('/admin/deleteStudent', null, { studentId: id });
+                await api.del(`/api/v1/students/${encodeURIComponent(id)}`);
             }
             api.notify('success', '删除成功', '用户已删除');
             await Promise.all([loadUsers(), loadStats()]);
@@ -258,7 +258,7 @@
 
     async function handleDeleteCourse(id) {
         try {
-            await api.post('/admin/deleteCourse', null, { courseId: id });
+            await api.del(`/api/v1/courses/${encodeURIComponent(id)}`);
             api.notify('success', '删除成功', '课程已删除');
             await Promise.all([loadCourses(), loadStats()]);
         } catch (error) {
