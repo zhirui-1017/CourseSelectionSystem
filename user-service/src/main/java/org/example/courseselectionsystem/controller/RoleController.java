@@ -82,9 +82,19 @@ public class RoleController {
      * @return 角色列表
      */
     @GetMapping("/list")
-    public Result<PageResult<Object>> getRoleList(PageRequest pageRequest) {
-        org.example.courseselectionsystem.service.RoleService.PageResult<Object> roleList = roleService.getRoleList(pageRequest);
-        return Result.success(new PageResult<>(roleList.getItems(), roleList.getTotal(), roleList.getPageNum(), roleList.getPageSize()));
+    public Result<PageResult<Object>> getRoleList(PageRequest pageRequest,
+                                                  @RequestParam(required = false) String name,
+                                                  @RequestParam(required = false) String code,
+                                                  @RequestParam(required = false) Integer status) {
+        PageRequest request = pageRequest == null ? new PageRequest() : pageRequest;
+        org.springframework.data.domain.Page<org.example.courseselectionsystem.entity.Role> rolePage =
+                roleService.getRoleList(request, name, code, status);
+        return Result.success(new PageResult<>(
+                new java.util.ArrayList<>(rolePage.getContent()),
+                rolePage.getTotalElements(),
+                rolePage.getNumber() + 1,
+                rolePage.getSize()
+        ));
     }
 
     /**

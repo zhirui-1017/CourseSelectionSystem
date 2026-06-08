@@ -24,10 +24,7 @@ public interface PermissionService {
         return getTopLevelPermissions();
     }
 
-    default Map<String, Object> updatePermissionStatus(Long id, Integer status) {
-        Map<String, Object> permission = getPermissionById(id);
-        return Map.of("code", 200, "message", "更新成功", "data", permission.get("data"));
-    }
+    Map<String, Object> updatePermissionStatus(Long id, Integer status);
 
     List<Map<String, Object>> getPermissionsByParentId(Long parentId);
 

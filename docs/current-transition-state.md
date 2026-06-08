@@ -7,6 +7,7 @@ This note records the current runnable transition state for the Spring Cloud mig
 - `selection-service` now owns the selection and course-selection REST APIs.
 - `user-service` now owns the user, role, and permission REST APIs.
 - `user-service` user list now aggregates student, teacher, and admin accounts; register, login, password reset, and password change endpoints have concrete student/teacher/admin implementations.
+- Role list filtering and permission status updates are concrete in `user-service` and mirrored in the `web-service` compatibility fallback.
 - `student-service` now owns the student REST APIs under `/api/v1/students/**`.
 - `teacher-service` now owns the teacher REST APIs under `/api/v1/teachers/**`.
 - Student and teacher page paths remain routed to `web-service` for compatibility.

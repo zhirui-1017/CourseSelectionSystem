@@ -61,6 +61,10 @@ public class PermissionServiceImpl implements PermissionService {
             permission.setDescription(stringValue(permissionMap.get("description")));
             permission.setUrl(stringValue(permissionMap.get("url")));
             permission.setMethod(stringValue(permissionMap.get("method")));
+            permission.setPermissionType(intValue(permissionMap.get("permissionType"), 3));
+            permission.setIcon(stringValue(permissionMap.get("icon")));
+            permission.setSort(intValue(permissionMap.get("sort"), 0));
+            permission.setStatus(intValue(permissionMap.get("status"), 1));
 
             Object parentId = permissionMap.get("parentId");
             if (parentId != null) {
@@ -125,6 +129,18 @@ public class PermissionServiceImpl implements PermissionService {
             }
             if (permissionMap.containsKey("method")) {
                 permission.setMethod(stringValue(permissionMap.get("method")));
+            }
+            if (permissionMap.containsKey("permissionType")) {
+                permission.setPermissionType(intValue(permissionMap.get("permissionType"), permission.getPermissionType()));
+            }
+            if (permissionMap.containsKey("icon")) {
+                permission.setIcon(stringValue(permissionMap.get("icon")));
+            }
+            if (permissionMap.containsKey("sort")) {
+                permission.setSort(intValue(permissionMap.get("sort"), permission.getSort()));
+            }
+            if (permissionMap.containsKey("status")) {
+                permission.setStatus(intValue(permissionMap.get("status"), permission.getStatus()));
             }
             if (permissionMap.containsKey("parentId")) {
                 try {
@@ -325,7 +341,11 @@ public class PermissionServiceImpl implements PermissionService {
         result.put("description", permission.getDescription());
         result.put("url", permission.getUrl());
         result.put("method", permission.getMethod());
+        result.put("permissionType", permission.getPermissionType());
         result.put("parentId", permission.getParentId());
+        result.put("icon", permission.getIcon());
+        result.put("sort", permission.getSort());
+        result.put("status", permission.getStatus());
         result.put("createTime", permission.getCreateTime());
         result.put("updateTime", permission.getUpdateTime());
         return result;
@@ -358,5 +378,12 @@ public class PermissionServiceImpl implements PermissionService {
 
     private String stringValue(Object value) {
         return value == null ? "" : value.toString();
+    }
+
+    private Integer intValue(Object value, Integer defaultValue) {
+        if (value == null || value.toString().trim().isEmpty()) {
+            return defaultValue;
+        }
+        return Integer.parseInt(value.toString());
     }
 }

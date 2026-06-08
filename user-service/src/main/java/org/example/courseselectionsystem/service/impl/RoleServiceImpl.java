@@ -14,8 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 @Service
 public class RoleServiceImpl implements RoleService {
@@ -27,6 +29,10 @@ public class RoleServiceImpl implements RoleService {
     @Transactional
     public Role addRole(Role role) {
         try {
+            if (role == null || isBlank(role.getName()) || isBlank(role.getCode())) {
+                throw new RuntimeException("Role name and code cannot be empty");
+            }
+
             Role existingRole = roleRepository.findByName(role.getName());
             if (existingRole != null) {
                 throw new RuntimeException("Role name already exists");
@@ -35,6 +41,10 @@ public class RoleServiceImpl implements RoleService {
             existingRole = roleRepository.findByCode(role.getCode());
             if (existingRole != null) {
                 throw new RuntimeException("Role code already exists");
+            }
+
+            if (role.getStatus() == null) {
+                role.setStatus(1);
             }
 
             return roleRepository.save(role);
@@ -47,25 +57,37 @@ public class RoleServiceImpl implements RoleService {
     @Transactional
     public Role updateRole(Role role) {
         try {
+            if (role == null || role.getId() == null) {
+                throw new RuntimeException("Role id cannot be empty");
+            }
+
             Role existingRole = roleRepository.findById(role.getId()).orElse(null);
             if (existingRole == null) {
                 throw new RuntimeException("Role does not exist");
             }
 
-            Role roleWithSameName = roleRepository.findByName(role.getName());
-            if (roleWithSameName != null && !roleWithSameName.getId().equals(role.getId())) {
-                throw new RuntimeException("Role name already exists");
+            if (!isBlank(role.getName())) {
+                Role roleWithSameName = roleRepository.findByName(role.getName());
+                if (roleWithSameName != null && !roleWithSameName.getId().equals(role.getId())) {
+                    throw new RuntimeException("Role name already exists");
+                }
+                existingRole.setName(role.getName());
             }
 
-            Role roleWithSameCode = roleRepository.findByCode(role.getCode());
-            if (roleWithSameCode != null && !roleWithSameCode.getId().equals(role.getId())) {
-                throw new RuntimeException("Role code already exists");
+            if (!isBlank(role.getCode())) {
+                Role roleWithSameCode = roleRepository.findByCode(role.getCode());
+                if (roleWithSameCode != null && !roleWithSameCode.getId().equals(role.getId())) {
+                    throw new RuntimeException("Role code already exists");
+                }
+                existingRole.setCode(role.getCode());
             }
 
-            existingRole.setName(role.getName());
-            existingRole.setCode(role.getCode());
-            existingRole.setDescription(role.getDescription());
-            existingRole.setStatus(role.getStatus());
+            if (role.getDescription() != null) {
+                existingRole.setDescription(role.getDescription());
+            }
+            if (role.getStatus() != null) {
+                existingRole.setStatus(role.getStatus());
+            }
 
             return roleRepository.save(existingRole);
         } catch (DataAccessException ex) {
@@ -136,25 +158,27 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Page<Role> getRoleList(PageRequest pageRequestParam, String name, String code, Integer status) {
+        PageRequest request = pageRequestParam == null ? new PageRequest() : pageRequestParam;
+        int pageNum = request.getPageNum() == null || request.getPageNum() < 1 ? 1 : request.getPageNum();
+        int pageSize = request.getPageSize() == null || request.getPageSize() < 1 ? 10 : Math.min(request.getPageSize(), 100);
+
         Sort sort;
-        if (pageRequestParam.getSortField() != null && !pageRequestParam.getSortField().isEmpty()) {
-            sort = "asc".equalsIgnoreCase(pageRequestParam.getSortOrder())
-                    ? Sort.by(Sort.Order.asc(pageRequestParam.getSortField()))
-                    : Sort.by(Sort.Order.desc(pageRequestParam.getSortField()));
+        if (!isBlank(request.getSortField())) {
+            String sortField = roleSortProperty(request.getSortField());
+            sort = "asc".equalsIgnoreCase(request.getSortOrder())
+                    ? Sort.by(Sort.Order.asc(sortField))
+                    : Sort.by(Sort.Order.desc(sortField));
         } else {
             sort = Sort.by(Sort.Order.desc("id"));
         }
 
         org.springframework.data.domain.PageRequest pageable =
-                org.springframework.data.domain.PageRequest.of(pageRequestParam.getPageNum() - 1, pageRequestParam.getPageSize(), sort);
+                org.springframework.data.domain.PageRequest.of(pageNum - 1, pageSize, sort);
 
         try {
-            return roleRepository.findAll(pageable);
+            return toPage(filterRoles(roleRepository.findAll(sort), name, code, status), pageable);
         } catch (DataAccessException ex) {
-            List<Role> roles = fallbackRoles();
-            int fromIndex = Math.min((int) pageable.getOffset(), roles.size());
-            int toIndex = Math.min(fromIndex + pageable.getPageSize(), roles.size());
-            return new PageImpl<>(roles.subList(fromIndex, toIndex), pageable, roles.size());
+            return toPage(filterRoles(fallbackRoles(), name, code, status), pageable);
         }
     }
 
@@ -221,5 +245,41 @@ public class RoleServiceImpl implements RoleService {
                         || normalized.equals(role.getName().toLowerCase(Locale.ROOT)))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private List<Role> filterRoles(List<Role> roles, String name, String code, Integer status) {
+        return roles.stream()
+                .filter(role -> containsIgnoreCase(role.getName(), name))
+                .filter(role -> containsIgnoreCase(role.getCode(), code))
+                .filter(role -> status == null || Objects.equals(role.getStatus(), status))
+                .collect(Collectors.toList());
+    }
+
+    private Page<Role> toPage(List<Role> roles, org.springframework.data.domain.PageRequest pageable) {
+        int fromIndex = Math.min((int) pageable.getOffset(), roles.size());
+        int toIndex = Math.min(fromIndex + pageable.getPageSize(), roles.size());
+        return new PageImpl<>(roles.subList(fromIndex, toIndex), pageable, roles.size());
+    }
+
+    private boolean containsIgnoreCase(String value, String keyword) {
+        if (isBlank(keyword)) {
+            return true;
+        }
+        return value != null && value.toLowerCase(Locale.ROOT).contains(keyword.trim().toLowerCase(Locale.ROOT));
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private String roleSortProperty(String field) {
+        String normalized = field.trim();
+        if ("name".equalsIgnoreCase(normalized)) {
+            return "roleName";
+        }
+        if ("code".equalsIgnoreCase(normalized)) {
+            return "roleCode";
+        }
+        return normalized;
     }
 }

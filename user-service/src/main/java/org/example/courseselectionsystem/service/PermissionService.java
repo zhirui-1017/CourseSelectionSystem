@@ -1,6 +1,5 @@
 package org.example.courseselectionsystem.service;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,13 +24,7 @@ public interface PermissionService {
         return getTopLevelPermissions();
     }
 
-    default Map<String, Object> updatePermissionStatus(Long id, Integer status) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("code", 501);
-        result.put("message", "Permission status update is not implemented");
-        result.put("data", null);
-        return result;
-    }
+    Map<String, Object> updatePermissionStatus(Long id, Integer status);
 
     List<Map<String, Object>> getPermissionsByParentId(Long parentId);
 
