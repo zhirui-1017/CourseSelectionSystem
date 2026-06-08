@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -24,9 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 用户服务实现类
@@ -136,7 +139,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserById(Long userId) {
-        if (userId == null || userId <= 0) {
+        if (userId == null || userId < 0) {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "用户ID不能为空");
         }
         
@@ -165,6 +168,11 @@ public class UserServiceImpl implements UserService {
             user.setUserCode(teacher.getTeacherNo());
             user.setDepartmentId(teacher.getDepartmentId());
             return user;
+        }
+
+        Admin admin = adminRepository.findById(userId).orElse(null);
+        if (admin != null) {
+            return fromAdmin(admin);
         }
         
         // 管理员特殊处理
@@ -211,6 +219,11 @@ public class UserServiceImpl implements UserService {
             user.setUserCode(teacher.getTeacherNo());
             user.setDepartmentId(teacher.getDepartmentId());
             return user;
+        }
+
+        Admin admin = adminRepository.findByUsername(username).orElse(null);
+        if (admin != null) {
+            return fromAdmin(admin);
         }
         
         // 管理员特殊处理
@@ -289,9 +302,30 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Page<User> getUserList(PageRequest pageRequest, String username, String realName, Integer userType) {
-        // TODO: 实现分页查询用户列表
-        // 这里需要与StudentMapper和TeacherMapper配合实现，暂时返回未实现
-        throw new BusinessException(Constants.NOT_IMPLEMENTED_CODE, "分页查询用户列表功能暂未实现");
+        PageRequest request = pageRequest == null ? new PageRequest() : pageRequest;
+        int pageNum = request.getPageNum() == null || request.getPageNum() < 1
+                ? Constants.DEFAULT_PAGE_NUM
+                : request.getPageNum();
+        int pageSize = request.getPageSize() == null || request.getPageSize() < 1
+                ? Constants.DEFAULT_PAGE_SIZE
+                : Math.min(request.getPageSize(), Constants.MAX_PAGE_SIZE);
+
+        List<User> filtered = aggregateUsers(userType).stream()
+                .filter(user -> containsIgnoreCase(user.getUsername(), username)
+                        || containsIgnoreCase(user.getUserCode(), username))
+                .filter(user -> containsIgnoreCase(user.getRealName(), realName))
+                .sorted(userComparator(request.getOrderByColumn(), Boolean.TRUE.equals(request.getIsAsc())))
+                .collect(Collectors.toList());
+
+        int fromIndex = Math.min((pageNum - 1) * pageSize, filtered.size());
+        int toIndex = Math.min(fromIndex + pageSize, filtered.size());
+        List<User> pageContent = filtered.subList(fromIndex, toIndex);
+
+        return new PageImpl<>(
+                pageContent,
+                org.springframework.data.domain.PageRequest.of(pageNum - 1, pageSize),
+                filtered.size()
+        );
     }
 
     @Override
@@ -302,37 +336,7 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "用户类型不能为空");
         }
         
-        List<User> userList = new ArrayList<>();
-        
-        // 根据用户类型查询对应的实体
-        if (userType == 1) { // 学生用户
-            List<Student> studentList = studentMapper.selectAll();
-            for (Student student : studentList) {
-                User user = new User();
-                user.setId(student.getId());
-                user.setUsername(student.getStudentNo());
-                user.setRealName(student.getName());
-                user.setUserType(1); // 1-学生
-                user.setUserCode(student.getStudentNo());
-                user.setDepartmentId(student.getDepartmentId());
-                user.setMajorId(student.getMajorId());
-                userList.add(user);
-            }
-        } else if (userType == 2) { // 教师用户
-            List<Teacher> teacherList = teacherMapper.selectAll();
-            for (Teacher teacher : teacherList) {
-                User user = new User();
-                user.setId(teacher.getId());
-                user.setUsername(teacher.getTeacherNo());
-                user.setRealName(teacher.getName());
-                user.setUserType(2); // 2-教师
-                user.setUserCode(teacher.getTeacherNo());
-                user.setDepartmentId(teacher.getDepartmentId());
-                userList.add(user);
-            }
-        } else {
-            throw new BusinessException(Constants.PARAM_ERROR_CODE, "不支持的用户类型");
-        }
+        List<User> userList = aggregateUsers(userType);
         
         logger.info("获取用户列表完成，共查询到 {} 条数据", userList.size());
         return userList;
@@ -341,15 +345,86 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = false)
     public boolean resetPassword(Long userId, String password) {
-        // 此方法暂时不实现，因为Student和Teacher实体中没有password字段
-        throw new BusinessException(Constants.NOT_IMPLEMENTED_CODE, "重置密码功能暂未实现");
+        validateUserId(userId);
+        if (!StringUtils.hasText(password)) {
+            throw new BusinessException(Constants.PARAM_ERROR_CODE, "新密码不能为空");
+        }
+
+        Student student = studentMapper.selectById(userId);
+        if (student != null) {
+            student.setPassword(password);
+            int result = studentMapper.updateById(student);
+            if (result > 0) {
+                return true;
+            }
+            throw new BusinessException(Constants.FAIL_CODE, "重置密码失败");
+        }
+
+        Teacher teacher = teacherMapper.selectById(userId);
+        if (teacher != null) {
+            teacher.setPassword(password);
+            int result = teacherMapper.updateById(teacher);
+            if (result > 0) {
+                return true;
+            }
+            throw new BusinessException(Constants.FAIL_CODE, "重置密码失败");
+        }
+
+        Admin admin = adminRepository.findById(userId).orElse(null);
+        if (admin != null) {
+            admin.setPassword(password);
+            adminRepository.save(admin);
+            return true;
+        }
+
+        throw new BusinessException(Constants.NOT_FOUND_CODE, "用户不存在");
     }
 
     @Override
     @Transactional(readOnly = false)
     public boolean changePassword(Long userId, String oldPassword, String newPassword) {
-        // 此方法暂时不实现，因为Student和Teacher实体中没有password字段
-        throw new BusinessException(Constants.NOT_IMPLEMENTED_CODE, "修改密码功能暂未实现");
+        validateUserId(userId);
+        if (!StringUtils.hasText(newPassword)) {
+            throw new BusinessException(Constants.PARAM_ERROR_CODE, "新密码不能为空");
+        }
+
+        Student student = studentMapper.selectById(userId);
+        if (student != null) {
+            if (!passwordMatches(oldPassword, student.getPassword())) {
+                throw new BusinessException(Constants.PARAM_ERROR_CODE, "旧密码不正确");
+            }
+            student.setPassword(newPassword);
+            int result = studentMapper.updateById(student);
+            if (result > 0) {
+                return true;
+            }
+            throw new BusinessException(Constants.FAIL_CODE, "修改密码失败");
+        }
+
+        Teacher teacher = teacherMapper.selectById(userId);
+        if (teacher != null) {
+            if (!teacherPasswordMatches(oldPassword, teacher.getPassword())) {
+                throw new BusinessException(Constants.PARAM_ERROR_CODE, "旧密码不正确");
+            }
+            teacher.setPassword(newPassword);
+            int result = teacherMapper.updateById(teacher);
+            if (result > 0) {
+                return true;
+            }
+            throw new BusinessException(Constants.FAIL_CODE, "修改密码失败");
+        }
+
+        Admin admin = adminRepository.findById(userId).orElse(null);
+        if (admin != null) {
+            if (!passwordMatches(oldPassword, admin.getPassword())) {
+                throw new BusinessException(Constants.PARAM_ERROR_CODE, "旧密码不正确");
+            }
+            admin.setPassword(newPassword);
+            adminRepository.save(admin);
+            return true;
+        }
+
+        throw new BusinessException(Constants.NOT_FOUND_CODE, "用户不存在");
     }
 
     @Override
@@ -509,6 +584,112 @@ public class UserServiceImpl implements UserService {
 
     private boolean isEnabled(Integer status) {
         return status == null || status == 1;
+    }
+
+    private void validateUserId(Long userId) {
+        if (userId == null || userId < 0) {
+            throw new BusinessException(Constants.PARAM_ERROR_CODE, "用户ID不能为空");
+        }
+    }
+
+    private List<User> aggregateUsers(Integer userType) {
+        if (userType != null && userType != 1 && userType != 2 && userType != 3) {
+            throw new BusinessException(Constants.PARAM_ERROR_CODE, "不支持的用户类型");
+        }
+
+        List<User> users = new ArrayList<>();
+        if (userType == null || userType == 1) {
+            for (Student student : studentMapper.selectAll()) {
+                users.add(fromStudent(student));
+            }
+        }
+        if (userType == null || userType == 2) {
+            for (Teacher teacher : teacherMapper.selectAll()) {
+                users.add(fromTeacher(teacher));
+            }
+        }
+        if (userType == null || userType == 3) {
+            for (Admin admin : adminRepository.findAll()) {
+                users.add(fromAdmin(admin));
+            }
+        }
+        return users;
+    }
+
+    private User fromStudent(Student student) {
+        User user = new User();
+        user.setId(student.getId());
+        user.setUsername(student.getStudentNo());
+        user.setRealName(student.getName());
+        user.setUserType(1);
+        user.setUserCode(student.getStudentNo());
+        user.setDepartmentId(student.getDepartmentId());
+        user.setMajorId(student.getMajorId());
+        user.setClassName(student.getClassName());
+        user.setEmail(student.getEmail());
+        user.setPhone(student.getPhone());
+        user.setStatus(student.getStatus());
+        return user;
+    }
+
+    private User fromTeacher(Teacher teacher) {
+        User user = new User();
+        user.setId(teacher.getId());
+        user.setUsername(teacher.getTeacherNo());
+        user.setRealName(teacher.getName());
+        user.setUserType(2);
+        user.setUserCode(teacher.getTeacherNo());
+        user.setDepartmentId(teacher.getDepartmentId());
+        user.setEmail(teacher.getEmail());
+        user.setPhone(teacher.getPhone());
+        user.setStatus(teacher.getStatus());
+        return user;
+    }
+
+    private User fromAdmin(Admin admin) {
+        User user = new User();
+        user.setId(admin.getId());
+        user.setUsername(admin.getUsername());
+        user.setRealName("管理员");
+        user.setUserType(3);
+        user.setUserCode(admin.getUsername());
+        user.setStatus(admin.getStatus());
+        return user;
+    }
+
+    private boolean containsIgnoreCase(String value, String keyword) {
+        if (!StringUtils.hasText(keyword)) {
+            return true;
+        }
+        return value != null && value.toLowerCase().contains(keyword.toLowerCase());
+    }
+
+    private Comparator<User> userComparator(String orderByColumn, boolean ascending) {
+        Comparator<User> comparator;
+        if ("username".equalsIgnoreCase(orderByColumn) || "userCode".equalsIgnoreCase(orderByColumn)) {
+            comparator = Comparator.comparing(user -> safeString(user.getUsername()), String.CASE_INSENSITIVE_ORDER);
+        } else if ("realName".equalsIgnoreCase(orderByColumn) || "name".equalsIgnoreCase(orderByColumn)) {
+            comparator = Comparator.comparing(user -> safeString(user.getRealName()), String.CASE_INSENSITIVE_ORDER);
+        } else if ("userType".equalsIgnoreCase(orderByColumn)) {
+            comparator = Comparator.comparing(user -> safeInteger(user.getUserType()));
+        } else if ("status".equalsIgnoreCase(orderByColumn)) {
+            comparator = Comparator.comparing(user -> safeInteger(user.getStatus()));
+        } else {
+            comparator = Comparator.comparing(user -> safeLong(user.getId()));
+        }
+        return ascending ? comparator : comparator.reversed();
+    }
+
+    private String safeString(String value) {
+        return value == null ? "" : value;
+    }
+
+    private Integer safeInteger(Integer value) {
+        return value == null ? Integer.MAX_VALUE : value;
+    }
+
+    private Long safeLong(Long value) {
+        return value == null ? Long.MAX_VALUE : value;
     }
 
     private boolean passwordMatches(String rawPassword, String storedPassword) {
