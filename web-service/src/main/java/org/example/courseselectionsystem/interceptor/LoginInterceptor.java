@@ -25,7 +25,8 @@ public class LoginInterceptor implements HandlerInterceptor {
             "/static/**",
             "/css/**",
             "/js/**",
-            "/images/**"
+            "/images/**",
+            "/actuator/**"
     );
     
     @Override

@@ -1,6 +1,7 @@
 param(
     [string[]]$Service,
-    [switch]$All
+    [switch]$All,
+    [int]$TimeoutSeconds = 30
 )
 
 $ErrorActionPreference = "Stop"
@@ -32,15 +33,44 @@ if ($selected.Count -eq 0) {
     throw "No matching services found. Requested: $($Service -join ', ')"
 }
 
+function Wait-PortReleased {
+    param(
+        [string]$Name,
+        [int]$Port,
+        [int]$Timeout
+    )
+
+    $deadline = (Get-Date).AddSeconds($Timeout)
+    while ((Get-Date) -lt $deadline) {
+        $listener = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue |
+                Select-Object -First 1
+        if ($null -eq $listener) {
+            return
+        }
+        Start-Sleep -Seconds 1
+    }
+
+    throw "Timed out waiting for $Name port $Port to be released."
+}
+
 foreach ($entry in $selected) {
     $process = Get-Process -Id $entry.Pid -ErrorAction SilentlyContinue
     if ($null -eq $process) {
         Write-Host "$($entry.Name) is not running with PID $($entry.Pid)."
-        continue
+    } else {
+        Write-Host "Stopping $($entry.Name) with PID $($entry.Pid)..."
+        Stop-Process -Id $entry.Pid -Force
     }
 
-    Write-Host "Stopping $($entry.Name) with PID $($entry.Pid)..."
-    Stop-Process -Id $entry.Pid -Force
+    $listeners = @(Get-NetTCPConnection -LocalPort $entry.Port -State Listen -ErrorAction SilentlyContinue)
+    foreach ($listener in $listeners) {
+        if ($listener.OwningProcess -ne $entry.Pid) {
+            Write-Host "Stopping $($entry.Name) listener on port $($entry.Port) with PID $($listener.OwningProcess)..."
+            Stop-Process -Id $listener.OwningProcess -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    Wait-PortReleased -Name $entry.Name -Port $entry.Port -Timeout $TimeoutSeconds
 }
 
 $remaining = @($entries | Where-Object { $selected.Name -notcontains $_.Name })

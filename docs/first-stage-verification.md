@@ -108,6 +108,24 @@ $env:JAVA_HOME='E:\biancheng\jdk\.jdks\oracle_open_jdk-17'
 }
 ```
 
+也可以指定任一服务检查对应路由的 fallback：
+
+```powershell
+.\scripts\smoke-test-gateway.ps1 -ExpectFallbackFor selection-service
+.\scripts\smoke-test-gateway.ps1 -ExpectFallbackFor user-service
+.\scripts\smoke-test-gateway.ps1 -ExpectFallbackFor student-service
+.\scripts\smoke-test-gateway.ps1 -ExpectFallbackFor teacher-service
+.\scripts\smoke-test-gateway.ps1 -ExpectFallbackFor web-service
+```
+
+如需一次性覆盖所有第一阶段业务服务，可以运行矩阵验收脚本：
+
+```powershell
+.\scripts\verify-gateway-fallbacks.ps1 -JavaHome 'E:\biancheng\jdk\.jdks\oracle_open_jdk-17'
+```
+
+该脚本会启动微服务栈，逐个停止 `course-service`、`selection-service`、`user-service`、`student-service`、`teacher-service`、`web-service`，并通过 Gateway 检查相应路由是否返回统一 fallback JSON。每轮检查结束后会重新启动被停止的服务，并等待对应 Gateway 路由恢复正常；脚本结束时会清理已启动的服务进程。
+
 ## 停止服务
 
 ```powershell
