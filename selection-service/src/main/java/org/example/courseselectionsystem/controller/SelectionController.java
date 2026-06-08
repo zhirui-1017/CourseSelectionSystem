@@ -189,6 +189,18 @@ public class SelectionController {
         return Result.success(courseSelectionService.getSelectionStats());
     }
 
+    @GetMapping("/teacher/course/{courseId}/students")
+    public Result getTeacherCourseStudents(@PathVariable Long courseId,
+                                           @RequestParam Long teacherId,
+                                           @RequestParam(required = false) Integer status) {
+        return Result.success(courseSelectionService.getTeacherCourseStudents(courseId, teacherId, status));
+    }
+
+    @GetMapping("/teacher/dashboard")
+    public Result getTeacherDashboard(@RequestParam Long teacherId) {
+        return Result.success(courseSelectionService.getTeacherDashboard(teacherId));
+    }
+
     @PostMapping("/{selectionId}/grade")
     public Result updateGrade(@PathVariable Long selectionId,
                               @RequestParam Long teacherId,

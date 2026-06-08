@@ -113,4 +113,8 @@ public interface CourseSelectionService {
     Map<String, Object> getSelectionStats();
 
     Map<String, Object> updateGrade(Long selectionId, Long teacherId, Map<String, Object> gradeInfo);
+
+    List<Map<String, Object>> getTeacherCourseStudents(Long courseId, Long teacherId, Integer status);
+
+    Map<String, Object> getTeacherDashboard(Long teacherId);
 }

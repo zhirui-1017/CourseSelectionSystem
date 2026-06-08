@@ -3,9 +3,11 @@ package org.example.courseselectionsystem.service.impl;
 import org.example.courseselectionsystem.common.Result;
 import org.example.courseselectionsystem.entity.Course;
 import org.example.courseselectionsystem.entity.CourseSelection;
+import org.example.courseselectionsystem.entity.Student;
 import org.example.courseselectionsystem.exception.BusinessException;
 import org.example.courseselectionsystem.repository.CourseRepository;
 import org.example.courseselectionsystem.repository.CourseSelectionRepository;
+import org.example.courseselectionsystem.repository.StudentRepository;
 import org.example.courseselectionsystem.service.CourseSelectionService;
 import org.example.courseselectionsystem.vo.PageRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,9 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private StudentRepository studentRepository;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -254,6 +259,84 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
         return toGradeRow(courseSelectionRepository.save(selection), course);
     }
 
+    @Override
+    public List<Map<String, Object>> getTeacherCourseStudents(Long courseId, Long teacherId, Integer status) {
+        Course course = requireOwnedCourse(courseId, teacherId);
+        List<CourseSelection> selections = status == null
+                ? courseSelectionRepository.findByCourseId(courseId)
+                : courseSelectionRepository.findByCourseIdAndStatus(courseId, status);
+
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (CourseSelection selection : selections) {
+            rows.add(toStudentRow(selection, course));
+        }
+        return rows;
+    }
+
+    @Override
+    public Map<String, Object> getTeacherDashboard(Long teacherId) {
+        if (teacherId == null) {
+            throw new BusinessException(Result.PARAM_ERROR, "teacherId不能为空");
+        }
+
+        List<Course> courses = courseRepository.findByTeacherId(teacherId);
+        if (courses == null) {
+            courses = Collections.emptyList();
+        }
+
+        long selectedCount = 0L;
+        long gradedCount = 0L;
+        long waitingCount = 0L;
+        double scoreTotal = 0D;
+        long scoreCount = 0L;
+        List<Map<String, Object>> recentSelections = new ArrayList<>();
+
+        for (Course course : courses) {
+            List<CourseSelection> selections = courseSelectionRepository.findByCourseId(course.getId());
+            for (CourseSelection selection : selections) {
+                if (Objects.equals(selection.getStatus(), 1)) {
+                    selectedCount++;
+                    if (selection.getScore() != null) {
+                        gradedCount++;
+                        scoreTotal += selection.getScore();
+                        scoreCount++;
+                    }
+                    recentSelections.add(toStudentRow(selection, course));
+                } else if (Objects.equals(selection.getStatus(), 3)) {
+                    waitingCount++;
+                }
+            }
+        }
+
+        recentSelections.sort((left, right) -> {
+            Date leftTime = (Date) left.get("selectionTime");
+            Date rightTime = (Date) right.get("selectionTime");
+            if (leftTime == null && rightTime == null) {
+                return 0;
+            }
+            if (leftTime == null) {
+                return 1;
+            }
+            if (rightTime == null) {
+                return -1;
+            }
+            return rightTime.compareTo(leftTime);
+        });
+        if (recentSelections.size() > 8) {
+            recentSelections = new ArrayList<>(recentSelections.subList(0, 8));
+        }
+
+        Map<String, Object> stats = new LinkedHashMap<>();
+        stats.put("courseCount", courses.size());
+        stats.put("studentCount", selectedCount);
+        stats.put("gradedCount", gradedCount);
+        stats.put("waitingCount", waitingCount);
+        stats.put("averageScore", scoreCount == 0 ? null : Math.round((scoreTotal / scoreCount) * 10D) / 10D);
+        stats.put("courses", courses);
+        stats.put("recentSelections", recentSelections);
+        return stats;
+    }
+
     private void promoteWaitingSelection(Long courseId) {
         Course course = courseRepository.findById(courseId).orElse(null);
         if (course == null) {
@@ -292,6 +375,12 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
     }
 
     private Course requireOwnedCourse(Long courseId, Long teacherId) {
+        if (courseId == null) {
+            throw new BusinessException(Result.PARAM_ERROR, "课程ID不能为空");
+        }
+        if (teacherId == null) {
+            throw new BusinessException(Result.PARAM_ERROR, "teacherId不能为空");
+        }
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(Result.NOT_FOUND, "课程不存在"));
         if (!Objects.equals(course.getTeacherId(), teacherId)) {
@@ -301,14 +390,16 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
     }
 
     private Map<String, Object> toGradeRow(CourseSelection selection, Course course) {
+        return toStudentRow(selection, course);
+    }
+
+    private Map<String, Object> toStudentRow(CourseSelection selection, Course course) {
         Map<String, Object> row = new LinkedHashMap<>();
         row.put("selectionId", selection.getId());
         row.put("courseId", selection.getCourseId());
         row.put("courseCode", course.getCourseCode());
         row.put("courseName", course.getCourseName());
         row.put("studentId", selection.getStudentId());
-        row.put("studentNo", selection.getStudentId());
-        row.put("studentName", "学生" + selection.getStudentId());
         row.put("selectionTime", selection.getSelectionTime());
         row.put("dailyGrade", selection.getDailyGrade());
         row.put("labGrade", selection.getLabGrade());
@@ -318,7 +409,29 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
         row.put("remark", selection.getRemark());
         row.put("status", selection.getStatus());
         row.put("statusText", selectionStatus(selection.getStatus()));
+        appendStudentInfo(row, selection.getStudentId());
         return row;
+    }
+
+    private void appendStudentInfo(Map<String, Object> row, Long studentId) {
+        Optional<Student> optionalStudent = studentId == null || studentRepository == null
+                ? Optional.empty()
+                : studentRepository.findById(studentId);
+        if (optionalStudent.isPresent()) {
+            Student student = optionalStudent.get();
+            row.put("studentNo", student.getStudentNo());
+            row.put("studentName", student.getName());
+            row.put("gender", student.getGender());
+            row.put("majorId", student.getMajorId());
+            row.put("collegeId", student.getCollegeId());
+            row.put("className", student.getClassName());
+            row.put("phone", student.getPhone());
+            row.put("email", student.getEmail());
+            return;
+        }
+
+        row.put("studentNo", studentId);
+        row.put("studentName", "学生" + studentId);
     }
 
     private Double calculateScore(Double dailyGrade, Double labGrade, Double examGrade) {

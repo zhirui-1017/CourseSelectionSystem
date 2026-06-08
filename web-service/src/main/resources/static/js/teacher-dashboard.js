@@ -87,15 +87,18 @@
             state.students = [];
             return [];
         }
-        state.students = await api.get('/teacher/courseStudents', {
-            courseId,
+        const teacherId = currentTeacherId();
+        state.students = await api.get(`/api/v1/course-selections/teacher/course/${encodeURIComponent(courseId)}/students`, {
+            teacherId,
             status: status === undefined ? 1 : status
         }) || [];
         return state.students;
     }
 
     async function renderDashboard() {
-        const dashboard = await api.get('/teacher/dashboard');
+        const dashboard = await api.get('/api/v1/course-selections/teacher/dashboard', {
+            teacherId: currentTeacherId()
+        });
         state.courses = dashboard.courses || [];
         renderStats([
             ['我的课程', dashboard.courseCount || 0, 'fa-book-open', '本账号授课课程'],
@@ -509,10 +512,7 @@
     async function saveGradeRow(row) {
         const button = row.querySelector('[data-save-grade]');
         const payload = gradePayload(row);
-        const teacherId = state.teacher?.id || state.teacher?.teacherId || state.teacher?.userId;
-        if (!teacherId) {
-            throw new Error('无法读取当前教师ID');
-        }
+        const teacherId = currentTeacherId();
         button.disabled = true;
         try {
             const saved = await api.post(
@@ -605,6 +605,14 @@
     function selectedCourse() {
         const id = selectedCourseId();
         return state.courses.find((course) => Number(course.id) === Number(id));
+    }
+
+    function currentTeacherId() {
+        const teacherId = state.teacher?.id || state.teacher?.teacherId || state.teacher?.userId;
+        if (!teacherId) {
+            throw new Error('无法读取当前教师ID');
+        }
+        return teacherId;
     }
 
     function gradeBadge(score, level) {
