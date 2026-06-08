@@ -11,11 +11,13 @@ import org.example.courseselectionsystem.mapper.TeacherMapper;
 import org.example.courseselectionsystem.repository.AdminRepository;
 import org.example.courseselectionsystem.service.impl.UserServiceImpl;
 import org.example.courseselectionsystem.vo.PageRequest;
+import org.example.courseselectionsystem.vo.RegisterRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -24,6 +26,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -38,6 +41,66 @@ class UserServiceImplTest {
 
     @Mock
     private AdminRepository adminRepository;
+
+    @Test
+    void registerCreatesStudentUserWithEncodedPassword() {
+        UserServiceImpl service = newService();
+        RegisterRequest request = registerRequest();
+        when(studentMapper.selectByStudentNo("S1001")).thenReturn(null);
+        when(studentMapper.insert(any(Student.class))).thenReturn(1);
+
+        boolean result = service.register(request);
+
+        assertThat(result).isTrue();
+        verify(studentMapper).insert(argThat(student ->
+                "S1001".equals(student.getStudentNo())
+                        && "New Student".equals(student.getName())
+                        && "new@example.com".equals(student.getEmail())
+                        && "13900000000".equals(student.getPhone())
+                        && Long.valueOf(2L).equals(student.getCollegeId())
+                        && Long.valueOf(3L).equals(student.getMajorId())
+                        && "Class 1".equals(student.getClassName())
+                        && Integer.valueOf(1).equals(student.getStatus())
+                        && new BCryptPasswordEncoder().matches("abc123", student.getPassword())
+        ));
+    }
+
+    @Test
+    void registerRejectsDuplicateStudentNo() {
+        UserServiceImpl service = newService();
+        RegisterRequest request = registerRequest();
+        when(studentMapper.selectByStudentNo("S1001")).thenReturn(student(1L, "S1001", "Existing"));
+
+        assertThatThrownBy(() -> service.register(request))
+                .isInstanceOf(BusinessException.class)
+                .extracting("code")
+                .isEqualTo(Constants.DUPLICATE_CODE);
+    }
+
+    @Test
+    void registerRejectsMismatchedConfirmPassword() {
+        UserServiceImpl service = newService();
+        RegisterRequest request = registerRequest();
+        request.confirmPassword = "other123";
+
+        assertThatThrownBy(() -> service.register(request))
+                .isInstanceOf(BusinessException.class)
+                .extracting("code")
+                .isEqualTo(Constants.PARAM_ERROR_CODE);
+    }
+
+    @Test
+    void registerAcceptsLowercaseStudentRole() {
+        UserServiceImpl service = newService();
+        RegisterRequest request = registerRequest();
+        request.role = "student";
+        when(studentMapper.selectByStudentNo("S1001")).thenReturn(null);
+        when(studentMapper.insert(any(Student.class))).thenReturn(1);
+
+        boolean result = service.register(request);
+
+        assertThat(result).isTrue();
+    }
 
     @Test
     void getUserListAggregatesFiltersSortsAndPagesUsers() {
@@ -175,6 +238,22 @@ class UserServiceImplTest {
         ReflectionTestUtils.setField(service, "teacherMapper", teacherMapper);
         ReflectionTestUtils.setField(service, "adminRepository", adminRepository);
         return service;
+    }
+
+    private RegisterRequest registerRequest() {
+        RegisterRequest request = new RegisterRequest();
+        request.username = "student-user";
+        request.userCode = "S1001";
+        request.password = "abc123";
+        request.confirmPassword = "abc123";
+        request.realName = "New Student";
+        request.role = Constants.ROLE_STUDENT;
+        request.departmentId = 2L;
+        request.majorId = 3L;
+        request.className = "Class 1";
+        request.email = "new@example.com";
+        request.phone = "13900000000";
+        return request;
     }
 
     private Student student(Long id, String studentNo, String name) {

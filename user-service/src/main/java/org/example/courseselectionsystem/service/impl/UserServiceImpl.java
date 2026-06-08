@@ -26,6 +26,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,32 +107,64 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = false)
     public boolean register(RegisterRequest registerRequest) {
         // 参数验证
         if (registerRequest == null) {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "注册请求不能为空");
         }
-        if (!StringUtils.hasText(registerRequest.username)) {
-            throw new BusinessException(Constants.PARAM_ERROR_CODE, "用户名不能为空");
-        }
         if (!StringUtils.hasText(registerRequest.password)) {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "密码不能为空");
         }
-        if (!StringUtils.hasText(registerRequest.role)) {
-            throw new BusinessException(Constants.PARAM_ERROR_CODE, "角色不能为空");
+        if (!StringUtils.hasText(registerRequest.confirmPassword)) {
+            throw new BusinessException(Constants.PARAM_ERROR_CODE, "确认密码不能为空");
+        }
+        if (!registerRequest.password.equals(registerRequest.confirmPassword)) {
+            throw new BusinessException(Constants.PARAM_ERROR_CODE, "两次输入的密码不一致");
         }
 
         // 暂时只支持学生注册
-        if (Constants.ROLE_STUDENT.equals(registerRequest.role)) {
+        if (isStudentRegister(registerRequest)) {
+            String studentNo = StringUtils.hasText(registerRequest.userCode)
+                    ? registerRequest.userCode
+                    : registerRequest.username;
+            if (!StringUtils.hasText(studentNo)) {
+                throw new BusinessException(Constants.PARAM_ERROR_CODE, "学号不能为空");
+            }
+            if (!StringUtils.hasText(registerRequest.realName)) {
+                throw new BusinessException(Constants.PARAM_ERROR_CODE, "姓名不能为空");
+            }
+            if (registerRequest.majorId == null) {
+                throw new BusinessException(Constants.PARAM_ERROR_CODE, "专业不能为空");
+            }
+
             // 检查学号是否已存在
-            Student existingStudent = studentMapper.selectByStudentNo(registerRequest.username);
+            Student existingStudent = studentMapper.selectByStudentNo(studentNo);
             if (existingStudent != null) {
                 throw new BusinessException(Constants.DUPLICATE_CODE, "学号已存在");
             }
-            
-            // TODO: 学生注册逻辑需要与StudentService配合实现
-            // 这里暂时返回未实现
-            throw new BusinessException(Constants.NOT_IMPLEMENTED_CODE, "学生注册功能暂未实现");
+
+            Student student = new Student();
+            student.setStudentNo(studentNo);
+            student.setName(registerRequest.realName);
+            student.setGender("未知");
+            student.setPhone(registerRequest.phone);
+            student.setEmail(registerRequest.email);
+            student.setPassword(passwordEncoder.encode(registerRequest.password));
+            student.setMajorId(registerRequest.majorId);
+            student.setCollegeId(registerRequest.departmentId == null ? 1L : registerRequest.departmentId);
+            student.setClassName(StringUtils.hasText(registerRequest.className) ? registerRequest.className : "未分班");
+            student.setStatus(1);
+            Date now = new Date();
+            student.setCreatedAt(now);
+            student.setUpdatedAt(now);
+
+            int result = studentMapper.insert(student);
+            if (result <= 0) {
+                throw new BusinessException(Constants.FAIL_CODE, "学生注册失败");
+            }
+            logger.info("学生注册成功，学号: {}", studentNo);
+            return true;
         } else {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "仅支持学生注册");
         }
@@ -590,6 +623,12 @@ public class UserServiceImpl implements UserService {
         if (userId == null || userId < 0) {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "用户ID不能为空");
         }
+    }
+
+    private boolean isStudentRegister(RegisterRequest registerRequest) {
+        return Constants.ROLE_STUDENT.equals(registerRequest.role)
+                || "student".equalsIgnoreCase(registerRequest.role)
+                || Integer.valueOf(1).equals(registerRequest.userType);
     }
 
     private List<User> aggregateUsers(Integer userType) {
