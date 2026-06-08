@@ -1,5 +1,6 @@
 (function () {
     const api = window.AppApi;
+    let editingUser = null;
 
     document.addEventListener('DOMContentLoaded', () => {
         initHashTabs();
@@ -102,6 +103,12 @@
                 <td>${statusBadge(user.status)}</td>
                 <td>${api.formatDate(user.createdAt)}</td>
                 <td>
+                    <button class="btn btn-sm btn-primary js-edit-user" data-role="${user.role}" data-id="${user.id}" title="编辑">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-warning js-reset-user-password" data-role="${user.role}" data-id="${user.id}" title="重置密码">
+                        <i class="fas fa-key"></i>
+                    </button>
                     <button class="btn btn-sm btn-danger js-delete-user" data-role="${user.role}" data-id="${user.id}" title="删除">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -158,7 +165,22 @@
         document.getElementById('submitAddUser')?.addEventListener('click', addUser, true);
         document.getElementById('submitAddCourse')?.addEventListener('click', addCourse, true);
 
+        document.querySelector('[data-target="#addUserModal"]')?.addEventListener('click', () => prepareAddUserForm());
+        document.getElementById('addUserModal')?.querySelectorAll('[data-dismiss="modal"], .close').forEach((button) => {
+            button.addEventListener('click', () => prepareAddUserForm());
+        });
+
         document.addEventListener('click', async (event) => {
+            const editUser = event.target.closest('.js-edit-user');
+            if (editUser) {
+                await prepareEditUserForm(editUser.dataset.role, editUser.dataset.id);
+            }
+
+            const resetPassword = event.target.closest('.js-reset-user-password');
+            if (resetPassword && confirm('确定重置该用户密码吗？')) {
+                await handleResetUserPassword(resetPassword.dataset.role, resetPassword.dataset.id);
+            }
+
             const deleteUser = event.target.closest('.js-delete-user');
             if (deleteUser && confirm('确定删除该用户吗？')) {
                 await handleDeleteUser(deleteUser.dataset.role, deleteUser.dataset.id);
@@ -179,9 +201,12 @@
             return;
         }
         const data = Object.fromEntries(new FormData(form).entries());
-        const role = data.role || 'student';
-        const username = data.username || '';
-        const body = {
+        const role = editingUser?.role || form.elements.role?.value || data.role || 'student';
+        const username = form.elements.username?.value || data.username || '';
+        const body = editingUser ? {
+            name: data.name,
+            email: data.email
+        } : {
             username,
             name: data.name,
             email: data.email,
@@ -195,17 +220,22 @@
             status: 1
         };
         try {
-            if (role === 'teacher') {
+            if (editingUser) {
+                await updateUser(editingUser.role, editingUser.id, body);
+                api.notify('success', '更新成功', '用户信息已更新');
+            } else if (role === 'teacher') {
                 await api.post('/api/v1/teachers/from-map', body);
+                api.notify('success', '添加成功', '用户已写入数据库');
             } else {
                 await api.post('/api/v1/students/from-map', body);
+                api.notify('success', '添加成功', '用户已写入数据库');
             }
             window.closeModal?.(document.getElementById('addUserModal'));
             form.reset();
-            api.notify('success', '添加成功', '用户已写入数据库');
+            prepareAddUserForm();
             await Promise.all([loadUsers(), loadStats()]);
         } catch (error) {
-            api.notify('error', '添加失败', error.message);
+            api.notify('error', editingUser ? '更新失败' : '添加失败', error.message);
         }
     }
 
@@ -253,6 +283,72 @@
             await Promise.all([loadUsers(), loadStats()]);
         } catch (error) {
             api.notify('error', '删除失败', error.message);
+        }
+    }
+
+    async function handleResetUserPassword(role, id) {
+        try {
+            if (role === 'teacher') {
+                await api.request(`/api/v1/teachers/${encodeURIComponent(id)}/reset-password`, { method: 'PUT' });
+            } else {
+                await api.request(`/api/v1/students/${encodeURIComponent(id)}/reset-password`, { method: 'PUT' });
+            }
+            api.notify('success', '重置成功', '密码已重置为账号后6位');
+        } catch (error) {
+            api.notify('error', '重置失败', error.message);
+        }
+    }
+
+    async function prepareEditUserForm(role, id) {
+        try {
+            const user = await api.get(role === 'teacher'
+                ? `/api/v1/teachers/${encodeURIComponent(id)}`
+                : `/api/v1/students/${encodeURIComponent(id)}`);
+            editingUser = { role, id };
+            const modal = document.getElementById('addUserModal');
+            const form = document.getElementById('addUserForm');
+            if (!modal || !form) {
+                return;
+            }
+            modal.querySelector('.modal-title').textContent = '编辑用户';
+            document.getElementById('submitAddUser').textContent = '保存修改';
+            form.elements.username.value = user.studentNo || user.teacherNo || '';
+            form.elements.username.disabled = true;
+            form.elements.name.value = user.name || '';
+            form.elements.role.value = role;
+            form.elements.role.disabled = true;
+            form.elements.email.value = user.email || '';
+            window.openModal?.(modal);
+        } catch (error) {
+            api.notify('error', '读取失败', error.message);
+        }
+    }
+
+    function prepareAddUserForm() {
+        const modal = document.getElementById('addUserModal');
+        const form = document.getElementById('addUserForm');
+        editingUser = null;
+        if (!modal || !form) {
+            return;
+        }
+        modal.querySelector('.modal-title').textContent = '添加用户';
+        document.getElementById('submitAddUser').textContent = '保存';
+        form.elements.username.disabled = false;
+        form.elements.role.disabled = false;
+        form.reset();
+    }
+
+    async function updateUser(role, id, body) {
+        if (role === 'teacher') {
+            await api.request(`/api/v1/teachers/${encodeURIComponent(id)}/from-map`, {
+                method: 'PUT',
+                body
+            });
+        } else {
+            await api.request(`/api/v1/students/${encodeURIComponent(id)}/from-map`, {
+                method: 'PUT',
+                body
+            });
         }
     }
 

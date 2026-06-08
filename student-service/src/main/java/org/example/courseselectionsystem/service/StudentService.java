@@ -41,21 +41,38 @@ public interface StudentService {
     boolean updateStudent(Student student);
 
     default boolean updateStudent(Map<String, Object> studentInfo) {
-        Student student = new Student();
         Object id = studentInfo.get("id");
-        if (id != null) {
-            student.setId(Long.valueOf(String.valueOf(id)));
+        Student student = id == null ? new Student() : getStudentById(Long.valueOf(String.valueOf(id)));
+        if (studentInfo.containsKey("studentNo") || studentInfo.containsKey("username")) {
+            student.setStudentNo(stringValue(studentInfo, "studentNo", stringValue(studentInfo, "username", "")));
         }
-        student.setStudentNo(String.valueOf(studentInfo.getOrDefault("studentNo", "")));
-        student.setName(String.valueOf(studentInfo.getOrDefault("name", "")));
-        student.setGender(stringValue(studentInfo, "gender", "男"));
-        student.setPhone(stringValue(studentInfo, "phone", ""));
-        student.setEmail(stringValue(studentInfo, "email", ""));
-        student.setPassword(stringValue(studentInfo, "password", "123456"));
-        student.setMajorId(longValue(studentInfo, "majorId", 1L));
-        student.setCollegeId(longValue(studentInfo, "collegeId", 1L));
-        student.setClassName(stringValue(studentInfo, "className", "未分班"));
-        student.setStatus(intValue(studentInfo, "status", 1));
+        if (studentInfo.containsKey("name")) {
+            student.setName(String.valueOf(studentInfo.getOrDefault("name", "")));
+        }
+        if (studentInfo.containsKey("gender")) {
+            student.setGender(stringValue(studentInfo, "gender", "男"));
+        }
+        if (studentInfo.containsKey("phone")) {
+            student.setPhone(stringValue(studentInfo, "phone", ""));
+        }
+        if (studentInfo.containsKey("email")) {
+            student.setEmail(stringValue(studentInfo, "email", ""));
+        }
+        if (studentInfo.containsKey("password")) {
+            student.setPassword(stringValue(studentInfo, "password", student.getPassword()));
+        }
+        if (studentInfo.containsKey("majorId")) {
+            student.setMajorId(longValue(studentInfo, "majorId", 1L));
+        }
+        if (studentInfo.containsKey("collegeId")) {
+            student.setCollegeId(longValue(studentInfo, "collegeId", 1L));
+        }
+        if (studentInfo.containsKey("className")) {
+            student.setClassName(stringValue(studentInfo, "className", "未分班"));
+        }
+        if (studentInfo.containsKey("status")) {
+            student.setStatus(intValue(studentInfo, "status", 1));
+        }
         return updateStudent(student);
     }
 
@@ -115,13 +132,9 @@ public interface StudentService {
         resetPassword(Long.valueOf(id));
     }
 
-    default boolean resetPassword(Long id) {
-        return true;
-    }
+    boolean resetPassword(Long id);
 
-    default boolean changePassword(Long id, String oldPassword, String newPassword) {
-        return true;
-    }
+    boolean changePassword(Long id, String oldPassword, String newPassword);
 
     default Map<String, Object> getStudentListByPage(PageRequest pageRequest) {
         PageResult<Student> page = getStudentsByPage(pageRequest);

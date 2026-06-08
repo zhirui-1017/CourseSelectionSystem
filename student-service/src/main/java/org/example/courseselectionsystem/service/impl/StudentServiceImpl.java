@@ -163,6 +163,42 @@ public class StudentServiceImpl implements StudentService {
         return studentMapper.selectByNameLike(name);
     }
 
+    @Override
+    @Transactional(readOnly = false)
+    public boolean resetPassword(Long id) {
+        Student student = getStudentById(id);
+        String studentNo = student.getStudentNo();
+        String password = studentNo.length() > 6
+                ? studentNo.substring(studentNo.length() - 6)
+                : studentNo;
+        student.setPassword(password);
+        int result = studentMapper.updateById(student);
+        if (result <= 0) {
+            logger.error("重置学生密码失败，学生ID: {}", id);
+            throw new BusinessException(Constants.FAIL_CODE, "重置学生密码失败");
+        }
+        return true;
+    }
+
+    @Override
+    @Transactional(readOnly = false)
+    public boolean changePassword(Long id, String oldPassword, String newPassword) {
+        if (!StringUtils.hasText(newPassword)) {
+            throw new BusinessException(Constants.PARAM_ERROR_CODE, "新密码不能为空");
+        }
+        Student student = getStudentById(id);
+        if (!StringUtils.hasText(oldPassword) || !oldPassword.equals(student.getPassword())) {
+            throw new BusinessException(Constants.PARAM_ERROR_CODE, "旧密码不正确");
+        }
+        student.setPassword(newPassword);
+        int result = studentMapper.updateById(student);
+        if (result <= 0) {
+            logger.error("修改学生密码失败，学生ID: {}", id);
+            throw new BusinessException(Constants.FAIL_CODE, "修改学生密码失败");
+        }
+        return true;
+    }
+
     /**
      * 验证学生参数
      * @param student 学生信息

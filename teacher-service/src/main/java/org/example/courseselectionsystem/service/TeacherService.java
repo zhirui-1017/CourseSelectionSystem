@@ -41,20 +41,35 @@ public interface TeacherService {
     boolean updateTeacher(Teacher teacher);
 
     default boolean updateTeacher(Map<String, Object> teacherInfo) {
-        Teacher teacher = new Teacher();
         Object id = teacherInfo.get("id");
-        if (id != null) {
-            teacher.setId(Long.valueOf(String.valueOf(id)));
+        Teacher teacher = id == null ? new Teacher() : getTeacherById(Long.valueOf(String.valueOf(id)));
+        if (teacherInfo.containsKey("teacherNo") || teacherInfo.containsKey("username")) {
+            teacher.setTeacherNo(stringValue(teacherInfo, "teacherNo", stringValue(teacherInfo, "username", "")));
         }
-        teacher.setTeacherNo(String.valueOf(teacherInfo.getOrDefault("teacherNo", "")));
-        teacher.setName(String.valueOf(teacherInfo.getOrDefault("name", "")));
-        teacher.setGender(stringValue(teacherInfo, "gender", "男"));
-        teacher.setPhone(stringValue(teacherInfo, "phone", ""));
-        teacher.setEmail(stringValue(teacherInfo, "email", ""));
-        teacher.setPassword(stringValue(teacherInfo, "password", "123456"));
-        teacher.setTitle(stringValue(teacherInfo, "title", "讲师"));
-        teacher.setDepartmentId(longValue(teacherInfo, "departmentId", 1L));
-        teacher.setStatus(intValue(teacherInfo, "status", 1));
+        if (teacherInfo.containsKey("name")) {
+            teacher.setName(String.valueOf(teacherInfo.getOrDefault("name", "")));
+        }
+        if (teacherInfo.containsKey("gender")) {
+            teacher.setGender(stringValue(teacherInfo, "gender", "男"));
+        }
+        if (teacherInfo.containsKey("phone")) {
+            teacher.setPhone(stringValue(teacherInfo, "phone", ""));
+        }
+        if (teacherInfo.containsKey("email")) {
+            teacher.setEmail(stringValue(teacherInfo, "email", ""));
+        }
+        if (teacherInfo.containsKey("password")) {
+            teacher.setPassword(stringValue(teacherInfo, "password", teacher.getPassword()));
+        }
+        if (teacherInfo.containsKey("title")) {
+            teacher.setTitle(stringValue(teacherInfo, "title", "讲师"));
+        }
+        if (teacherInfo.containsKey("departmentId")) {
+            teacher.setDepartmentId(longValue(teacherInfo, "departmentId", 1L));
+        }
+        if (teacherInfo.containsKey("status")) {
+            teacher.setStatus(intValue(teacherInfo, "status", 1));
+        }
         return updateTeacher(teacher);
     }
 
