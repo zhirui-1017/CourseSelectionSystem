@@ -23,8 +23,35 @@
 
 ## 首批待整理项
 
-1. 统一登录入口：确认使用 `templates/login.html` 的 `/login`，逐步清理或重定向 `static/login.html`。
-2. 统一退出入口：将页面里的 `../login.html` 这类静态退出链接收敛为 `/login/logout`。
+1. 统一登录入口：已确认使用 `templates/login.html` 的 `/login`，并将历史 `/login.html` 请求重定向到 `/login`。
+2. 统一退出入口：已将学生、教师页面里的 `../login.html`、`#logout` 等静态退出链接收敛为 `/login/logout`；管理员页面中的旧注释也已同步改为统一退出地址。
 3. 收敛前端 API 调用：优先保留 `/api/v1/...` 业务接口经 Gateway 调用，标记仍依赖 `/admin/...`、`/teacher/...` 兼容接口的页面脚本。
 4. 明确认证升级条件：只有在页面 API 调用已基本从兼容控制器迁出后，再评估 JWT 或统一认证中心。
 
+## 本次入口整理
+
+- `LegacyLoginController` 负责把 `/login.html` 重定向到 `/login`，兼容旧书签和历史静态链接。
+- `LoginInterceptor` 的未登录重定向地址已从 `/user/login` 收敛为 `/login`。
+- `SecurityConfig` 放行 `/login.html`，确保旧入口能正常跳转到模板登录页。
+- `static/login.html` 作为历史静态资源暂时保留；浏览器访问 `/login.html` 时优先由后端重定向到 `/login`，文件内部的兜底跳转也已从 `/login.html` 改为 `/login`。
+- `/login.html`、`/login/logout`、`LoginInterceptor` 和 Spring Security 未认证入口均使用相对 `Location: /login`，避免经 Gateway 访问时跳出统一入口。
+
+## 本次前端兼容接口清单
+
+| 页面脚本 | 当前调用 | 当前归属 | 后续处理 |
+| --- | --- | --- | --- |
+| `static/js/student-courses.js` | `/login/current`、`/api/v1/courses/search`、`/api/v1/courses/active`、`/api/v1/course-selections/...` | 登录态在 `web-service`，业务接口经 Gateway 进入课程/选课服务 | 保持现状，作为阶段 5 的迁移参考基线 |
+| `static/js/admin-dashboard.js` | 只读列表与计数已改为 `/api/v1/students/list`、`/api/v1/teachers/list`、`/api/v1/courses/list`；`/admin/stats` 和新增/删除操作仍走 `/admin/...` | 列表数据经 Gateway 进入学生/教师/课程服务，管理写操作仍在 `web-service` 兼容控制器 | 后续继续迁移新增、删除、统计等写操作和组合数据接口 |
+| `static/js/teacher-dashboard.js` | `/login/current`、`/teacher/myCourses`、`/teacher/courseStudents`、`/teacher/dashboard`、`/teacher/updateGrade` | 登录态和教师页面兼容接口仍在 `web-service` | 后续先确认教师视图所需聚合数据，再决定保留组合接口或迁到业务服务 |
+
+## 阶段 5 下一步边界
+
+- 优先迁移只读列表接口，降低页面从兼容控制器迁出的风险。
+- 写操作接口需要先确认请求参数和返回结构，避免静态页面与微服务 API 的字段名不一致。
+- 在管理员、教师页面主要业务调用从 `/admin/...`、`/teacher/...` 迁出前，暂不升级为 JWT 或独立认证中心。
+
+## 本次只读接口迁移
+
+- 管理员仪表盘的学生、教师、课程列表已从 `/admin/...` 兼容接口切换到 `/api/v1/.../list`。
+- `AppApi.pageItems` 继续兼容 `items`、`content`、`records`；新增 `AppApi.pageTotal` 兼容 `total`、`totalElements`、`totalCount`，用于不同分页返回结构的总数显示。
+- 管理员新增/删除操作暂时保留 `/admin/add*`、`/admin/delete*`，避免在未核对字段前改变写入行为。

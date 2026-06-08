@@ -174,6 +174,7 @@ if (Test-ExpectFallback "web-service") {
     Invoke-RouteCheck -Name $route.Name -Path $route.Path -ExpectedStatus @(503) -ExpectedBodyText $fallbackText -RetrySeconds 45
 } else {
     Invoke-RouteCheck -Name "Login page" -Path "/login" -ExpectedStatus @(200) -ExpectedBodyText ""
+    Invoke-RouteCheck -Name "Legacy login route" -Path "/login.html" -ExpectedStatus @(200, 302) -ExpectedBodyText ""
     Invoke-RouteCheck -Name "Admin page route" -Path "/admin/index" -ExpectedStatus @(200, 302) -ExpectedBodyText ""
     Invoke-RouteCheck -Name "Student page route" -Path "/student/index" -ExpectedStatus @(200, 302) -ExpectedBodyText ""
     Invoke-RouteCheck -Name "Teacher page route" -Path "/teacher/index" -ExpectedStatus @(200, 302) -ExpectedBodyText ""

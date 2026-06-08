@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
@@ -21,6 +22,8 @@ public class LoginInterceptor implements HandlerInterceptor {
     // 不需要拦截的URL列表
     private static final List<String> EXCLUDE_URLS = Arrays.asList(
             "/user/login", 
+            "/login",
+            "/login.html",
             "/user/register",
             "/static/**",
             "/css/**",
@@ -130,7 +133,8 @@ public class LoginInterceptor implements HandlerInterceptor {
         String currentUrl = request.getRequestURI();
         request.getSession().setAttribute("redirectUrl", currentUrl);
         
-        response.sendRedirect(request.getContextPath() + "/user/login");
+        response.setStatus(HttpServletResponse.SC_FOUND);
+        response.setHeader("Location", URI.create("/login").toString());
     }
     
     /**

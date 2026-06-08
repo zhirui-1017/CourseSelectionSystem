@@ -95,6 +95,16 @@
         return pageLike.items || pageLike.content || pageLike.records || [];
     }
 
+    function pageTotal(pageLike) {
+        if (!pageLike) {
+            return 0;
+        }
+        if (Array.isArray(pageLike)) {
+            return pageLike.length;
+        }
+        return pageLike.total ?? pageLike.totalElements ?? pageLike.totalCount ?? pageItems(pageLike).length;
+    }
+
     window.AppApi = {
         request,
         get,
@@ -104,6 +114,7 @@
         formatDate,
         notify,
         pageItems,
+        pageTotal,
         toQuery
     };
 })();

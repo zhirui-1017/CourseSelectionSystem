@@ -1,5 +1,6 @@
 package org.example.courseselectionsystem.config;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -14,13 +15,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .authorizeRequests()
                 .antMatchers(
-                        "/static/**", "/webjars/**", "/", "/login", "/login/auth",
-                        "/login/current", "/register", "/actuator/**"
+                        "/static/**", "/webjars/**", "/", "/login", "/login.html", "/login/auth",
+                        "/login/current", "/login/logout", "/register", "/actuator/**"
                 ).permitAll()
                 .antMatchers("/css/**", "/js/**", "/images/**").permitAll()
                 .antMatchers("/admin/*.html", "/student/*.html", "/teacher/*.html").permitAll()
                 .antMatchers("/api/**").authenticated()
                 .anyRequest().authenticated()
+                .and()
+                .exceptionHandling()
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(HttpStatus.FOUND.value());
+                    response.setHeader("Location", "/login");
+                })
                 .and()
                 .formLogin()
                 .loginPage("/login")

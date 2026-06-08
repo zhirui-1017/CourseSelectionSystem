@@ -33,7 +33,7 @@ class GatewayRoutesConfigurationTest {
         assertThat(properties.getProperty("spring.cloud.gateway.routes[5].uri"))
                 .isEqualTo("lb://" + ServiceNames.WEB_SERVICE);
         assertThat(properties.getProperty("spring.cloud.gateway.routes[5].predicates[0]"))
-                .isEqualTo("Path=/,/login/**,/admin/**,/student/**,/teacher/**,/static/**,/css/**,/js/**,/images/**,/webjars/**,/api/v1/**");
+                .isEqualTo("Path=/,/login.html,/login/**,/admin/**,/student/**,/teacher/**,/static/**,/css/**,/js/**,/images/**,/webjars/**,/api/v1/**");
     }
 
     @Test

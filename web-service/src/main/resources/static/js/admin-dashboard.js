@@ -44,16 +44,16 @@
         try {
             const [stats, students, teachers, courses] = await Promise.all([
                 api.get('/admin/stats'),
-                api.get('/admin/students', { pageNum: 1, pageSize: 1, orderByColumn: 'id', isAsc: true }),
-                api.get('/admin/teachers', { pageNum: 1, pageSize: 1, orderByColumn: 'id', isAsc: true }),
-                api.get('/admin/adminCourses', { pageNum: 1, pageSize: 1, orderByColumn: 'id', isAsc: true })
+                api.get('/api/v1/students/list', { pageNum: 1, pageSize: 1, orderByColumn: 'id', isAsc: true }),
+                api.get('/api/v1/teachers/list', { pageNum: 1, pageSize: 1, orderByColumn: 'id', isAsc: true }),
+                api.get('/api/v1/courses/list', { pageNum: 1, pageSize: 1, orderByColumn: 'id', isAsc: true })
             ]);
 
             const values = document.querySelectorAll('#dashboard .stat-value');
             const totals = [
-                students.total ?? 0,
-                teachers.total ?? 0,
-                courses.total ?? stats.courseCount ?? 0,
+                api.pageTotal(students),
+                api.pageTotal(teachers),
+                api.pageTotal(courses) || (stats.courseCount ?? 0),
                 stats.selectionCount ?? 0
             ];
             values.forEach((element, index) => {
@@ -72,8 +72,8 @@
         tbody.innerHTML = rowMessage(9, '正在加载用户数据...');
         try {
             const [students, teachers] = await Promise.all([
-                api.get('/admin/students', { pageNum: 1, pageSize: 10, orderByColumn: 'id', isAsc: true }),
-                api.get('/admin/teachers', { pageNum: 1, pageSize: 10, orderByColumn: 'id', isAsc: true })
+                api.get('/api/v1/students/list', { pageNum: 1, pageSize: 10, orderByColumn: 'id', isAsc: true }),
+                api.get('/api/v1/teachers/list', { pageNum: 1, pageSize: 10, orderByColumn: 'id', isAsc: true })
             ]);
             const rows = [
                 ...api.pageItems(students).map((item) => ({ ...item, role: 'student' })),
@@ -117,7 +117,7 @@
         }
         tbody.innerHTML = rowMessage(9, '正在加载课程数据...');
         try {
-            const data = await api.get('/admin/adminCourses', { pageNum: 1, pageSize: 10, orderByColumn: 'id', isAsc: true });
+            const data = await api.get('/api/v1/courses/list', { pageNum: 1, pageSize: 10, orderByColumn: 'id', isAsc: true });
             renderCourses(api.pageItems(data));
         } catch (error) {
             tbody.innerHTML = rowMessage(9, error.message);
