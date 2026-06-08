@@ -3,7 +3,9 @@ package org.example.courseselectionsystem.service.impl;
 import org.example.courseselectionsystem.common.Result;
 import org.example.courseselectionsystem.entity.Course;
 import org.example.courseselectionsystem.entity.CourseSelection;
+import org.example.courseselectionsystem.entity.Student;
 import org.example.courseselectionsystem.exception.BusinessException;
+import org.example.courseselectionsystem.mapper.StudentMapper;
 import org.example.courseselectionsystem.repository.CourseRepository;
 import org.example.courseselectionsystem.repository.CourseSelectionRepository;
 import org.example.courseselectionsystem.service.CourseSelectionService;
@@ -47,6 +49,9 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired(required = false)
+    private StudentMapper studentMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -243,6 +248,122 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
         return selections;
     }
 
+    @Override
+    public Map<String, Object> getSelectionStats() {
+        Map<String, Object> stats = new LinkedHashMap<>();
+        stats.put("selectionCount", courseSelectionRepository.count());
+        stats.put("courseCount", courseRepository.count());
+        return stats;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> updateGrade(Long selectionId, Long teacherId, Map<String, Object> gradeInfo) {
+        if (selectionId == null || teacherId == null) {
+            throw new BusinessException(Result.PARAM_ERROR, "selectionId and teacherId are required");
+        }
+
+        CourseSelection selection = courseSelectionRepository.findById(selectionId)
+                .orElseThrow(() -> new BusinessException(Result.NOT_FOUND, "course selection not found"));
+        Course course = requireOwnedCourse(selection.getCourseId(), teacherId);
+
+        Map<String, Object> payload = gradeInfo == null ? Collections.emptyMap() : gradeInfo;
+        Double dailyGrade = gradeValue(payload.get("dailyGrade"), "dailyGrade");
+        Double labGrade = gradeValue(payload.get("labGrade"), "labGrade");
+        Double examGrade = gradeValue(payload.get("examGrade"), "examGrade");
+        Double score = gradeValue(payload.get("score"), "score");
+        if (score == null) {
+            score = calculateScore(dailyGrade, labGrade, examGrade);
+        }
+
+        selection.setDailyGrade(dailyGrade);
+        selection.setLabGrade(labGrade);
+        selection.setExamGrade(examGrade);
+        selection.setScore(score);
+        selection.setRemark(stringValue(payload.get("remark")));
+        selection.setUpdateTime(new Date());
+
+        return toStudentRow(courseSelectionRepository.save(selection), course);
+    }
+
+    @Override
+    public List<Map<String, Object>> getTeacherCourseStudents(Long courseId, Long teacherId, Integer status) {
+        Course course = requireOwnedCourse(courseId, teacherId);
+        List<CourseSelection> selections = status == null
+                ? courseSelectionRepository.findByCourseId(courseId)
+                : courseSelectionRepository.findByCourseIdAndStatus(courseId, status);
+
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (CourseSelection selection : selections) {
+            rows.add(toStudentRow(selection, course));
+        }
+        return rows;
+    }
+
+    @Override
+    public Map<String, Object> getTeacherDashboard(Long teacherId) {
+        if (teacherId == null) {
+            throw new BusinessException(Result.PARAM_ERROR, "teacherId is required");
+        }
+
+        List<Course> courses = courseRepository.findByTeacherId(teacherId);
+        if (courses == null) {
+            courses = Collections.emptyList();
+        }
+
+        long selectedCount = 0L;
+        long gradedCount = 0L;
+        long waitingCount = 0L;
+        double scoreTotal = 0D;
+        long scoreCount = 0L;
+        List<Map<String, Object>> recentSelections = new ArrayList<>();
+
+        for (Course course : courses) {
+            List<CourseSelection> selections = courseSelectionRepository.findByCourseId(course.getId());
+            for (CourseSelection selection : selections) {
+                if (Objects.equals(selection.getStatus(), 1)) {
+                    selectedCount++;
+                    if (selection.getScore() != null) {
+                        gradedCount++;
+                        scoreTotal += selection.getScore();
+                        scoreCount++;
+                    }
+                    recentSelections.add(toStudentRow(selection, course));
+                } else if (Objects.equals(selection.getStatus(), 3)) {
+                    waitingCount++;
+                }
+            }
+        }
+
+        recentSelections.sort((left, right) -> {
+            Date leftTime = (Date) left.get("selectionTime");
+            Date rightTime = (Date) right.get("selectionTime");
+            if (leftTime == null && rightTime == null) {
+                return 0;
+            }
+            if (leftTime == null) {
+                return 1;
+            }
+            if (rightTime == null) {
+                return -1;
+            }
+            return rightTime.compareTo(leftTime);
+        });
+        if (recentSelections.size() > 8) {
+            recentSelections = new ArrayList<>(recentSelections.subList(0, 8));
+        }
+
+        Map<String, Object> stats = new LinkedHashMap<>();
+        stats.put("courseCount", courses.size());
+        stats.put("studentCount", selectedCount);
+        stats.put("gradedCount", gradedCount);
+        stats.put("waitingCount", waitingCount);
+        stats.put("averageScore", scoreCount == 0 ? null : Math.round((scoreTotal / scoreCount) * 10D) / 10D);
+        stats.put("courses", courses);
+        stats.put("recentSelections", recentSelections);
+        return stats;
+    }
+
     private void promoteWaitingSelection(Long courseId) {
         Course course = courseRepository.findById(courseId).orElse(null);
         if (course == null) {
@@ -278,6 +399,124 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
             selection.setCredit(course.getCredit());
         });
         return selection;
+    }
+
+    private Course requireOwnedCourse(Long courseId, Long teacherId) {
+        if (courseId == null) {
+            throw new BusinessException(Result.PARAM_ERROR, "courseId is required");
+        }
+        if (teacherId == null) {
+            throw new BusinessException(Result.PARAM_ERROR, "teacherId is required");
+        }
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new BusinessException(Result.NOT_FOUND, "course not found"));
+        if (!Objects.equals(course.getTeacherId(), teacherId)) {
+            throw new BusinessException(403, "no permission to access this course");
+        }
+        return course;
+    }
+
+    private Map<String, Object> toStudentRow(CourseSelection selection, Course course) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("selectionId", selection.getId());
+        row.put("courseId", selection.getCourseId());
+        row.put("courseCode", course.getCourseCode());
+        row.put("courseName", course.getCourseName());
+        row.put("studentId", selection.getStudentId());
+        row.put("selectionTime", selection.getSelectionTime());
+        row.put("dailyGrade", selection.getDailyGrade());
+        row.put("labGrade", selection.getLabGrade());
+        row.put("examGrade", selection.getExamGrade());
+        row.put("score", selection.getScore());
+        row.put("scoreLevel", scoreLevel(selection.getScore()));
+        row.put("remark", selection.getRemark());
+        row.put("status", selection.getStatus());
+        row.put("statusText", selectionStatus(selection.getStatus()));
+        appendStudentInfo(row, selection.getStudentId());
+        return row;
+    }
+
+    private void appendStudentInfo(Map<String, Object> row, Long studentId) {
+        Student student = studentId == null || studentMapper == null ? null : studentMapper.selectById(studentId);
+        if (student != null) {
+            row.put("studentNo", student.getStudentNo());
+            row.put("studentName", student.getName());
+            row.put("gender", student.getGender());
+            row.put("majorId", student.getMajorId());
+            row.put("collegeId", student.getCollegeId());
+            row.put("className", student.getClassName());
+            row.put("phone", student.getPhone());
+            row.put("email", student.getEmail());
+            return;
+        }
+
+        row.put("studentNo", studentId);
+        row.put("studentName", "Student" + studentId);
+    }
+
+    private Double calculateScore(Double dailyGrade, Double labGrade, Double examGrade) {
+        if (dailyGrade == null && labGrade == null && examGrade == null) {
+            return null;
+        }
+        double daily = dailyGrade == null ? 0D : dailyGrade;
+        double lab = labGrade == null ? 0D : labGrade;
+        double exam = examGrade == null ? 0D : examGrade;
+        return Math.round((daily * 0.4D + lab * 0.2D + exam * 0.4D) * 10D) / 10D;
+    }
+
+    private String scoreLevel(Double score) {
+        if (score == null) {
+            return "Not graded";
+        }
+        if (score >= 90D) {
+            return "Excellent";
+        }
+        if (score >= 80D) {
+            return "Good";
+        }
+        if (score >= 70D) {
+            return "Average";
+        }
+        if (score >= 60D) {
+            return "Pass";
+        }
+        return "Fail";
+    }
+
+    private String selectionStatus(Integer status) {
+        if (Objects.equals(status, 1)) {
+            return "Selected";
+        }
+        if (Objects.equals(status, 2)) {
+            return "Dropped";
+        }
+        if (Objects.equals(status, 3)) {
+            return "Waiting";
+        }
+        return "Unknown";
+    }
+
+    private Double gradeValue(Object value, String label) {
+        if (value == null || String.valueOf(value).isBlank()) {
+            return null;
+        }
+        try {
+            double number = Double.parseDouble(String.valueOf(value));
+            if (number < 0D || number > 100D) {
+                throw new BusinessException(Result.PARAM_ERROR, label + " must be between 0 and 100");
+            }
+            return number;
+        } catch (NumberFormatException e) {
+            throw new BusinessException(Result.PARAM_ERROR, label + " must be numeric");
+        }
+    }
+
+    private String stringValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value).trim();
+        return text.isEmpty() ? null : text;
     }
 
     private Integer safeCapacity(Course course) {
