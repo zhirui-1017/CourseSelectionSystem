@@ -136,12 +136,14 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public Page<Course> getCourseList(PageRequest pageRequestParam, String courseName, String courseCode,
-                                      Long teacherId, Long departmentId, Integer status) {
-        Sort sort = Sort.by(Sort.Direction.DESC, "createTime");
+                                      Long teacherId, Long departmentId, String courseType, Integer status) {
+        PageRequest request = pageRequestParam == null ? new PageRequest() : pageRequestParam;
+        int pageNum = request.getPageNum() == null || request.getPageNum() < 1 ? 1 : request.getPageNum();
+        int pageSize = request.getPageSize() == null || request.getPageSize() < 1 ? 10 : Math.min(request.getPageSize(), 100);
         org.springframework.data.domain.PageRequest pageRequest =
-                org.springframework.data.domain.PageRequest.of(pageRequestParam.getPageNum() - 1,
-                        pageRequestParam.getPageSize(), sort);
-        return courseRepository.findCourses(blankToNull(courseName), blankToNull(courseCode), teacherId, null, status, pageRequest);
+                org.springframework.data.domain.PageRequest.of(pageNum - 1, pageSize, courseSort(request));
+        return courseRepository.findCourses(blankToNull(courseName), blankToNull(courseCode), teacherId,
+                normalizeCourseType(courseType), status, pageRequest);
     }
 
     @Override
@@ -191,6 +193,73 @@ public class CourseServiceImpl implements CourseService {
             default:
                 return String.valueOf(courseType);
         }
+    }
+
+    private String normalizeCourseType(String courseType) {
+        if (!StringUtils.hasText(courseType) || "all".equalsIgnoreCase(courseType)) {
+            return null;
+        }
+        String normalized = courseType.trim();
+        if ("1".equals(normalized) || "required".equalsIgnoreCase(normalized)) {
+            return "必修课";
+        }
+        if ("2".equals(normalized) || "elective".equalsIgnoreCase(normalized)) {
+            return "选修课";
+        }
+        if ("3".equals(normalized) || "general".equalsIgnoreCase(normalized)) {
+            return "通识课";
+        }
+        if ("4".equals(normalized) || "professional".equalsIgnoreCase(normalized)) {
+            return "专业课";
+        }
+        return normalized;
+    }
+
+    private Sort courseSort(PageRequest request) {
+        String sortField = request.getSortField();
+        String property = StringUtils.hasText(sortField) ? courseSortProperty(sortField) : "id";
+        Sort.Direction direction = "desc".equalsIgnoreCase(request.getSortOrder()) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        if (!StringUtils.hasText(sortField)) {
+            direction = Sort.Direction.DESC;
+        }
+        return Sort.by(new Sort.Order(direction, property));
+    }
+
+    private String courseSortProperty(String field) {
+        String normalized = field.trim();
+        if ("code".equalsIgnoreCase(normalized)) {
+            return "courseCode";
+        }
+        if ("name".equalsIgnoreCase(normalized)) {
+            return "courseName";
+        }
+        if ("type".equalsIgnoreCase(normalized) || "category".equalsIgnoreCase(normalized)) {
+            return "courseType";
+        }
+        if ("credits".equalsIgnoreCase(normalized)) {
+            return "credit";
+        }
+        if ("capacity".equalsIgnoreCase(normalized) || "maxCapacity".equalsIgnoreCase(normalized)) {
+            return "availableSlots";
+        }
+        if ("enrolled".equalsIgnoreCase(normalized) || "currentStudents".equalsIgnoreCase(normalized)) {
+            return "selectedCount";
+        }
+        if ("courseCode".equalsIgnoreCase(normalized)
+                || "courseName".equalsIgnoreCase(normalized)
+                || "courseType".equalsIgnoreCase(normalized)
+                || "credit".equalsIgnoreCase(normalized)
+                || "totalHours".equalsIgnoreCase(normalized)
+                || "teacherId".equalsIgnoreCase(normalized)
+                || "availableSlots".equalsIgnoreCase(normalized)
+                || "selectedCount".equalsIgnoreCase(normalized)
+                || "status".equalsIgnoreCase(normalized)
+                || "createTime".equalsIgnoreCase(normalized)
+                || "updateTime".equalsIgnoreCase(normalized)
+                || "id".equalsIgnoreCase(normalized)) {
+            return normalized;
+        }
+        return "id";
     }
 
     private String blankToNull(String value) {

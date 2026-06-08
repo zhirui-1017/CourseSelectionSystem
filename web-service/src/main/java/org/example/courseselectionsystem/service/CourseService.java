@@ -64,7 +64,7 @@ public interface CourseService {
      * @param status 状态
      * @return 课程分页列表
      */
-    Page<Course> getCourseList(PageRequest pageRequest, String courseName, String courseCode, Long teacherId, Long departmentId, Integer status);
+    Page<Course> getCourseList(PageRequest pageRequest, String courseName, String courseCode, Long teacherId, Long departmentId, String courseType, Integer status);
 
     /**
      * 获取所有启用的课程
@@ -85,7 +85,7 @@ public interface CourseService {
     }
 
     default Map<String, Object> getCourseListByPage(PageRequest pageRequest) {
-        Page<Course> page = getCourseList(pageRequest, null, null, null, null, null);
+        Page<Course> page = getCourseList(pageRequest, null, null, null, null, null, null);
         return Map.of("items", page.getContent(), "total", page.getTotalElements());
     }
 
@@ -107,23 +107,44 @@ public interface CourseService {
     }
 
     default Course updateCourse(Map<String, Object> courseInfo) {
-        Course course = new Course();
         Object id = courseInfo.get("id");
-        if (id != null) {
-            course.setId(Long.valueOf(String.valueOf(id)));
+        Course course = id == null ? new Course() : getCourseById(Long.valueOf(String.valueOf(id)));
+        if (courseInfo.containsKey("courseName")) {
+            course.setCourseName(String.valueOf(courseInfo.getOrDefault("courseName", "")));
         }
-        course.setCourseName(String.valueOf(courseInfo.getOrDefault("courseName", "")));
-        course.setCourseCode(String.valueOf(courseInfo.getOrDefault("courseCode", "")));
-        course.setTeacherId(longValue(courseInfo, "teacherId", 1L));
-        course.setCredit(doubleValue(courseInfo, "credit", doubleValue(courseInfo, "credits", 2D)));
-        course.setTotalHours(intValue(courseInfo, "totalHours", 32));
-        course.setAvailableSlots(intValue(courseInfo, "availableSlots", intValue(courseInfo, "capacity", 40)));
-        course.setSelectedCount(intValue(courseInfo, "selectedCount", 0));
-        course.setClassroom(stringValue(courseInfo, "classroom", "待安排"));
-        course.setSchedule(stringValue(courseInfo, "schedule", "待安排"));
-        course.setCourseType(stringValue(courseInfo, "courseType", "选修课"));
-        course.setDescription(stringValue(courseInfo, "description", ""));
-        course.setStatus(intValue(courseInfo, "status", 1));
+        if (courseInfo.containsKey("courseCode")) {
+            course.setCourseCode(String.valueOf(courseInfo.getOrDefault("courseCode", "")));
+        }
+        if (courseInfo.containsKey("teacherId")) {
+            course.setTeacherId(longValue(courseInfo, "teacherId", 1L));
+        }
+        if (courseInfo.containsKey("credit") || courseInfo.containsKey("credits")) {
+            course.setCredit(doubleValue(courseInfo, "credit", doubleValue(courseInfo, "credits", course.getCredit())));
+        }
+        if (courseInfo.containsKey("totalHours")) {
+            course.setTotalHours(intValue(courseInfo, "totalHours", 32));
+        }
+        if (courseInfo.containsKey("availableSlots") || courseInfo.containsKey("capacity")) {
+            course.setAvailableSlots(intValue(courseInfo, "availableSlots", intValue(courseInfo, "capacity", course.getAvailableSlots())));
+        }
+        if (courseInfo.containsKey("selectedCount")) {
+            course.setSelectedCount(intValue(courseInfo, "selectedCount", course.getSelectedCount()));
+        }
+        if (courseInfo.containsKey("classroom")) {
+            course.setClassroom(stringValue(courseInfo, "classroom", "待安排"));
+        }
+        if (courseInfo.containsKey("schedule")) {
+            course.setSchedule(stringValue(courseInfo, "schedule", "待安排"));
+        }
+        if (courseInfo.containsKey("courseType")) {
+            course.setCourseType(stringValue(courseInfo, "courseType", "选修课"));
+        }
+        if (courseInfo.containsKey("description")) {
+            course.setDescription(stringValue(courseInfo, "description", ""));
+        }
+        if (courseInfo.containsKey("status")) {
+            course.setStatus(intValue(courseInfo, "status", 1));
+        }
         return updateCourse(course);
     }
 

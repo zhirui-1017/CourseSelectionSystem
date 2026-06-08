@@ -64,7 +64,7 @@ public interface CourseService {
      * @param status 状态
      * @return 课程分页列表
      */
-    Page<Course> getCourseList(PageRequest pageRequest, String courseName, String courseCode, Long teacherId, Long departmentId, Integer status);
+    Page<Course> getCourseList(PageRequest pageRequest, String courseName, String courseCode, Long teacherId, Long departmentId, String courseType, Integer status);
 
     /**
      * 获取所有启用的课程
@@ -85,7 +85,7 @@ public interface CourseService {
     }
 
     default Map<String, Object> getCourseListByPage(PageRequest pageRequest) {
-        Page<Course> page = getCourseList(pageRequest, null, null, null, null, null);
+        Page<Course> page = getCourseList(pageRequest, null, null, null, null, null, null);
         return Map.of("items", page.getContent(), "total", page.getTotalElements());
     }
 

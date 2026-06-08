@@ -104,8 +104,9 @@ public class CourseController {
                                @RequestParam(required = false) String courseCode,
                                @RequestParam(required = false) Long teacherId,
                                @RequestParam(required = false) Long departmentId,
+                               @RequestParam(required = false) String courseType,
                                @RequestParam(required = false) Integer status) {
-        Page<Course> coursePage = courseService.getCourseList(pageRequest, courseName, courseCode, teacherId, departmentId, status);
+        Page<Course> coursePage = courseService.getCourseList(pageRequest, courseName, courseCode, teacherId, departmentId, courseType, status);
         return Result.success(coursePage);
     }
 
