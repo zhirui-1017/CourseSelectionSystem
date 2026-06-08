@@ -225,6 +225,35 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
         return stats;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> updateGrade(Long selectionId, Long teacherId, Map<String, Object> gradeInfo) {
+        if (selectionId == null || teacherId == null) {
+            throw new BusinessException(Result.PARAM_ERROR, "selectionId和teacherId不能为空");
+        }
+
+        CourseSelection selection = courseSelectionRepository.findById(selectionId)
+                .orElseThrow(() -> new BusinessException(Result.NOT_FOUND, "选课记录不存在"));
+        Course course = requireOwnedCourse(selection.getCourseId(), teacherId);
+
+        Double dailyGrade = gradeValue(gradeInfo.get("dailyGrade"), "平时成绩");
+        Double labGrade = gradeValue(gradeInfo.get("labGrade"), "实验成绩");
+        Double examGrade = gradeValue(gradeInfo.get("examGrade"), "考试成绩");
+        Double score = gradeValue(gradeInfo.get("score"), "总评成绩");
+        if (score == null) {
+            score = calculateScore(dailyGrade, labGrade, examGrade);
+        }
+
+        selection.setDailyGrade(dailyGrade);
+        selection.setLabGrade(labGrade);
+        selection.setExamGrade(examGrade);
+        selection.setScore(score);
+        selection.setRemark(stringValue(gradeInfo.get("remark")));
+        selection.setUpdateTime(new Date());
+
+        return toGradeRow(courseSelectionRepository.save(selection), course);
+    }
+
     private void promoteWaitingSelection(Long courseId) {
         Course course = courseRepository.findById(courseId).orElse(null);
         if (course == null) {
@@ -260,6 +289,101 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
             selection.setCredit(course.getCredit());
         });
         return selection;
+    }
+
+    private Course requireOwnedCourse(Long courseId, Long teacherId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new BusinessException(Result.NOT_FOUND, "课程不存在"));
+        if (!Objects.equals(course.getTeacherId(), teacherId)) {
+            throw new BusinessException(403, "无权访问该课程");
+        }
+        return course;
+    }
+
+    private Map<String, Object> toGradeRow(CourseSelection selection, Course course) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("selectionId", selection.getId());
+        row.put("courseId", selection.getCourseId());
+        row.put("courseCode", course.getCourseCode());
+        row.put("courseName", course.getCourseName());
+        row.put("studentId", selection.getStudentId());
+        row.put("studentNo", selection.getStudentId());
+        row.put("studentName", "学生" + selection.getStudentId());
+        row.put("selectionTime", selection.getSelectionTime());
+        row.put("dailyGrade", selection.getDailyGrade());
+        row.put("labGrade", selection.getLabGrade());
+        row.put("examGrade", selection.getExamGrade());
+        row.put("score", selection.getScore());
+        row.put("scoreLevel", scoreLevel(selection.getScore()));
+        row.put("remark", selection.getRemark());
+        row.put("status", selection.getStatus());
+        row.put("statusText", selectionStatus(selection.getStatus()));
+        return row;
+    }
+
+    private Double calculateScore(Double dailyGrade, Double labGrade, Double examGrade) {
+        if (dailyGrade == null && labGrade == null && examGrade == null) {
+            return null;
+        }
+        double daily = dailyGrade == null ? 0D : dailyGrade;
+        double lab = labGrade == null ? 0D : labGrade;
+        double exam = examGrade == null ? 0D : examGrade;
+        return Math.round((daily * 0.4D + lab * 0.2D + exam * 0.4D) * 10D) / 10D;
+    }
+
+    private String scoreLevel(Double score) {
+        if (score == null) {
+            return "未录入";
+        }
+        if (score >= 90D) {
+            return "优秀";
+        }
+        if (score >= 80D) {
+            return "良好";
+        }
+        if (score >= 70D) {
+            return "中等";
+        }
+        if (score >= 60D) {
+            return "及格";
+        }
+        return "不及格";
+    }
+
+    private String selectionStatus(Integer status) {
+        if (Objects.equals(status, 1)) {
+            return "已选";
+        }
+        if (Objects.equals(status, 2)) {
+            return "已退课";
+        }
+        if (Objects.equals(status, 3)) {
+            return "候补";
+        }
+        return "未知";
+    }
+
+    private Double gradeValue(Object value, String label) {
+        if (value == null || String.valueOf(value).isBlank()) {
+            return null;
+        }
+        try {
+            double number = Double.parseDouble(String.valueOf(value));
+            if (number < 0D || number > 100D) {
+                throw new BusinessException(Result.PARAM_ERROR, label + "必须在0到100之间");
+            }
+            return number;
+        } catch (NumberFormatException e) {
+            throw new BusinessException(Result.PARAM_ERROR, label + "必须是数字");
+        }
+    }
+
+    private String stringValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value).trim();
+        return text.isEmpty() ? null : text;
     }
 
     private Integer safeCapacity(Course course) {

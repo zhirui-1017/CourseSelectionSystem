@@ -188,6 +188,13 @@ public class CourseSelectionController {
         return Result.success(courseSelectionService.getSelectionStats());
     }
 
+    @PostMapping("/{selectionId}/grade")
+    public Result updateGrade(@PathVariable Long selectionId,
+                              @RequestParam Long teacherId,
+                              @RequestBody Map<String, Object> gradeInfo) {
+        return Result.success(courseSelectionService.updateGrade(selectionId, teacherId, gradeInfo));
+    }
+
     /**
      * 获取选课记录详情（包含学生和课程信息）
      * @param selectionId 选课记录ID

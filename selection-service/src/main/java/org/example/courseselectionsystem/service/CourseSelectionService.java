@@ -111,4 +111,6 @@ public interface CourseSelectionService {
     List<CourseSelection> queryCourseSelections(Long studentId, Long courseId, String semester, Integer status);
 
     Map<String, Object> getSelectionStats();
+
+    Map<String, Object> updateGrade(Long selectionId, Long teacherId, Map<String, Object> gradeInfo);
 }

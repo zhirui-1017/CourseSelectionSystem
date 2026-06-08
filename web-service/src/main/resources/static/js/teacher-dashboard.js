@@ -509,14 +509,23 @@
     async function saveGradeRow(row) {
         const button = row.querySelector('[data-save-grade]');
         const payload = gradePayload(row);
+        const teacherId = state.teacher?.id || state.teacher?.teacherId || state.teacher?.userId;
+        if (!teacherId) {
+            throw new Error('无法读取当前教师ID');
+        }
         button.disabled = true;
         try {
-            const saved = await api.post('/teacher/updateGrade', payload);
+            const saved = await api.post(
+                `/api/v1/course-selections/${encodeURIComponent(payload.selectionId)}/grade`,
+                payload,
+                { teacherId }
+            );
             const index = state.students.findIndex((item) => Number(item.selectionId) === Number(saved.selectionId));
+            const merged = index >= 0 ? { ...state.students[index], ...saved } : saved;
             if (index >= 0) {
-                state.students[index] = saved;
+                state.students[index] = merged;
             }
-            api.notify('success', '保存成功', `${saved.studentName || '学生'} 的成绩已保存`);
+            api.notify('success', '保存成功', `${merged.studentName || '学生'} 的成绩已保存`);
             renderGradeDistribution(state.students);
         } finally {
             button.disabled = false;

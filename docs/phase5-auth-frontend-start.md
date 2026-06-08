@@ -42,7 +42,7 @@
 | --- | --- | --- | --- |
 | `static/js/student-courses.js` | `/login/current`、`/api/v1/courses/search`、`/api/v1/courses/active`、`/api/v1/course-selections/...` | 登录态在 `web-service`，业务接口经 Gateway 进入课程/选课服务 | 保持现状，作为阶段 5 的迁移参考基线 |
 | `static/js/admin-dashboard.js` | 列表与计数已改为 `/api/v1/students/list`、`/api/v1/teachers/list`、`/api/v1/courses/list`、`/api/v1/course-selections/stats`；新增/删除已改为 `/api/v1/students/from-map`、`/api/v1/teachers/from-map`、`/api/v1/courses` 和对应 `DELETE /api/v1/.../{id}` | 管理员仪表盘主要业务数据经 Gateway 进入学生/教师/课程/选课服务 | 后续继续迁移编辑、重置密码等未接入的管理操作 |
-| `static/js/teacher-dashboard.js` | `/login/current`、`/api/v1/courses/teacher/{teacherId}`；`/teacher/courseStudents`、`/teacher/dashboard`、`/teacher/updateGrade` 暂留 | 教师课程只读列表经 Gateway 进入 `course-service`；登录态、学生列表聚合、仪表盘聚合和成绩写入仍在 `web-service` | 后续先确认教师视图所需聚合数据，再决定保留组合接口或迁到业务服务 |
+| `static/js/teacher-dashboard.js` | `/login/current`、`/api/v1/courses/teacher/{teacherId}`、`/api/v1/course-selections/{selectionId}/grade`；`/teacher/courseStudents`、`/teacher/dashboard` 暂留 | 教师课程只读列表经 Gateway 进入 `course-service`；成绩写入进入 `selection-service` 并显式校验 `teacherId` 与课程归属；登录态、学生列表聚合和仪表盘聚合仍在 `web-service` | 后续先补齐教师视图所需学生详情与统计聚合，再迁移剩余组合接口 |
 
 ## 阶段 5 下一步边界
 
@@ -57,3 +57,4 @@
 - 教师端课程管理、学生管理、成绩管理页面共用的课程下拉/课程卡片列表已从 `/teacher/myCourses` 切换到 `/api/v1/courses/teacher/{teacherId}`，由 `course-service` 提供只读课程列表。
 - `AppApi.pageItems` 继续兼容 `items`、`content`、`records`；新增 `AppApi.pageTotal` 兼容 `total`、`totalElements`、`totalCount`，用于不同分页返回结构的总数显示。
 - 管理员新增学生/教师/课程以及删除学生/教师/课程已从 `/admin/add*`、`/admin/delete*` 切换到 `/api/v1/...` 业务服务接口；前端仍保留字段默认值，避免改变表单填写范围。
+- 教师端成绩保存已从 `/teacher/updateGrade` 切换到 `/api/v1/course-selections/{selectionId}/grade`，由 `selection-service` 写入成绩并校验教师课程归属；当前仍通过前端传递 `teacherId`，后续统一认证前不把它视为最终鉴权方案。
