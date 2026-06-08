@@ -181,6 +181,15 @@ public class SelectionController {
     }
     
     /**
+     * 获取选课统计信息
+     * @return 选课统计信息
+     */
+    @GetMapping("/stats")
+    public Result getSelectionStats() {
+        return Result.success(courseSelectionService.getSelectionStats());
+    }
+
+    /**
      * 获取选课记录详情（包含学生和课程信息）
      * @param selectionId 选课记录ID
      * @return 选课记录详情

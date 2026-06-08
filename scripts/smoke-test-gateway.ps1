@@ -185,6 +185,7 @@ if (Test-ExpectFallback "course-service") {
     Invoke-RouteCheck -Name $route.Name -Path $route.Path -ExpectedStatus @(503) -ExpectedBodyText $fallbackText -RetrySeconds 45
 } elseif (-not (Test-ExpectFallback "web-service")) {
     Invoke-RouteCheck -Name "Course API route" -Path "/api/v1/courses/list?pageNum=1&pageSize=10" -ExpectedStatus @(200) -ExpectedBodyText ""
+    Invoke-RouteCheck -Name "Selection stats API route" -Path "/api/v1/course-selections/stats" -ExpectedStatus @(200) -ExpectedBodyText "selectionCount"
 }
 
 foreach ($serviceName in $fallbackTargets) {

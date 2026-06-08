@@ -43,7 +43,7 @@
     async function loadStats() {
         try {
             const [stats, students, teachers, courses] = await Promise.all([
-                api.get('/admin/stats'),
+                api.get('/api/v1/course-selections/stats'),
                 api.get('/api/v1/students/list', { pageNum: 1, pageSize: 1, orderByColumn: 'id', isAsc: true }),
                 api.get('/api/v1/teachers/list', { pageNum: 1, pageSize: 1, orderByColumn: 'id', isAsc: true }),
                 api.get('/api/v1/courses/list', { pageNum: 1, pageSize: 1, orderByColumn: 'id', isAsc: true })

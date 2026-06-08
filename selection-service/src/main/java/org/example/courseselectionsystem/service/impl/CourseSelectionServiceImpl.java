@@ -217,6 +217,14 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
         return selections;
     }
 
+    @Override
+    public Map<String, Object> getSelectionStats() {
+        Map<String, Object> stats = new LinkedHashMap<>();
+        stats.put("selectionCount", courseSelectionRepository.count());
+        stats.put("courseCount", courseRepository.count());
+        return stats;
+    }
+
     private void promoteWaitingSelection(Long courseId) {
         Course course = courseRepository.findById(courseId).orElse(null);
         if (course == null) {
