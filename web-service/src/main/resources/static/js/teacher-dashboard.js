@@ -68,7 +68,13 @@
         if (!force && state.courses.length) {
             return state.courses;
         }
-        state.courses = await api.get('/teacher/myCourses') || [];
+        const teacherId = state.teacher?.id || state.teacher?.teacherId || state.teacher?.userId;
+        if (!teacherId) {
+            state.courses = [];
+            state.selectedCourseId = null;
+            throw new Error('无法读取当前教师ID');
+        }
+        state.courses = await api.get(`/api/v1/courses/teacher/${encodeURIComponent(teacherId)}`) || [];
         const requestedCourseId = new URLSearchParams(window.location.search).get('courseId');
         const requested = requestedCourseId ? Number(requestedCourseId) : null;
         const firstCourse = state.courses[0] ? Number(state.courses[0].id) : null;
