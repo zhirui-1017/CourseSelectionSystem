@@ -30,6 +30,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -53,9 +54,6 @@ public class UserServiceImpl implements UserService {
 
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    // 由于代码中没有显示JwtTokenUtil的定义，暂时注释掉token生成逻辑
-    // private JwtTokenUtil jwtTokenUtil;
-
     @Override
     public Map<String, Object> login(LoginRequest loginRequest) {
         logger.info("用户登录请求处理开始");
@@ -75,35 +73,42 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "密码不能为空");
         }
 
-        // 学生登录逻辑 - 暂时默认走学生登录路径
-        User user = new User();
-        user.username = username;
-        
         Student student = studentMapper.selectByStudentNo(username);
-        if (student == null) {
-            throw new BusinessException(Constants.NOT_FOUND_CODE, "用户不存在");
+        if (student != null) {
+            if (!isEnabled(student.getStatus()) || !passwordMatches(password, student.getPassword())) {
+                throw new BusinessException(Constants.UNAUTHORIZED_CODE, "用户名或密码错误");
+            }
+            return buildLoginResult(fromStudent(student));
         }
-        
-        // 临时跳过密码验证逻辑，因为Student实体已移除密码字段
-        // TODO: 实现统一的用户认证机制
-        
-        user.id = student.id;
-        user.realName = student.name;
-        user.departmentId = student.departmentId;
-        user.majorId = student.majorId;
-        user.userType = 1; // 1-学生
-        user.userCode = student.studentNo;
-        
-        // 生成token - 暂时注释掉，因为缺少JwtTokenUtil的定义
-        // String token = jwtTokenUtil.generateToken(username);
-        String token = "temporary-token-" + System.currentTimeMillis(); // 临时token
-        
-        // 构建返回结果
-        Map<String, Object> result = new HashMap<>();
-        result.put("token", token);
-        result.put("user", user);
-        
-        return result;
+
+        Teacher teacher = teacherMapper.selectByTeacherNo(username);
+        if (teacher != null) {
+            if (!isEnabled(teacher.getStatus()) || !teacherPasswordMatches(password, teacher.getPassword())) {
+                throw new BusinessException(Constants.UNAUTHORIZED_CODE, "用户名或密码错误");
+            }
+            return buildLoginResult(fromTeacher(teacher));
+        }
+
+        Admin admin = adminRepository.findByUsername(username).orElse(null);
+        if (admin != null) {
+            if (!isEnabled(admin.getStatus()) || !passwordMatches(password, admin.getPassword())) {
+                throw new BusinessException(Constants.UNAUTHORIZED_CODE, "用户名或密码错误");
+            }
+            return buildLoginResult(fromAdmin(admin));
+        }
+
+        if (Constants.ADMIN_USERNAME.equals(username) && "admin123".equals(password)) {
+            User user = new User();
+            user.setId(0L);
+            user.setUsername(Constants.ADMIN_USERNAME);
+            user.setRealName("管理员");
+            user.setUserType(3);
+            user.setUserCode(Constants.ADMIN_USERNAME);
+            user.setStatus(1);
+            return buildLoginResult(user);
+        }
+
+        throw new BusinessException(Constants.NOT_FOUND_CODE, "用户不存在");
     }
 
     @Override
@@ -592,26 +597,7 @@ public class UserServiceImpl implements UserService {
             return false;
         }
 
-        if ("student".equals(role)) {
-            Student student = studentMapper.selectByStudentNo(username);
-            if (student != null) {
-                // 学生登录逻辑，这里暂时简化处理
-                logger.info("学生登录成功，学号: {}", username);
-                return true;
-            }
-        } else if ("teacher".equals(role)) {
-            // 教师登录逻辑，这里暂时简化处理
-            logger.info("教师登录验证，工号: {}", username);
-            return true;
-        } else if ("admin".equals(role)) {
-            // 管理员登录逻辑
-            if ("admin".equals(username) && "admin123".equals(password)) {
-                logger.info("管理员登录成功");
-                return true;
-            }
-        }
-        
-        logger.warn("登录验证失败，用户名: {}", username);
+        logger.warn("不支持的登录角色，用户名: {}, 角色: {}", username, role);
         return false;
     }
 
@@ -629,6 +615,13 @@ public class UserServiceImpl implements UserService {
         return Constants.ROLE_STUDENT.equals(registerRequest.role)
                 || "student".equalsIgnoreCase(registerRequest.role)
                 || Integer.valueOf(1).equals(registerRequest.userType);
+    }
+
+    private Map<String, Object> buildLoginResult(User user) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("token", "session-" + UUID.randomUUID());
+        result.put("user", user);
+        return result;
     }
 
     private List<User> aggregateUsers(Integer userType) {

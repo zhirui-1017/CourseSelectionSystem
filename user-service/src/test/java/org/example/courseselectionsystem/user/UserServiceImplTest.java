@@ -10,6 +10,7 @@ import org.example.courseselectionsystem.mapper.StudentMapper;
 import org.example.courseselectionsystem.mapper.TeacherMapper;
 import org.example.courseselectionsystem.repository.AdminRepository;
 import org.example.courseselectionsystem.service.impl.UserServiceImpl;
+import org.example.courseselectionsystem.vo.LoginRequest;
 import org.example.courseselectionsystem.vo.PageRequest;
 import org.example.courseselectionsystem.vo.RegisterRequest;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,6 +43,80 @@ class UserServiceImplTest {
 
     @Mock
     private AdminRepository adminRepository;
+
+    @Test
+    void loginAuthenticatesStudentPasswordAndReturnsUser() {
+        UserServiceImpl service = newService();
+        Student student = student(1L, "S1001", "Alice");
+        student.setPassword(new BCryptPasswordEncoder().encode("abc123"));
+        when(studentMapper.selectByStudentNo("S1001")).thenReturn(student);
+
+        Map<String, Object> result = service.login(loginRequest("S1001", "abc123"));
+
+        assertThat(result.get("token")).asString().startsWith("session-");
+        User user = (User) result.get("user");
+        assertThat(user.getUsername()).isEqualTo("S1001");
+        assertThat(user.getUserType()).isEqualTo(1);
+    }
+
+    @Test
+    void loginRejectsWrongStudentPassword() {
+        UserServiceImpl service = newService();
+        Student student = student(1L, "S1001", "Alice");
+        student.setPassword("abc123");
+        when(studentMapper.selectByStudentNo("S1001")).thenReturn(student);
+
+        assertThatThrownBy(() -> service.login(loginRequest("S1001", "bad123")))
+                .isInstanceOf(BusinessException.class)
+                .extracting("code")
+                .isEqualTo(Constants.UNAUTHORIZED_CODE);
+    }
+
+    @Test
+    void loginFallsThroughToTeacherWhenStudentNotFound() {
+        UserServiceImpl service = newService();
+        Teacher teacher = teacher(2L, "T1001", "Carol");
+        teacher.setPassword("teach123");
+        when(studentMapper.selectByStudentNo("T1001")).thenReturn(null);
+        when(teacherMapper.selectByTeacherNo("T1001")).thenReturn(teacher);
+
+        Map<String, Object> result = service.login(loginRequest("T1001", "teach123"));
+
+        User user = (User) result.get("user");
+        assertThat(user.getUsername()).isEqualTo("T1001");
+        assertThat(user.getUserType()).isEqualTo(2);
+    }
+
+    @Test
+    void loginAuthenticatesPersistedAdmin() {
+        UserServiceImpl service = newService();
+        Admin admin = admin(4L, "admin");
+        admin.setPassword(new BCryptPasswordEncoder().encode("admin123"));
+        when(studentMapper.selectByStudentNo("admin")).thenReturn(null);
+        when(teacherMapper.selectByTeacherNo("admin")).thenReturn(null);
+        when(adminRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+
+        Map<String, Object> result = service.login(loginRequest("admin", "admin123"));
+
+        User user = (User) result.get("user");
+        assertThat(user.getId()).isEqualTo(4L);
+        assertThat(user.getUserType()).isEqualTo(3);
+    }
+
+    @Test
+    void loginSupportsLegacyAdminFallback() {
+        UserServiceImpl service = newService();
+        when(studentMapper.selectByStudentNo("admin")).thenReturn(null);
+        when(teacherMapper.selectByTeacherNo("admin")).thenReturn(null);
+        when(adminRepository.findByUsername("admin")).thenReturn(Optional.empty());
+
+        Map<String, Object> result = service.login(loginRequest("admin", "admin123"));
+
+        User user = (User) result.get("user");
+        assertThat(user.getId()).isZero();
+        assertThat(user.getUsername()).isEqualTo("admin");
+        assertThat(user.getUserType()).isEqualTo(3);
+    }
 
     @Test
     void registerCreatesStudentUserWithEncodedPassword() {
@@ -253,6 +329,13 @@ class UserServiceImplTest {
         request.className = "Class 1";
         request.email = "new@example.com";
         request.phone = "13900000000";
+        return request;
+    }
+
+    private LoginRequest loginRequest(String username, String password) {
+        LoginRequest request = new LoginRequest();
+        request.username = username;
+        request.password = password;
         return request;
     }
 
