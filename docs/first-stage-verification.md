@@ -51,6 +51,38 @@ $env:JAVA_HOME='E:\biancheng\jdk\.jdks\oracle_open_jdk-17'
 - `/admin/index`、`/student/index`、`/teacher/index` 页面路由可经 Gateway 访问。
 - `/api/v1/courses/list` 会路由到 `course-service`。
 
+## 核心业务回归验收
+
+默认执行只读回归检查：
+
+```powershell
+.\scripts\regression-test-core-flow.ps1
+```
+
+该脚本会通过 Gateway 验证：
+
+- 管理员登录与 Session 当前用户。
+- 课程查询。
+- 学生列表查询。
+- 已选课程查询。
+- 当前课程查询。
+- 学分统计。
+- 选课状态检查。
+
+如果当前数据库没有可发现的学生或课程数据，默认只跳过依赖种子数据的检查；如希望把缺少种子数据视为失败，可以加：
+
+```powershell
+.\scripts\regression-test-core-flow.ps1 -RequireSeedData
+```
+
+如需验证“选课后退课”的可逆写入流程，请提供明确的学生和课程 ID，并显式开启写入检查：
+
+```powershell
+.\scripts\regression-test-core-flow.ps1 -StudentId 1 -CourseId 1 -ExerciseSelectionWrite
+```
+
+脚本会先检查该学生是否已经选过该课程；如果已经存在活动选课记录，会跳过写入流程，避免误退真实选课。
+
 ## 熔断 fallback 验收
 
 先停止一个业务服务，例如 `course-service`：
