@@ -1,7 +1,11 @@
 package org.example.courseselectionsystem.repository;
 
 import org.example.courseselectionsystem.entity.Department;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -32,4 +36,13 @@ public interface DepartmentRepository extends JpaRepository<Department, Long> {
      * @return 学院列表
      */
     List<Department> findByStatusOrderBySortAsc(Integer status);
+
+    @Query("SELECT d FROM Department d WHERE 1=1 " +
+            "AND (:departmentName IS NULL OR d.departmentName LIKE CONCAT('%', :departmentName, '%')) " +
+            "AND (:departmentCode IS NULL OR d.departmentCode LIKE CONCAT('%', :departmentCode, '%')) " +
+            "AND (:status IS NULL OR d.status = :status)")
+    Page<Department> findDepartments(@Param("departmentName") String departmentName,
+                                     @Param("departmentCode") String departmentCode,
+                                     @Param("status") Integer status,
+                                     Pageable pageable);
 }
