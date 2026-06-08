@@ -1,6 +1,7 @@
 (function () {
     const api = window.AppApi;
     let editingUser = null;
+    let editingCourse = null;
 
     document.addEventListener('DOMContentLoaded', () => {
         initHashTabs();
@@ -148,6 +149,9 @@
                 <td>${api.escapeHtml(course.selectedCount ?? course.currentStudents ?? 0)}</td>
                 <td>${courseStatusBadge(course.status)}</td>
                 <td>
+                    <button class="btn btn-sm btn-primary js-edit-course" data-id="${course.id}" title="编辑">
+                        <i class="fas fa-edit"></i>
+                    </button>
                     <button class="btn btn-sm btn-danger js-delete-course" data-id="${course.id}" title="删除">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -169,6 +173,10 @@
         document.getElementById('addUserModal')?.querySelectorAll('[data-dismiss="modal"], .close').forEach((button) => {
             button.addEventListener('click', () => prepareAddUserForm());
         });
+        document.querySelector('[data-target="#addCourseModal"]')?.addEventListener('click', () => prepareAddCourseForm());
+        document.getElementById('addCourseModal')?.querySelectorAll('[data-dismiss="modal"], .close').forEach((button) => {
+            button.addEventListener('click', () => prepareAddCourseForm());
+        });
 
         document.addEventListener('click', async (event) => {
             const editUser = event.target.closest('.js-edit-user');
@@ -184,6 +192,11 @@
             const deleteUser = event.target.closest('.js-delete-user');
             if (deleteUser && confirm('确定删除该用户吗？')) {
                 await handleDeleteUser(deleteUser.dataset.role, deleteUser.dataset.id);
+            }
+
+            const editCourse = event.target.closest('.js-edit-course');
+            if (editCourse) {
+                await prepareEditCourseForm(editCourse.dataset.id);
             }
 
             const deleteCourse = event.target.closest('.js-delete-course');
@@ -261,14 +274,30 @@
             description: data.description || '',
             status: 1
         };
+        const editBody = {
+            courseName: data.courseName,
+            credit: data.credits,
+            totalHours: Number(data.credits || 2) * 16,
+            availableSlots: data.capacity || 40,
+            description: data.description || ''
+        };
         try {
-            await api.post('/api/v1/courses', body);
+            if (editingCourse) {
+                await api.request(`/api/v1/courses/${encodeURIComponent(editingCourse.id)}`, {
+                    method: 'PUT',
+                    body: editBody
+                });
+                api.notify('success', '更新成功', '课程信息已更新');
+            } else {
+                await api.post('/api/v1/courses', body);
+                api.notify('success', '添加成功', '课程已写入数据库');
+            }
             window.closeModal?.(document.getElementById('addCourseModal'));
             form.reset();
-            api.notify('success', '添加成功', '课程已写入数据库');
+            prepareAddCourseForm();
             await Promise.all([loadCourses(), loadStats()]);
         } catch (error) {
-            api.notify('error', '添加失败', error.message);
+            api.notify('error', editingCourse ? '更新失败' : '添加失败', error.message);
         }
     }
 
@@ -360,6 +389,42 @@
         } catch (error) {
             api.notify('error', '删除失败', error.message);
         }
+    }
+
+    async function prepareEditCourseForm(id) {
+        try {
+            const course = await api.get(`/api/v1/courses/${encodeURIComponent(id)}`);
+            editingCourse = { id };
+            const modal = document.getElementById('addCourseModal');
+            const form = document.getElementById('addCourseForm');
+            if (!modal || !form) {
+                return;
+            }
+            modal.querySelector('.modal-title').textContent = '编辑课程';
+            document.getElementById('submitAddCourse').textContent = '保存修改';
+            form.elements.courseCode.value = course.courseCode || '';
+            form.elements.courseCode.disabled = true;
+            form.elements.courseName.value = course.courseName || '';
+            form.elements.credits.value = course.credit == null ? '' : String(course.credit);
+            form.elements.capacity.value = course.availableSlots ?? course.maxCapacity ?? '';
+            form.elements.description.value = course.description || '';
+            window.openModal?.(modal);
+        } catch (error) {
+            api.notify('error', '读取失败', error.message);
+        }
+    }
+
+    function prepareAddCourseForm() {
+        const modal = document.getElementById('addCourseModal');
+        const form = document.getElementById('addCourseForm');
+        editingCourse = null;
+        if (!modal || !form) {
+            return;
+        }
+        modal.querySelector('.modal-title').textContent = '添加课程';
+        document.getElementById('submitAddCourse').textContent = '保存';
+        form.elements.courseCode.disabled = false;
+        form.reset();
     }
 
     function badge(text, type) {

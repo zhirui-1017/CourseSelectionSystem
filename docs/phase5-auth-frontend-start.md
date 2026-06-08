@@ -41,7 +41,7 @@
 | 页面脚本 | 当前调用 | 当前归属 | 后续处理 |
 | --- | --- | --- | --- |
 | `static/js/student-courses.js` | `/login/current`、`/api/v1/courses/search`、`/api/v1/courses/active`、`/api/v1/course-selections/...` | 登录态在 `web-service`，业务接口经 Gateway 进入课程/选课服务 | 保持现状，作为阶段 5 的迁移参考基线 |
-| `static/js/admin-dashboard.js` | 列表与计数已改为 `/api/v1/students/list`、`/api/v1/teachers/list`、`/api/v1/courses/list`、`/api/v1/course-selections/stats`；新增、编辑、删除、重置密码已改为 `/api/v1/students/**`、`/api/v1/teachers/**`、`/api/v1/courses/**` | 管理员仪表盘主要业务数据经 Gateway 进入学生/教师/课程/选课服务 | 后续继续迁移课程编辑、管理员自身账号等未接入的管理操作 |
+| `static/js/admin-dashboard.js` | 列表与计数已改为 `/api/v1/students/list`、`/api/v1/teachers/list`、`/api/v1/courses/list`、`/api/v1/course-selections/stats`；新增、编辑、删除、重置密码已改为 `/api/v1/students/**`、`/api/v1/teachers/**`、`/api/v1/courses/**` | 管理员仪表盘主要业务数据经 Gateway 进入学生/教师/课程/选课服务 | 后续继续迁移管理员自身账号等认证边界操作 |
 | `static/js/teacher-dashboard.js` | `/login/current`、`/api/v1/courses/teacher/{teacherId}`、`/api/v1/course-selections/teacher/...`、`/api/v1/course-selections/{selectionId}/grade` | 教师课程只读列表经 Gateway 进入 `course-service`；学生列表、仪表盘聚合和成绩写入经 Gateway 进入 `selection-service`；登录态仍在 `web-service` | 后续继续评估教师资料、密码等个人设置接口与统一认证边界 |
 
 ## 阶段 5 下一步边界
@@ -58,6 +58,7 @@
 - `AppApi.pageItems` 继续兼容 `items`、`content`、`records`；新增 `AppApi.pageTotal` 兼容 `total`、`totalElements`、`totalCount`，用于不同分页返回结构的总数显示。
 - 管理员新增学生/教师/课程以及删除学生/教师/课程已从 `/admin/add*`、`/admin/delete*` 切换到 `/api/v1/...` 业务服务接口；前端仍保留字段默认值，避免改变表单填写范围。
 - 管理员编辑学生/教师资料以及重置学生/教师密码已接入 `/api/v1/students/{id}/from-map`、`/api/v1/teachers/{id}/from-map` 和对应 `reset-password` 接口；`from-map` 更新以现有记录为基底，只覆盖前端提交字段，避免编辑资料时误覆盖密码、班级、职称等未展示字段。
+- 管理员编辑课程资料已接入 `/api/v1/courses/{id}`，复用课程弹窗提交课程名、学分、容量和介绍；`CourseService.updateCourse(Map)` 同样以现有课程为基底，避免编辑时误覆盖教师、排课、教室、已选人数等未展示字段。
 - 教师端成绩保存已从 `/teacher/updateGrade` 切换到 `/api/v1/course-selections/{selectionId}/grade`，由 `selection-service` 写入成绩并校验教师课程归属；当前仍通过前端传递 `teacherId`，后续统一认证前不把它视为最终鉴权方案。
 - 教师端学生名单已从 `/teacher/courseStudents` 切换到 `/api/v1/course-selections/teacher/course/{courseId}/students`，由 `selection-service` 校验教师课程归属并聚合学生只读信息。
 - 教师端首页统计已从 `/teacher/dashboard` 切换到 `/api/v1/course-selections/teacher/dashboard`，由 `selection-service` 聚合课程数、选课人数、成绩录入数、平均分和最近选课记录。
