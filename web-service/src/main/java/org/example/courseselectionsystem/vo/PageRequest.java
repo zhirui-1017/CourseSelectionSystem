@@ -26,14 +26,16 @@ public class PageRequest {
      * 排序方向：asc 或 desc
      */
     private Boolean isAsc = true;
+    private String searchField;
+    private String searchValue;
     private java.util.Map<String, Object> params;
 
     public String getSearchField() {
-        return orderByColumn;
+        return searchField;
     }
 
     public String getSearchValue() {
-        return null;
+        return searchValue;
     }
 
     public String getSortField() {

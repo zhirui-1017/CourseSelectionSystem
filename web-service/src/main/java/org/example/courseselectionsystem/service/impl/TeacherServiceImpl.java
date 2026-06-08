@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -29,6 +30,28 @@ import java.util.regex.Pattern;
 public class TeacherServiceImpl implements TeacherService {
 
     private static final Logger logger = LoggerFactory.getLogger(TeacherServiceImpl.class);
+    private static final int DEFAULT_PAGE_SIZE = 10;
+    private static final int MAX_PAGE_SIZE = 100;
+    private static final Map<String, String> SORT_COLUMNS = Map.ofEntries(
+            Map.entry("id", "id"),
+            Map.entry("teacherNo", "teacher_no"),
+            Map.entry("teacher_no", "teacher_no"),
+            Map.entry("teacherId", "teacher_no"),
+            Map.entry("username", "teacher_no"),
+            Map.entry("name", "name"),
+            Map.entry("teacherName", "name"),
+            Map.entry("gender", "gender"),
+            Map.entry("phone", "phone"),
+            Map.entry("email", "email"),
+            Map.entry("title", "title"),
+            Map.entry("departmentId", "department_id"),
+            Map.entry("department", "department_id"),
+            Map.entry("status", "status"),
+            Map.entry("createdAt", "created_at"),
+            Map.entry("createTime", "created_at"),
+            Map.entry("updatedAt", "updated_at"),
+            Map.entry("updateTime", "updated_at")
+    );
 
     @Autowired
     private TeacherMapper teacherMapper;
@@ -119,23 +142,16 @@ public class TeacherServiceImpl implements TeacherService {
     @Override
     public PageResult<Teacher> getTeachersByPage(PageRequest pageRequest) {
         // 构建分页参数
-        Page<Teacher> page = new Page<>(pageRequest.getPageNum(), pageRequest.getPageSize());
+        PageRequest request = pageRequest == null ? new PageRequest() : pageRequest;
+        Page<Teacher> page = new Page<>(normalizePageNum(request.getPageNum()), normalizePageSize(request.getPageSize()));
         
         // 构建查询条件
         QueryWrapper<Teacher> queryWrapper = new QueryWrapper<>();
-        if (StringUtils.hasText(pageRequest.getSearchField()) && StringUtils.hasText(pageRequest.getSearchValue())) {
-            if ("name".equals(pageRequest.getSearchField())) {
-                queryWrapper.like("name", pageRequest.getSearchValue());
-            } else if ("teacherNo".equals(pageRequest.getSearchField())) {
-                queryWrapper.eq("teacher_no", pageRequest.getSearchValue());
-            }
-        }
+        applySearch(queryWrapper, request);
+        applyFilters(queryWrapper, request);
         
         // 排序
-        if (StringUtils.hasText(pageRequest.getSortField())) {
-            boolean isAsc = "asc".equalsIgnoreCase(pageRequest.getSortOrder());
-            queryWrapper.orderBy(true, isAsc, pageRequest.getSortField());
-        }
+        queryWrapper.orderBy(true, "asc".equalsIgnoreCase(request.getSortOrder()), sortColumn(request));
         
         // 分页查询
         IPage<Teacher> pageResult = teacherMapper.selectPage(page, queryWrapper);
@@ -162,6 +178,129 @@ public class TeacherServiceImpl implements TeacherService {
     @Override
     public List<Teacher> searchTeachersByName(String name) {
         return teacherMapper.selectByNameLike(name);
+    }
+
+    private void applySearch(QueryWrapper<Teacher> queryWrapper, PageRequest request) {
+        String searchField = firstText(request.getSearchField(), textParam(request, "searchField"));
+        String searchValue = firstText(request.getSearchValue(), textParam(request, "searchValue"));
+        if (!StringUtils.hasText(searchField) || !StringUtils.hasText(searchValue)) {
+            return;
+        }
+        switch (searchField.trim()) {
+            case "name":
+            case "teacherName":
+                queryWrapper.like("name", searchValue.trim());
+                break;
+            case "teacherNo":
+            case "teacherId":
+            case "username":
+                queryWrapper.like("teacher_no", searchValue.trim());
+                break;
+            case "phone":
+                queryWrapper.like("phone", searchValue.trim());
+                break;
+            case "email":
+                queryWrapper.like("email", searchValue.trim());
+                break;
+            case "title":
+                queryWrapper.like("title", searchValue.trim());
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void applyFilters(QueryWrapper<Teacher> queryWrapper, PageRequest request) {
+        String teacherName = textParam(request, "teacherName", "name");
+        if (StringUtils.hasText(teacherName)) {
+            queryWrapper.like("name", teacherName.trim());
+        }
+
+        String teacherNo = textParam(request, "teacherNo", "teacherId", "username");
+        if (StringUtils.hasText(teacherNo)) {
+            queryWrapper.like("teacher_no", teacherNo.trim());
+        }
+
+        Long departmentId = longParam(request, "departmentId");
+        if (departmentId != null) {
+            queryWrapper.eq("department_id", departmentId);
+        }
+
+        String title = textParam(request, "title");
+        if (StringUtils.hasText(title)) {
+            queryWrapper.like("title", title.trim());
+        }
+
+        String gender = textParam(request, "gender");
+        if (StringUtils.hasText(gender)) {
+            queryWrapper.eq("gender", gender.trim());
+        }
+
+        Integer status = intParam(request, "status");
+        if (status != null) {
+            queryWrapper.eq("status", status);
+        }
+    }
+
+    private int normalizePageNum(Integer pageNum) {
+        return pageNum == null || pageNum < 1 ? 1 : pageNum;
+    }
+
+    private int normalizePageSize(Integer pageSize) {
+        if (pageSize == null || pageSize < 1) {
+            return DEFAULT_PAGE_SIZE;
+        }
+        return Math.min(pageSize, MAX_PAGE_SIZE);
+    }
+
+    private String sortColumn(PageRequest request) {
+        String sortField = firstText(request.getSortField(), textParam(request, "sortField", "orderByColumn"));
+        if (!StringUtils.hasText(sortField)) {
+            return "id";
+        }
+        return SORT_COLUMNS.getOrDefault(sortField.trim(), "id");
+    }
+
+    private String firstText(String first, String second) {
+        return StringUtils.hasText(first) ? first : second;
+    }
+
+    private String textParam(PageRequest request, String... keys) {
+        Map<String, Object> params = request.getParams();
+        if (params == null || params.isEmpty()) {
+            return null;
+        }
+        for (String key : keys) {
+            Object value = params.get(key);
+            if (value != null && StringUtils.hasText(String.valueOf(value))) {
+                return String.valueOf(value);
+            }
+        }
+        return null;
+    }
+
+    private Long longParam(PageRequest request, String... keys) {
+        String value = textParam(request, keys);
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        try {
+            return Long.valueOf(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private Integer intParam(PageRequest request, String... keys) {
+        String value = textParam(request, keys);
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     /**

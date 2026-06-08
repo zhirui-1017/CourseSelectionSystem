@@ -74,12 +74,14 @@ public class StudentApiController {
     }
 
     @GetMapping("/list")
-    public Result<PageResult<Student>> getStudentsByPage(PageRequest pageRequest) {
+    public Result<PageResult<Student>> getStudentsByPage(PageRequest pageRequest, @RequestParam Map<String, Object> params) {
+        pageRequest.setParams(params);
         return Result.success(studentService.getStudentsByPage(pageRequest));
     }
 
     @GetMapping("/page-map")
-    public Result<Map<String, Object>> getStudentListByPage(PageRequest pageRequest) {
+    public Result<Map<String, Object>> getStudentListByPage(PageRequest pageRequest, @RequestParam Map<String, Object> params) {
+        pageRequest.setParams(params);
         return Result.success(studentService.getStudentListByPage(pageRequest));
     }
 

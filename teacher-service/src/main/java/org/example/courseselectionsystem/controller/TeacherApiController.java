@@ -74,12 +74,14 @@ public class TeacherApiController {
     }
 
     @GetMapping("/list")
-    public Result<PageResult<Teacher>> getTeachersByPage(PageRequest pageRequest) {
+    public Result<PageResult<Teacher>> getTeachersByPage(PageRequest pageRequest, @RequestParam Map<String, Object> params) {
+        pageRequest.setParams(params);
         return Result.success(teacherService.getTeachersByPage(pageRequest));
     }
 
     @GetMapping("/page-map")
-    public Result<Map<String, Object>> getTeacherListByPage(PageRequest pageRequest) {
+    public Result<Map<String, Object>> getTeacherListByPage(PageRequest pageRequest, @RequestParam Map<String, Object> params) {
+        pageRequest.setParams(params);
         return Result.success(teacherService.getTeacherListByPage(pageRequest));
     }
 

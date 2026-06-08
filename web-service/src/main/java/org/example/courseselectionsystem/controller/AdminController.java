@@ -61,8 +61,9 @@ public class AdminController {
      */
     @GetMapping("/students")
     @ResponseBody
-    public Result<?> getStudentList(PageRequest pageRequest) {
+    public Result<?> getStudentList(PageRequest pageRequest, @RequestParam Map<String, Object> params) {
         try {
+            pageRequest.setParams(params);
             Map<String, Object> result = studentService.getStudentListByPage(pageRequest);
             return Result.success(result);
         } catch (Exception e) {
@@ -139,8 +140,9 @@ public class AdminController {
      */
     @GetMapping("/teachers")
     @ResponseBody
-    public Result<?> getTeacherList(PageRequest pageRequest) {
+    public Result<?> getTeacherList(PageRequest pageRequest, @RequestParam Map<String, Object> params) {
         try {
+            pageRequest.setParams(params);
             Map<String, Object> result = teacherService.getTeacherListByPage(pageRequest);
             return Result.success(result);
         } catch (Exception e) {

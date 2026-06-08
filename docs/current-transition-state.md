@@ -14,5 +14,7 @@ This note records the current runnable transition state for the Spring Cloud mig
 - Role list filtering and permission status updates are concrete in `user-service` and mirrored in the `web-service` compatibility fallback.
 - `student-service` now owns the student REST APIs under `/api/v1/students/**`.
 - `teacher-service` now owns the teacher REST APIs under `/api/v1/teachers/**`.
+- Student list pagination now normalizes page and sort parameters, supports name/student number/college/department/major/class/status filtering, and is mirrored in the `web-service` compatibility fallback.
+- Teacher list pagination now normalizes page and sort parameters, supports name/teacher number/department/title/gender/status filtering, and is mirrored in the `web-service` compatibility fallback.
 - Student and teacher page paths remain routed to `web-service` for compatibility.
 - Gateway routes migrated API domains to their target services first, then keeps the legacy `web-service` route as a compatibility fallback for remaining pages and APIs.

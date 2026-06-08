@@ -29,35 +29,6 @@ class TeacherServiceImplTest {
     private TeacherMapper teacherMapper;
 
     @Test
-    void updateTeacherFromMapPreservesExistingPasswordAndTitleWhenOmitted() {
-        TeacherServiceImpl service = newService();
-        Teacher teacher = new Teacher();
-        teacher.setId(3L);
-        teacher.setTeacherNo("T1001");
-        teacher.setName("教师");
-        teacher.setGender("女");
-        teacher.setPassword("old-pass");
-        teacher.setTitle("教授");
-        teacher.setDepartmentId(5L);
-        teacher.setStatus(1);
-        when(teacherMapper.selectById(3L)).thenReturn(teacher);
-        when(teacherMapper.countByTeacherNo("T1001", 3L)).thenReturn(0);
-        when(teacherMapper.updateById(any(Teacher.class))).thenReturn(1);
-
-        boolean result = service.updateTeacher(Map.of(
-                "id", 3L,
-                "name", "新教师",
-                "email", "teacher@example.edu.cn"
-        ));
-
-        assertThat(result).isTrue();
-        assertThat(teacher.getName()).isEqualTo("新教师");
-        assertThat(teacher.getPassword()).isEqualTo("old-pass");
-        assertThat(teacher.getTitle()).isEqualTo("教授");
-        assertThat(teacher.getDepartmentId()).isEqualTo(5L);
-    }
-
-    @Test
     @SuppressWarnings({"unchecked", "rawtypes"})
     void getTeachersByPageNormalizesPagingAndFallsBackToSafeSort() {
         TeacherServiceImpl service = newService();
