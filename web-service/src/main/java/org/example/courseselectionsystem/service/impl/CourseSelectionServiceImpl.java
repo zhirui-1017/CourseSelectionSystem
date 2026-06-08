@@ -20,6 +20,28 @@ import java.util.*;
 @Service
 public class CourseSelectionServiceImpl implements CourseSelectionService {
 
+    private static final int DEFAULT_PAGE_SIZE = 10;
+    private static final int MAX_PAGE_SIZE = 100;
+    private static final Map<String, String> SORT_COLUMNS = Map.ofEntries(
+            Map.entry("id", "id"),
+            Map.entry("studentId", "studentId"),
+            Map.entry("student", "studentId"),
+            Map.entry("courseId", "courseId"),
+            Map.entry("course", "courseId"),
+            Map.entry("status", "status"),
+            Map.entry("score", "score"),
+            Map.entry("dailyGrade", "dailyGrade"),
+            Map.entry("labGrade", "labGrade"),
+            Map.entry("examGrade", "examGrade"),
+            Map.entry("selectionTime", "selectionTime"),
+            Map.entry("selectedAt", "selectionTime"),
+            Map.entry("dropTime", "dropTime"),
+            Map.entry("createTime", "createTime"),
+            Map.entry("createdAt", "createTime"),
+            Map.entry("updateTime", "updateTime"),
+            Map.entry("updatedAt", "updateTime")
+    );
+
     @Autowired
     private CourseSelectionRepository courseSelectionRepository;
 
@@ -106,9 +128,11 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
 
     @Override
     public Page<CourseSelection> getStudentCourseSelections(Long studentId, PageRequest pageRequest, String semester, Integer status) {
-        Sort sort = Sort.by(pageRequest.getIsAsc() ? Sort.Direction.ASC : Sort.Direction.DESC, sortColumn(pageRequest));
+        PageRequest request = pageRequest == null ? new PageRequest() : pageRequest;
+        Sort sort = Sort.by(sortDirection(request), sortColumn(request));
         org.springframework.data.domain.PageRequest springPageRequest =
-                org.springframework.data.domain.PageRequest.of(pageRequest.getPageNum() - 1, pageRequest.getPageSize(), sort);
+                org.springframework.data.domain.PageRequest.of(normalizePageNum(request.getPageNum()) - 1,
+                        normalizePageSize(request.getPageSize()), sort);
 
         Page<CourseSelection> page = status != null
                 ? courseSelectionRepository.findByStudentIdAndStatus(studentId, status, springPageRequest)
@@ -118,9 +142,11 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
 
     @Override
     public Page<CourseSelection> getCourseStudentList(Long courseId, PageRequest pageRequest, Integer status) {
-        Sort sort = Sort.by(pageRequest.getIsAsc() ? Sort.Direction.ASC : Sort.Direction.DESC, sortColumn(pageRequest));
+        PageRequest request = pageRequest == null ? new PageRequest() : pageRequest;
+        Sort sort = Sort.by(sortDirection(request), sortColumn(request));
         org.springframework.data.domain.PageRequest springPageRequest =
-                org.springframework.data.domain.PageRequest.of(pageRequest.getPageNum() - 1, pageRequest.getPageSize(), sort);
+                org.springframework.data.domain.PageRequest.of(normalizePageNum(request.getPageNum()) - 1,
+                        normalizePageSize(request.getPageSize()), sort);
         return status != null
                 ? courseSelectionRepository.findByCourseIdAndStatus(courseId, status, springPageRequest).map(this::enrich)
                 : courseSelectionRepository.findByCourseId(courseId, springPageRequest).map(this::enrich);
@@ -266,7 +292,25 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
         return result;
     }
 
+    private Sort.Direction sortDirection(PageRequest request) {
+        return Boolean.TRUE.equals(request.getIsAsc()) ? Sort.Direction.ASC : Sort.Direction.DESC;
+    }
+
+    private int normalizePageNum(Integer pageNum) {
+        return pageNum == null || pageNum < 1 ? 1 : pageNum;
+    }
+
+    private int normalizePageSize(Integer pageSize) {
+        if (pageSize == null || pageSize < 1) {
+            return DEFAULT_PAGE_SIZE;
+        }
+        return Math.min(pageSize, MAX_PAGE_SIZE);
+    }
+
     private String sortColumn(PageRequest pageRequest) {
-        return StringUtils.hasText(pageRequest.getOrderByColumn()) ? pageRequest.getOrderByColumn() : "selectionTime";
+        if (pageRequest == null || !StringUtils.hasText(pageRequest.getOrderByColumn())) {
+            return "selectionTime";
+        }
+        return SORT_COLUMNS.getOrDefault(pageRequest.getOrderByColumn().trim(), "selectionTime");
     }
 }
