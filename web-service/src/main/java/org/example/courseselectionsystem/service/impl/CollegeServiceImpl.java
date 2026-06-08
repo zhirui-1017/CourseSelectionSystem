@@ -12,6 +12,8 @@ import org.example.courseselectionsystem.vo.PageResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -171,34 +173,18 @@ public class CollegeServiceImpl implements CollegeService {
     @Override
     public PageResult<CollegeVO> getCollegeList(PageRequest pageRequest) {
         logger.info("获取学院列表，分页参数：{}", pageRequest);
-        // 这里应该调用带分页的查询方法
-        // 暂时简化实现
-        List<College> colleges = collegeRepository.findAll();
-        List<CollegeVO> collegeVOs = colleges.stream()
+        PageRequest request = pageRequest == null ? new PageRequest() : pageRequest;
+        int pageNum = request.getPageNum() == null || request.getPageNum() < 1 ? 1 : request.getPageNum();
+        int pageSize = request.getPageSize() == null || request.getPageSize() < 1 ? 10 : Math.min(request.getPageSize(), 100);
+        org.springframework.data.domain.PageRequest pageable =
+                org.springframework.data.domain.PageRequest.of(pageNum - 1, pageSize, collegeSort(request));
+
+        Page<College> collegePage = collegeRepository.findAll(pageable);
+        List<CollegeVO> collegeVOs = collegePage.getContent().stream()
                 .map(collegeMapper::toVO)
                 .collect(Collectors.toList());
         
-        return new PageResult<CollegeVO>() {
-            @Override
-            public List<CollegeVO> getItems() {
-                return collegeVOs;
-            }
-
-            @Override
-            public long getTotal() {
-                return collegeVOs.size();
-            }
-
-            @Override
-            public int getPageNum() {
-                return pageRequest.getPageNum();
-            }
-
-            @Override
-            public int getPageSize() {
-                return pageRequest.getPageSize();
-            }
-        };
+        return new SimplePageResult<>(collegePage.getNumber() + 1, collegePage.getSize(), collegePage.getTotalElements(), collegeVOs);
     }
 
     /**
@@ -260,5 +246,68 @@ public class CollegeServiceImpl implements CollegeService {
                 .orElseThrow(() -> new BusinessException("学院不存在，ID：" + id));
         college.setStatus(status);
         collegeRepository.save(college);
+    }
+
+    private Sort collegeSort(PageRequest request) {
+        String sortField = request.getSortField();
+        String property = StringUtils.hasText(sortField) ? collegeSortProperty(sortField) : "id";
+        Sort.Direction direction = "desc".equalsIgnoreCase(request.getSortOrder()) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        if (!StringUtils.hasText(sortField)) {
+            direction = Sort.Direction.DESC;
+        }
+        return Sort.by(new Sort.Order(direction, property));
+    }
+
+    private String collegeSortProperty(String field) {
+        String normalized = field.trim();
+        if ("collegeName".equalsIgnoreCase(normalized)) {
+            return "name";
+        }
+        if ("collegeCode".equalsIgnoreCase(normalized)) {
+            return "code";
+        }
+        if ("name".equalsIgnoreCase(normalized)
+                || "code".equalsIgnoreCase(normalized)
+                || "status".equalsIgnoreCase(normalized)
+                || "createTime".equalsIgnoreCase(normalized)
+                || "updateTime".equalsIgnoreCase(normalized)
+                || "id".equalsIgnoreCase(normalized)) {
+            return normalized;
+        }
+        return "id";
+    }
+
+    private static class SimplePageResult<T> implements PageResult<T> {
+        private final int pageNum;
+        private final int pageSize;
+        private final long total;
+        private final List<T> items;
+
+        private SimplePageResult(int pageNum, int pageSize, long total, List<T> items) {
+            this.pageNum = pageNum;
+            this.pageSize = pageSize;
+            this.total = total;
+            this.items = items;
+        }
+
+        @Override
+        public List<T> getItems() {
+            return items;
+        }
+
+        @Override
+        public long getTotal() {
+            return total;
+        }
+
+        @Override
+        public int getPageNum() {
+            return pageNum;
+        }
+
+        @Override
+        public int getPageSize() {
+            return pageSize;
+        }
     }
 }
