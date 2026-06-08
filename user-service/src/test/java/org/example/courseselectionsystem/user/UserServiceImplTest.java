@@ -179,6 +179,69 @@ class UserServiceImplTest {
     }
 
     @Test
+    void registerCreatesTeacherUserWithEncodedPassword() {
+        UserServiceImpl service = newService();
+        RegisterRequest request = teacherRegisterRequest();
+        when(teacherMapper.selectByTeacherNo("T1001")).thenReturn(null);
+        when(teacherMapper.insert(any(Teacher.class))).thenReturn(1);
+
+        boolean result = service.register(request);
+
+        assertThat(result).isTrue();
+        verify(teacherMapper).insert(argThat(teacher ->
+                "T1001".equals(teacher.getTeacherNo())
+                        && "New Teacher".equals(teacher.getName())
+                        && "teacher@example.com".equals(teacher.getEmail())
+                        && "13800000001".equals(teacher.getPhone())
+                        && Long.valueOf(5L).equals(teacher.getDepartmentId())
+                        && Integer.valueOf(1).equals(teacher.getStatus())
+                        && new BCryptPasswordEncoder().matches("teach123", teacher.getPassword())
+        ));
+    }
+
+    @Test
+    void registerRejectsDuplicateTeacherNo() {
+        UserServiceImpl service = newService();
+        RegisterRequest request = teacherRegisterRequest();
+        when(teacherMapper.selectByTeacherNo("T1001")).thenReturn(teacher(1L, "T1001", "Existing"));
+
+        assertThatThrownBy(() -> service.register(request))
+                .isInstanceOf(BusinessException.class)
+                .extracting("code")
+                .isEqualTo(Constants.DUPLICATE_CODE);
+    }
+
+    @Test
+    void registerCreatesAdminUserWithEncodedPassword() {
+        UserServiceImpl service = newService();
+        RegisterRequest request = adminRegisterRequest();
+        when(adminRepository.findByUsername("new-admin")).thenReturn(Optional.empty());
+
+        boolean result = service.register(request);
+
+        assertThat(result).isTrue();
+        verify(adminRepository).save(argThat(admin ->
+                "new-admin".equals(admin.getUsername())
+                        && Integer.valueOf(3).equals(admin.getRole())
+                        && Integer.valueOf(1).equals(admin.getStatus())
+                        && new BCryptPasswordEncoder().matches("admin123", admin.getPassword())
+        ));
+    }
+
+    @Test
+    void registerRejectsUnsupportedUserType() {
+        UserServiceImpl service = newService();
+        RegisterRequest request = registerRequest();
+        request.role = "guest";
+        request.userType = 9;
+
+        assertThatThrownBy(() -> service.register(request))
+                .isInstanceOf(BusinessException.class)
+                .extracting("code")
+                .isEqualTo(Constants.PARAM_ERROR_CODE);
+    }
+
+    @Test
     void getUserListAggregatesFiltersSortsAndPagesUsers() {
         UserServiceImpl service = newService();
         when(studentMapper.selectAll()).thenReturn(List.of(
@@ -329,6 +392,30 @@ class UserServiceImplTest {
         request.className = "Class 1";
         request.email = "new@example.com";
         request.phone = "13900000000";
+        return request;
+    }
+
+    private RegisterRequest teacherRegisterRequest() {
+        RegisterRequest request = new RegisterRequest();
+        request.username = "teacher-user";
+        request.userCode = "T1001";
+        request.password = "teach123";
+        request.confirmPassword = "teach123";
+        request.realName = "New Teacher";
+        request.role = Constants.ROLE_TEACHER;
+        request.departmentId = 5L;
+        request.email = "teacher@example.com";
+        request.phone = "13800000001";
+        return request;
+    }
+
+    private RegisterRequest adminRegisterRequest() {
+        RegisterRequest request = new RegisterRequest();
+        request.username = "new-admin";
+        request.password = "admin123";
+        request.confirmPassword = "admin123";
+        request.realName = "New Admin";
+        request.role = Constants.ROLE_ADMIN;
         return request;
     }
 

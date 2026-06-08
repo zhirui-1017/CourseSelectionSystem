@@ -128,51 +128,17 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "两次输入的密码不一致");
         }
 
-        // 暂时只支持学生注册
         if (isStudentRegister(registerRequest)) {
-            String studentNo = StringUtils.hasText(registerRequest.userCode)
-                    ? registerRequest.userCode
-                    : registerRequest.username;
-            if (!StringUtils.hasText(studentNo)) {
-                throw new BusinessException(Constants.PARAM_ERROR_CODE, "学号不能为空");
-            }
-            if (!StringUtils.hasText(registerRequest.realName)) {
-                throw new BusinessException(Constants.PARAM_ERROR_CODE, "姓名不能为空");
-            }
-            if (registerRequest.majorId == null) {
-                throw new BusinessException(Constants.PARAM_ERROR_CODE, "专业不能为空");
-            }
-
-            // 检查学号是否已存在
-            Student existingStudent = studentMapper.selectByStudentNo(studentNo);
-            if (existingStudent != null) {
-                throw new BusinessException(Constants.DUPLICATE_CODE, "学号已存在");
-            }
-
-            Student student = new Student();
-            student.setStudentNo(studentNo);
-            student.setName(registerRequest.realName);
-            student.setGender("未知");
-            student.setPhone(registerRequest.phone);
-            student.setEmail(registerRequest.email);
-            student.setPassword(passwordEncoder.encode(registerRequest.password));
-            student.setMajorId(registerRequest.majorId);
-            student.setCollegeId(registerRequest.departmentId == null ? 1L : registerRequest.departmentId);
-            student.setClassName(StringUtils.hasText(registerRequest.className) ? registerRequest.className : "未分班");
-            student.setStatus(1);
-            Date now = new Date();
-            student.setCreatedAt(now);
-            student.setUpdatedAt(now);
-
-            int result = studentMapper.insert(student);
-            if (result <= 0) {
-                throw new BusinessException(Constants.FAIL_CODE, "学生注册失败");
-            }
-            logger.info("学生注册成功，学号: {}", studentNo);
-            return true;
-        } else {
-            throw new BusinessException(Constants.PARAM_ERROR_CODE, "仅支持学生注册");
+            return registerStudent(registerRequest);
         }
+        if (isTeacherRegister(registerRequest)) {
+            return registerTeacher(registerRequest);
+        }
+        if (isAdminRegister(registerRequest)) {
+            return registerAdmin(registerRequest);
+        }
+
+        throw new BusinessException(Constants.PARAM_ERROR_CODE, "不支持的注册用户类型");
     }
 
     @Override
@@ -617,11 +583,130 @@ public class UserServiceImpl implements UserService {
                 || Integer.valueOf(1).equals(registerRequest.userType);
     }
 
+    private boolean isTeacherRegister(RegisterRequest registerRequest) {
+        return Constants.ROLE_TEACHER.equals(registerRequest.role)
+                || "teacher".equalsIgnoreCase(registerRequest.role)
+                || Integer.valueOf(2).equals(registerRequest.userType);
+    }
+
+    private boolean isAdminRegister(RegisterRequest registerRequest) {
+        return Constants.ROLE_ADMIN.equals(registerRequest.role)
+                || "admin".equalsIgnoreCase(registerRequest.role)
+                || Integer.valueOf(3).equals(registerRequest.userType);
+    }
+
     private Map<String, Object> buildLoginResult(User user) {
         Map<String, Object> result = new HashMap<>();
         result.put("token", "session-" + UUID.randomUUID());
         result.put("user", user);
         return result;
+    }
+
+    private boolean registerStudent(RegisterRequest registerRequest) {
+        String studentNo = registerCode(registerRequest);
+        if (!StringUtils.hasText(studentNo)) {
+            throw new BusinessException(Constants.PARAM_ERROR_CODE, "学号不能为空");
+        }
+        String realName = requireRealName(registerRequest);
+        if (registerRequest.majorId == null) {
+            throw new BusinessException(Constants.PARAM_ERROR_CODE, "专业不能为空");
+        }
+
+        Student existingStudent = studentMapper.selectByStudentNo(studentNo);
+        if (existingStudent != null) {
+            throw new BusinessException(Constants.DUPLICATE_CODE, "学号已存在");
+        }
+
+        Student student = new Student();
+        student.setStudentNo(studentNo);
+        student.setName(realName);
+        student.setGender("未知");
+        student.setPhone(registerRequest.phone);
+        student.setEmail(registerRequest.email);
+        student.setPassword(passwordEncoder.encode(registerRequest.password));
+        student.setMajorId(registerRequest.majorId);
+        student.setCollegeId(registerRequest.departmentId == null ? 1L : registerRequest.departmentId);
+        student.setClassName(StringUtils.hasText(registerRequest.className) ? registerRequest.className : "未分班");
+        student.setStatus(1);
+        Date now = new Date();
+        student.setCreatedAt(now);
+        student.setUpdatedAt(now);
+
+        int result = studentMapper.insert(student);
+        if (result <= 0) {
+            throw new BusinessException(Constants.FAIL_CODE, "学生注册失败");
+        }
+        logger.info("学生注册成功，学号: {}", studentNo);
+        return true;
+    }
+
+    private boolean registerTeacher(RegisterRequest registerRequest) {
+        String teacherNo = registerCode(registerRequest);
+        if (!StringUtils.hasText(teacherNo)) {
+            throw new BusinessException(Constants.PARAM_ERROR_CODE, "工号不能为空");
+        }
+        String realName = requireRealName(registerRequest);
+
+        Teacher existingTeacher = teacherMapper.selectByTeacherNo(teacherNo);
+        if (existingTeacher != null) {
+            throw new BusinessException(Constants.DUPLICATE_CODE, "工号已存在");
+        }
+
+        Teacher teacher = new Teacher();
+        teacher.setTeacherNo(teacherNo);
+        teacher.setName(realName);
+        teacher.setGender("未知");
+        teacher.setPhone(registerRequest.phone);
+        teacher.setEmail(registerRequest.email);
+        teacher.setPassword(passwordEncoder.encode(registerRequest.password));
+        teacher.setDepartmentId(registerRequest.departmentId == null ? 1L : registerRequest.departmentId);
+        teacher.setStatus(1);
+        Date now = new Date();
+        teacher.setCreatedAt(now);
+        teacher.setUpdatedAt(now);
+
+        int result = teacherMapper.insert(teacher);
+        if (result <= 0) {
+            throw new BusinessException(Constants.FAIL_CODE, "教师注册失败");
+        }
+        logger.info("教师注册成功，工号: {}", teacherNo);
+        return true;
+    }
+
+    private boolean registerAdmin(RegisterRequest registerRequest) {
+        String username = StringUtils.hasText(registerRequest.username)
+                ? registerRequest.username
+                : registerRequest.userCode;
+        if (!StringUtils.hasText(username)) {
+            throw new BusinessException(Constants.PARAM_ERROR_CODE, "用户名不能为空");
+        }
+
+        Admin existingAdmin = adminRepository.findByUsername(username).orElse(null);
+        if (existingAdmin != null) {
+            throw new BusinessException(Constants.DUPLICATE_CODE, "用户名已存在");
+        }
+
+        Admin admin = new Admin();
+        admin.setUsername(username);
+        admin.setPassword(passwordEncoder.encode(registerRequest.password));
+        admin.setRole(3);
+        admin.setStatus(1);
+        adminRepository.save(admin);
+        logger.info("管理员注册成功，用户名: {}", username);
+        return true;
+    }
+
+    private String registerCode(RegisterRequest registerRequest) {
+        return StringUtils.hasText(registerRequest.userCode)
+                ? registerRequest.userCode
+                : registerRequest.username;
+    }
+
+    private String requireRealName(RegisterRequest registerRequest) {
+        if (!StringUtils.hasText(registerRequest.realName)) {
+            throw new BusinessException(Constants.PARAM_ERROR_CODE, "姓名不能为空");
+        }
+        return registerRequest.realName;
     }
 
     private List<User> aggregateUsers(Integer userType) {
