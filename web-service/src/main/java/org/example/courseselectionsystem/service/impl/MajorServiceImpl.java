@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.List;
@@ -149,16 +150,15 @@ public class MajorServiceImpl implements MajorService {
     @Override
     public Page<Major> getMajorList(PageRequest pageRequestParam, String majorName, String majorCode, Long departmentId, Integer status) {
         // 构建排序规则
-        Sort.Direction direction = pageRequestParam.getIsAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Sort sort = Sort.by(direction, pageRequestParam.getOrderByColumn());
+        PageRequest request = pageRequestParam == null ? new PageRequest() : pageRequestParam;
+        int pageNum = request.getPageNum() == null || request.getPageNum() < 1 ? 1 : request.getPageNum();
+        int pageSize = request.getPageSize() == null || request.getPageSize() < 1 ? 10 : Math.min(request.getPageSize(), 100);
 
         // 构建分页请求
         org.springframework.data.domain.PageRequest pageable =
-                org.springframework.data.domain.PageRequest.of(pageRequestParam.getPageNum() - 1, pageRequestParam.getPageSize(), sort);
+                org.springframework.data.domain.PageRequest.of(pageNum - 1, pageSize, majorSort(request));
 
-        // 根据查询条件查询专业列表
-        // 注意：这里为了简化，直接调用findAll方法，实际应该根据具体条件实现自定义查询
-        return majorRepository.findAll(pageable);
+        return majorRepository.findMajors(blankToNull(majorName), blankToNull(majorCode), departmentId, status, pageable);
     }
 
     @Override
@@ -196,5 +196,47 @@ public class MajorServiceImpl implements MajorService {
         major.setUpdateTime(new Date());
         majorRepository.save(major);
         return true;
+    }
+
+    private Sort majorSort(PageRequest request) {
+        String sortField = request.getSortField();
+        String property = StringUtils.hasText(sortField) ? majorSortProperty(sortField) : "id";
+        Sort.Direction direction = "desc".equalsIgnoreCase(request.getSortOrder()) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        if (!StringUtils.hasText(sortField)) {
+            direction = Sort.Direction.DESC;
+        }
+        return Sort.by(new Sort.Order(direction, property));
+    }
+
+    private String majorSortProperty(String field) {
+        String normalized = field.trim();
+        if ("code".equalsIgnoreCase(normalized)) {
+            return "majorCode";
+        }
+        if ("name".equalsIgnoreCase(normalized)) {
+            return "majorName";
+        }
+        if ("department".equalsIgnoreCase(normalized)) {
+            return "departmentName";
+        }
+        if ("majorCode".equalsIgnoreCase(normalized)
+                || "majorName".equalsIgnoreCase(normalized)
+                || "departmentId".equalsIgnoreCase(normalized)
+                || "departmentName".equalsIgnoreCase(normalized)
+                || "directorId".equalsIgnoreCase(normalized)
+                || "directorName".equalsIgnoreCase(normalized)
+                || "level".equalsIgnoreCase(normalized)
+                || "sort".equalsIgnoreCase(normalized)
+                || "status".equalsIgnoreCase(normalized)
+                || "createTime".equalsIgnoreCase(normalized)
+                || "updateTime".equalsIgnoreCase(normalized)
+                || "id".equalsIgnoreCase(normalized)) {
+            return normalized;
+        }
+        return "id";
+    }
+
+    private String blankToNull(String value) {
+        return StringUtils.hasText(value) ? value : null;
     }
 }

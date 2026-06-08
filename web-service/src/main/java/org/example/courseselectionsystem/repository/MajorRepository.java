@@ -1,7 +1,11 @@
 package org.example.courseselectionsystem.repository;
 
 import org.example.courseselectionsystem.entity.Major;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -47,4 +51,15 @@ public interface MajorRepository extends JpaRepository<Major, Long> {
      * @return 专业列表
      */
     List<Major> findByStatusOrderBySortAsc(Integer status);
+
+    @Query("SELECT m FROM Major m WHERE 1=1 " +
+            "AND (:majorName IS NULL OR m.majorName LIKE CONCAT('%', :majorName, '%')) " +
+            "AND (:majorCode IS NULL OR m.majorCode LIKE CONCAT('%', :majorCode, '%')) " +
+            "AND (:departmentId IS NULL OR m.departmentId = :departmentId) " +
+            "AND (:status IS NULL OR m.status = :status)")
+    Page<Major> findMajors(@Param("majorName") String majorName,
+                           @Param("majorCode") String majorCode,
+                           @Param("departmentId") Long departmentId,
+                           @Param("status") Integer status,
+                           Pageable pageable);
 }

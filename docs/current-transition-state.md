@@ -7,6 +7,7 @@ This note records the current runnable transition state for the Spring Cloud mig
 - College list pagination now uses repository-backed paging and sort normalization in `course-service`, mirrored in the `web-service` compatibility fallback.
 - Course list pagination now normalizes page and sort parameters, supports course type filtering, and is mirrored in the `web-service` compatibility fallback.
 - Department list pagination now applies repository-backed name/code/status filtering and sort normalization in both `course-service` and the `web-service` fallback.
+- Major list pagination now applies repository-backed name/code/department/status filtering and sort normalization in both `course-service` and the `web-service` fallback.
 - `selection-service` now owns the selection and course-selection REST APIs.
 - `user-service` now owns the user, role, and permission REST APIs.
 - `user-service` user list now aggregates student, teacher, and admin accounts; register, login, password reset, and password change endpoints have concrete student/teacher/admin implementations.
