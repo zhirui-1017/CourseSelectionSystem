@@ -3,1017 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>个人信息 - 学生选课系统</title>
+    <title>个人信息 - 学生端</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../../css/common.css">
-    <script src="../../js/common.js"></script>
-    <style>
-        /* 个人信息容器样式 */
-        .profile-container {
-            display: grid;
-            grid-template-columns: 300px 1fr;
-            gap: var(--spacing-xl);
-            margin-bottom: var(--spacing-xl);
-        }
-        
-        /* 个人资料卡片样式 */
-        .profile-card {
-            background: var(--glass-bg);
-            border-radius: var(--radius-lg);
-            border: var(--glass-border);
-            backdrop-filter: var(--glass-backdrop);
-            box-shadow: var(--shadow);
-            padding: var(--spacing-xl);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            position: sticky;
-            top: var(--top-nav-height);
-        }
-        
-        .profile-avatar {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            border: 4px solid var(--white);
-            box-shadow: var(--shadow);
-            background-color: var(--gray-200);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: var(--spacing-lg);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .profile-avatar i {
-            font-size: 3rem;
-            color: var(--gray-400);
-        }
-        
-        .avatar-upload-button {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: var(--primary-color);
-            color: var(--white);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            border: 2px solid var(--white);
-            box-shadow: var(--shadow);
-            transition: background-color var(--transition-normal);
-        }
-        
-        .avatar-upload-button:hover {
-            background-color: var(--primary-dark);
-        }
-        
-        .avatar-upload-input {
-            display: none;
-        }
-        
-        .profile-name {
-            font-size: var(--font-size-lg);
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: var(--spacing-xs);
-        }
-        
-        .profile-role {
-            font-size: var(--font-size-sm);
-            color: var(--text-secondary);
-            margin-bottom: var(--spacing-md);
-        }
-        
-        .profile-id {
-            font-size: var(--font-size-sm);
-            color: var(--text-secondary);
-            margin-bottom: var(--spacing-lg);
-        }
-        
-        .profile-bio {
-            font-size: var(--font-size-sm);
-            color: var(--text-primary);
-            line-height: 1.5;
-            margin-bottom: var(--spacing-lg);
-        }
-        
-        .profile-stats {
-            width: 100%;
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: var(--spacing-lg);
-            padding: var(--spacing-md) 0;
-            border-top: 1px solid var(--border-color);
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .profile-stat {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .stat-value {
-            font-size: var(--font-size-lg);
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-        
-        .stat-label {
-            font-size: var(--font-size-xs);
-            color: var(--text-secondary);
-        }
-        
-        .profile-actions {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-md);
-        }
-        
-        /* 信息详情样式 */
-        .profile-details {
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-xl);
-        }
-        
-        .info-section {
-            background: var(--glass-bg);
-            border-radius: var(--radius-lg);
-            border: var(--glass-border);
-            backdrop-filter: var(--glass-backdrop);
-            box-shadow: var(--shadow);
-            padding: var(--spacing-xl);
-        }
-        
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--spacing-lg);
-            padding-bottom: var(--spacing-md);
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .section-title {
-            font-size: var(--font-size-lg);
-            font-weight: 600;
-            color: var(--text-primary);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm);
-        }
-        
-        .section-title i {
-            color: var(--primary-color);
-        }
-        
-        .edit-section-button {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-xs);
-            padding: var(--spacing-sm) var(--spacing-md);
-            background-color: var(--white);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            color: var(--text-primary);
-            font-size: var(--font-size-sm);
-            cursor: pointer;
-            transition: all var(--transition-normal);
-        }
-        
-        .edit-section-button:hover {
-            background-color: var(--primary-light);
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-        }
-        
-        /* 信息列表样式 */
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: var(--spacing-lg);
-        }
-        
-        .info-item {
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-xs);
-        }
-        
-        .info-label {
-            font-size: var(--font-size-sm);
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-        
-        .info-value {
-            font-size: var(--font-size-sm);
-            color: var(--text-primary);
-            word-break: break-word;
-        }
-        
-        /* 表单样式 */
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: var(--spacing-lg);
-        }
-        
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-xs);
-        }
-        
-        .form-label {
-            font-size: var(--font-size-sm);
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-        
-        .form-input, 
-        .form-select, 
-        .form-textarea {
-            padding: var(--spacing-sm) var(--spacing-md);
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border-color);
-            background-color: var(--white);
-            font-size: var(--font-size-sm);
-            transition: border-color var(--transition-normal);
-        }
-        
-        .form-input:focus, 
-        .form-select:focus, 
-        .form-textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-        
-        .form-textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-        
-        .form-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: var(--spacing-md);
-            margin-top: var(--spacing-xl);
-            padding-top: var(--spacing-lg);
-            border-top: 1px solid var(--border-color);
-        }
-        
-        /* 教育经历样式 */
-        .education-item {
-            padding: var(--spacing-lg);
-            background-color: var(--white);
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-sm);
-            margin-bottom: var(--spacing-lg);
-            position: relative;
-        }
-        
-        .education-item:last-child {
-            margin-bottom: 0;
-        }
-        
-        .education-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: var(--spacing-md);
-        }
-        
-        .education-info h4 {
-            font-size: var(--font-size-md);
-            font-weight: 600;
-            color: var(--text-primary);
-            margin: 0 0 var(--spacing-xs) 0;
-        }
-        
-        .education-info p {
-            font-size: var(--font-size-sm);
-            color: var(--text-secondary);
-            margin: 0;
-        }
-        
-        .education-date {
-            font-size: var(--font-size-sm);
-            color: var(--primary-color);
-            font-weight: 500;
-        }
-        
-        /* 技能标签样式 */
-        .skills-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: var(--spacing-sm);
-            margin-bottom: var(--spacing-lg);
-        }
-        
-        .skill-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--spacing-xs);
-            padding: var(--spacing-xs) var(--spacing-sm);
-            background-color: var(--primary-light);
-            color: var(--primary-color);
-            border-radius: 50px;
-            font-size: var(--font-size-xs);
-            font-weight: 500;
-        }
-        
-        .add-skill-button {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--spacing-xs);
-            padding: var(--spacing-xs) var(--spacing-sm);
-            background-color: var(--gray-100);
-            color: var(--text-secondary);
-            border-radius: 50px;
-            font-size: var(--font-size-xs);
-            cursor: pointer;
-            transition: all var(--transition-normal);
-        }
-        
-        .add-skill-button:hover {
-            background-color: var(--gray-200);
-            color: var(--text-primary);
-        }
-        
-        /* 密码修改表单样式 */
-        .password-form {
-            max-width: 500px;
-        }
-        
-        /* 模态框样式 */
-        .modal-backdrop {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .modal {
-            background: var(--glass-bg);
-            border-radius: var(--radius-lg);
-            border: var(--glass-border);
-            backdrop-filter: var(--glass-backdrop);
-            box-shadow: var(--shadow-lg);
-            padding: var(--spacing-xl);
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--spacing-lg);
-            padding-bottom: var(--spacing-md);
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .modal-title {
-            font-size: var(--font-size-lg);
-            font-weight: 600;
-            color: var(--text-primary);
-            margin: 0;
-        }
-        
-        .close-modal-button {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-            padding: var(--spacing-xs);
-            transition: color var(--transition-normal);
-        }
-        
-        .close-modal-button:hover {
-            color: var(--text-primary);
-        }
-        
-        /* 移动端响应式 */
-        @media (max-width: 992px) {
-            .profile-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .profile-card {
-                position: static;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .info-grid, 
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .form-actions {
-                flex-direction: column;
-            }
-            
-            .modal {
-                width: 95%;
-                padding: var(--spacing-lg);
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/profile-pages.css">
 </head>
-<body>
+<body class="profile-page" data-profile-role="student">
     <div class="page-container">
-        <!-- 侧边栏 -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <a href="index.html" class="sidebar-brand">
-                    <div class="sidebar-brand-icon">
-                        <i class="fas fa-graduation-cap"></i>
-                    </div>
-                    <span class="sidebar-brand-text">选课系统学生端</span>
+                <a href="/student/index.html" class="sidebar-brand">
+                    <div class="sidebar-brand-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <span class="sidebar-brand-text">学生端</span>
                 </a>
-                <button class="sidebar-toggle" aria-label="收起侧边栏">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
+                <button class="sidebar-toggle" type="button" aria-label="收起侧边栏"><i class="fas fa-chevron-left"></i></button>
             </div>
-            
             <nav class="sidebar-nav">
-                <div class="nav-group">
-                    <div class="nav-item">
-                        <a href="index.html" class="nav-link">
-                            <i class="nav-icon fas fa-home"></i>
-                            <span class="nav-text">首页</span>
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a href="my-courses.html" class="nav-link">
-                            <i class="nav-icon fas fa-book"></i>
-                            <span class="nav-text">我的课程</span>
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a href="course-selection.html" class="nav-link">
-                            <i class="nav-icon fas fa-search"></i>
-                            <span class="nav-text">课程选择</span>
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a href="schedule.html" class="nav-link">
-                            <i class="nav-icon fas fa-calendar-alt"></i>
-                            <span class="nav-text">我的课表</span>
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a href="grades.html" class="nav-link">
-                            <i class="nav-icon fas fa-chart-line"></i>
-                            <span class="nav-text">成绩查询</span>
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a href="evaluations.html" class="nav-link">
-                            <i class="nav-icon fas fa-star"></i>
-                            <span class="nav-text">课程评价</span>
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="nav-group">
-                    <div class="nav-item">
-                        <a href="profile.html" class="nav-link active">
-                            <i class="nav-icon fas fa-user"></i>
-                            <span class="nav-text">个人信息</span>
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a href="messages.html" class="nav-link">
-                            <i class="nav-icon fas fa-envelope"></i>
-                            <span class="nav-text">消息通知</span>
-                            <span class="nav-badge">5</span>
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a href="settings.html" class="nav-link">
-                            <i class="nav-icon fas fa-cog"></i>
-                            <span class="nav-text">设置</span>
-                        </a>
-                    </div>
-                </div>
+                <div class="nav-item"><a href="/student/index.html" class="nav-link"><i class="nav-icon fas fa-home"></i><span class="nav-text">首页</span></a></div>
+                <div class="nav-item"><a href="/student/my-courses.html" class="nav-link"><i class="nav-icon fas fa-book"></i><span class="nav-text">我的课程</span></a></div>
+                <div class="nav-item"><a href="/student/course-selection.html" class="nav-link"><i class="nav-icon fas fa-search"></i><span class="nav-text">课程选择</span></a></div>
+                <div class="nav-item"><a href="/student/grades.html" class="nav-link"><i class="nav-icon fas fa-chart-line"></i><span class="nav-text">成绩查询</span></a></div>
+                <div class="nav-item"><a href="/student/profile.html" class="nav-link active"><i class="nav-icon fas fa-user"></i><span class="nav-text">个人信息</span></a></div>
             </nav>
         </aside>
-        
-        <!-- 主内容区 -->
+
         <main class="main-content">
-            <!-- 顶部导航栏 -->
             <header class="top-navbar">
                 <div class="nav-left">
-                    <button class="mobile-sidebar-toggle" aria-label="切换侧边栏">
-                        <i class="fas fa-bars"></i>
-                    </button>
+                    <button class="mobile-sidebar-toggle" type="button" aria-label="打开侧边栏"><i class="fas fa-bars"></i></button>
                     <h1 class="page-title">个人信息</h1>
                 </div>
-                
                 <div class="nav-right">
-                    <div class="breadcrumb">
-                        <a href="index.html">首页</a>
-                        <span class="breadcrumb-separator">/</span>
-                        <span class="breadcrumb-current">个人信息</span>
-                    </div>
-                    
-                    <button class="nav-icon-btn" aria-label="通知">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge">5</span>
-                    </button>
-                    </div>
-                    
-                    <div class="dropdown">
-                        <button class="user-profile dropdown-toggle">
-                            <div class="user-avatar">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="user-info">
-                                <span class="user-name">张三</span>
-                                <span class="user-role">计算机科学与技术</span>
-                            </div>
-                        </button>
-                        <div class="dropdown-menu">
-                            <a href="profile.html" class="dropdown-item">
-                                <i class="fas fa-user"></i> 个人信息
-                            </a>
-                            <a href="settings.html" class="dropdown-item">
-                                <i class="fas fa-cog"></i> 设置
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a href="/login/logout" class="dropdown-item">
-                                <i class="fas fa-sign-out-alt"></i> 退出登录
-                            </a>
+                    <div class="user-profile">
+                        <div class="user-avatar" data-profile-avatar>学</div>
+                        <div class="user-info">
+                            <span class="user-name" data-user-name>学生</span>
+                            <span class="user-role" data-user-role>Student</span>
                         </div>
                     </div>
+                    <a class="btn btn-secondary btn-sm" href="/login/logout"><i class="fas fa-right-from-bracket"></i>退出</a>
                 </div>
             </header>
-            
-            <!-- 页面内容 --<div class="content-wrapper">
-                <div class="profile-container">
-                    <!-- 个人资料卡片 --<div class="profile-card">
-                        <div class="profile-avatar">
-                            <i class="fas fa-user"></i>
-                            <label class="avatar-upload-button">
-                                <i class="fas fa-camera"></i>
-                                <input type="file" class="avatar-upload-input" accept="image/*">
-                            </label>
-                        </div>
-                        
-                        <h2 class="profile-name">张三</h2>
-                        <p class="profile-role">计算机科学与技术</p>
-                        <p class="profile-id">学号: 2021000001</p>
-                        
-                        <p class="profile-bio">热爱编程，对人工智能和机器学习有浓厚兴趣，希望成为一名优秀的软件工程师。</p>
-                        
-                        <div class="profile-stats">
-                            <div class="profile-stat">
-                                <span class="stat-value">15</span>
-                                <span class="stat-label">已修课程</span>
+
+            <div class="content-wrapper">
+                <div class="profile-layout">
+                    <aside class="profile-summary">
+                        <div class="profile-avatar-large" data-profile-avatar>学</div>
+                        <h2 data-profile-name>学生</h2>
+                        <p data-profile-role-text>Student</p>
+                        <div class="profile-meta-list">
+                            <div class="profile-meta-item">
+                                <span class="profile-meta-label" data-profile-id-label>学号</span>
+                                <span class="profile-meta-value" data-profile-id-value>-</span>
                             </div>
-                            <div class="profile-stat">
-                                <span class="stat-value">88.5</span>
-                                <span class="stat-label">平均分</span>
-                            </div>
-                            <div class="profile-stat">
-                                <span class="stat-value">3.7</span>
-                                <span class="stat-label">平均绩点</span>
+                            <div class="profile-meta-item">
+                                <span class="profile-meta-label">账号状态</span>
+                                <span class="profile-meta-value" data-profile-status>-</span>
                             </div>
                         </div>
-                        
-                        <div class="profile-actions">
-                            <button class="btn btn-primary edit-profile-button">
-                                <i class="fas fa-edit mr-2"></i> 编辑个人资料
-                            </button>
-                            <button class="btn btn-outline-secondary change-password-button">
-                                <i class="fas fa-key mr-2"></i> 修改密码
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- 信息详情 --<div class="profile-details">
-                        <!-- 基本信息 --<div class="info-section">
-                            <div class="section-header">
-                                <h3 class="section-title">
-                                    <i class="fas fa-id-card"></i> 基本信息
-                                </h3>
-                                <button class="edit-section-button edit-basic-info-button">
-                                    <i class="fas fa-edit"></i> 编辑
-                                </button>
+                        <a class="btn btn-primary" href="#security"><i class="fas fa-key"></i>修改密码</a>
+                    </aside>
+
+                    <section>
+                        <div class="profile-panel">
+                            <div class="profile-panel-header">
+                                <h2 class="profile-panel-title"><i class="fas fa-id-card"></i>资料编辑</h2>
                             </div>
-                            
-                            <div class="info-grid">
-                                <div class="info-item">
-                                    <span class="info-label">姓名</span>
-                                    <span class="info-value">张三</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">性别</span>
-                                    <span class="info-value">男</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">出生日期</span>
-                                    <span class="info-value">2003-05-15</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">民族</span>
-                                    <span class="info-value">汉族</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">政治面貌</span>
-                                    <span class="info-value">共青团员</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">身份证号</span>
-                                    <span class="info-value">110************1234</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- 联系方式 --<div class="info-section">
-                            <div class="section-header">
-                                <h3 class="section-title">
-                                    <i class="fas fa-phone"></i> 联系方式
-                                </h3>
-                                <button class="edit-section-button edit-contact-button">
-                                    <i class="fas fa-edit"></i> 编辑
-                                </button>
-                            </div>
-                            
-                            <div class="info-grid">
-                                <div class="info-item">
-                                    <span class="info-label">手机号码</span>
-                                    <span class="info-value">138****5678</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">电子邮箱</span>
-                                    <span class="info-value">zhangsan****@example.com</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">QQ号码</span>
-                                    <span class="info-value">12345****</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">微信账号</span>
-                                    <span class="info-value">ZhangSan****</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">家庭住址</span>
-                                    <span class="info-value">北京市海淀区中关村南大街5号院***</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- 教育经历 --<div class="info-section">
-                            <div class="section-header">
-                                <h3 class="section-title">
-                                    <i class="fas fa-graduation-cap"></i> 教育经历
-                                </h3>
-                                <button class="edit-section-button edit-education-button">
-                                    <i class="fas fa-edit"></i> 编辑
-                                </button>
-                            </div>
-                            
-                            <div class="education-list">
-                                <div class="education-item">
-                                    <div class="education-header">
-                                        <div class="education-info">
-                                            <h4>北京大学计算机科学与技术学院</h4>
-                                            <p>计算机科学与技术专业 | 本科 | 在读</p>
+                            <div class="profile-panel-body">
+                                <form data-profile-form>
+                                    <div class="profile-form-grid">
+                                        <div class="form-group">
+                                            <label class="form-label" for="student-no">学号</label>
+                                            <input id="student-no" class="form-control" name="idNo" type="text" disabled>
+                                            <p class="profile-field-note">学号由系统维护，个人页不可修改。</p>
                                         </div>
-                                        <div class="education-date">2021.09 - 2025.06 (预计)</div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="student-name">姓名</label>
+                                            <input id="student-name" class="form-control" name="name" type="text" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="student-gender">性别</label>
+                                            <select id="student-gender" class="form-control" name="gender" required>
+                                                <option value="男">男</option>
+                                                <option value="女">女</option>
+                                                <option value="其他">其他</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="student-phone">联系电话</label>
+                                            <input id="student-phone" class="form-control" name="phone" type="tel" autocomplete="tel">
+                                        </div>
+                                        <div class="form-group full">
+                                            <label class="form-label" for="student-email">电子邮箱</label>
+                                            <input id="student-email" class="form-control" name="email" type="email" autocomplete="email">
+                                        </div>
                                     </div>
-                                    <p class="info-value">主修课程：数据结构与算法、操作系统原理、计算机网络、数据库系统原理、人工智能导论等。</p>
+                                    <div class="profile-actions-row">
+                                        <button class="btn btn-secondary" type="reset">恢复当前资料</button>
+                                        <button class="btn btn-primary" type="submit"><i class="fas fa-floppy-disk"></i>保存资料</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="profile-panel">
+                            <div class="profile-panel-header">
+                                <h2 class="profile-panel-title"><i class="fas fa-circle-info"></i>当前档案</h2>
+                            </div>
+                            <div class="profile-panel-body">
+                                <div class="profile-read-grid" data-profile-readonly>
+                                    <div class="profile-read-item"><span class="loading"></span></div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- 个人技能 --<div class="info-section">
-                            <div class="section-header">
-                                <h3 class="section-title">
-                                    <i class="fas fa-code"></i> 个人技能
-                                </h3>
-                                <button class="edit-section-button edit-skills-button">
-                                    <i class="fas fa-edit"></i> 编辑
-                                </button>
+
+                        <div class="profile-panel" id="security">
+                            <div class="profile-panel-header">
+                                <h2 class="profile-panel-title"><i class="fas fa-shield-halved"></i>账号安全</h2>
                             </div>
-                            
-                            <div class="skills-container">
-                                <span class="skill-tag">
-                                    <i class="fab fa-python"></i> Python
-                                </span>
-                                <span class="skill-tag">
-                                    <i class="fab fa-java"></i> Java
-                                </span>
-                                <span class="skill-tag">
-                                    <i class="fab fa-js"></i> JavaScript
-                                </span>
-                                <span class="skill-tag">
-                                    <i class="fas fa-database"></i> MySQL
-                                </span>
-                                <span class="skill-tag">
-                                    <i class="fab fa-github"></i> Git
-                                </span>
-                                <span class="skill-tag">
-                                    <i class="fab fa-html5"></i> HTML5
-                                </span>
-                                <span class="skill-tag">
-                                    <i class="fab fa-css3-alt"></i> CSS3
-                                </span>
-                                <span class="skill-tag">
-                                    <i class="fas fa-robot"></i> 机器学习
-                                </span>
+                            <div class="profile-panel-body">
+                                <p class="security-hint">建议定期更新密码，避免与其他系统共用同一密码。</p>
+                                <form data-password-form>
+                                    <div class="profile-form-grid">
+                                        <div class="form-group">
+                                            <label class="form-label" for="student-old-password">当前密码</label>
+                                            <input id="student-old-password" class="form-control" name="oldPassword" type="password" required autocomplete="current-password">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="student-new-password">新密码</label>
+                                            <input id="student-new-password" class="form-control" name="newPassword" type="password" required minlength="6" autocomplete="new-password">
+                                        </div>
+                                        <div class="form-group full">
+                                            <label class="form-label" for="student-confirm-password">确认新密码</label>
+                                            <input id="student-confirm-password" class="form-control" name="confirmPassword" type="password" required minlength="6" autocomplete="new-password">
+                                        </div>
+                                    </div>
+                                    <div class="profile-actions-row">
+                                        <button class="btn btn-secondary" type="reset">清空</button>
+                                        <button class="btn btn-primary" type="submit"><i class="fas fa-key"></i>修改密码</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
-                    </div>
+                    </section>
                 </div>
             </div>
         </main>
     </div>
-    
-    <!-- 编辑个人资料模态框 --<div class="modal-backdrop edit-profile-modal-backdrop">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">编辑个人资料</h3>
-                <button class="close-modal-button close-edit-profile-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <form id="edit-profile-form">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">姓名 *</label>
-                        <input type="text" class="form-input" name="name" value="张三" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">性别 *</label>
-                        <select class="form-select" name="gender" required>
-                            <option value="male" selected>男</option>
-                            <option value="female">女</option>
-                            <option value="other">其他</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">出生日期 *</label>
-                        <input type="date" class="form-input" name="birthdate" value="2003-05-15" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">民族 *</label>
-                        <select class="form-select" name="nationality" required>
-                            <option value="汉族" selected>汉族</option>
-                            <option value="蒙古族">蒙古族</option>
-                            <option value="回族">回族</option>
-                            <option value="藏族">藏族</option>
-                            <option value="维吾尔族">维吾尔族</option>
-                            <option value="其他">其他</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">政治面貌 *</label>
-                        <select class="form-select" name="political" required>
-                            <option value="共青团员" selected>共青团员</option>
-                            <option value="中共党员">中共党员</option>
-                            <option value="中共预备党员">中共预备党员</option>
-                            <option value="群众">群众</option>
-                            <option value="其他">其他</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">个人简介</label>
-                        <textarea class="form-textarea" name="bio">热爱编程，对人工智能和机器学习有浓厚兴趣，希望成为一名优秀的软件工程师。</textarea>
-                    </div>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" class="btn btn-outline-secondary close-edit-profile-modal">取消</button>
-                    <button type="submit" class="btn btn-primary">保存更改</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <!-- 修改密码模态框 --<div class="modal-backdrop change-password-modal-backdrop">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">修改密码</h3>
-                <button class="close-modal-button close-change-password-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <form id="change-password-form" class="password-form">
-                <div class="form-group">
-                    <label class="form-label">当前密码 *</label>
-                    <input type="password" class="form-input" name="current-password" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">新密码 *</label>
-                    <input type="password" class="form-input" name="new-password" required minlength="8">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">确认新密码 *</label>
-                    <input type="password" class="form-input" name="confirm-password" required minlength="8">
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" class="btn btn-outline-secondary close-change-password-modal">取消</button>
-                    <button type="submit" class="btn btn-primary">修改密码</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 获取DOM元素
-            const editProfileButton = document.querySelector('.edit-profile-button');
-            const changePasswordButton = document.querySelector('.change-password-button');
-            const editBasicInfoButton = document.querySelector('.edit-basic-info-button');
-            const editContactButton = document.querySelector('.edit-contact-button');
-            const editEducationButton = document.querySelector('.edit-education-button');
-            const editSkillsButton = document.querySelector('.edit-skills-button');
-            const avatarUploadInput = document.querySelector('.avatar-upload-input');
-            
-            // 模态框元素
-            const editProfileModalBackdrop = document.querySelector('.edit-profile-modal-backdrop');
-            const changePasswordModalBackdrop = document.querySelector('.change-password-modal-backdrop');
-            const closeEditProfileModalButtons = document.querySelectorAll('.close-edit-profile-modal');
-            const closeChangePasswordModalButtons = document.querySelectorAll('.close-change-password-modal');
-            
-            // 表单元素
-            const editProfileForm = document.getElementById('edit-profile-form');
-            const changePasswordForm = document.getElementById('change-password-form');
-            
-            // 打开编辑个人资料模态框
-            function openEditProfileModal() {
-                editProfileModalBackdrop.style.display = 'flex';
-                editProfileModalBackdrop.querySelector('.modal').scrollTop = 0;
-            }
-            
-            // 关闭编辑个人资料模态框
-            function closeEditProfileModal() {
-                editProfileModalBackdrop.style.display = 'none';
-            }
-            
-            // 打开修改密码模态框
-            function openChangePasswordModal() {
-                changePasswordModalBackdrop.style.display = 'flex';
-                changePasswordModalBackdrop.querySelector('.modal').scrollTop = 0;
-            }
-            
-            // 关闭修改密码模态框
-            function closeChangePasswordModal() {
-                changePasswordModalBackdrop.style.display = 'none';
-                changePasswordForm.reset();
-            }
-            
-            // 头像上传处理
-            avatarUploadInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    // 在实际应用中，这里应该上传头像文件到服务器
-                    console.log('上传头像文件:', file.name);
-                    alert('头像上传成功！');
-                    
-                    // 模拟更新头像预览
-                    const profileAvatar = document.querySelector('.profile-avatar');
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        profileAvatar.innerHTML = `<img src="${event.target.result}" alt="头像" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
-                        profileAvatar.innerHTML += `
-                            <label class="avatar-upload-button">
-                                <i class="fas fa-camera"></i>
-                                <input type="file" class="avatar-upload-input" accept="image/*">
-                            </label>
-                        `;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-            
-            // 事件监听器
-            editProfileButton.addEventListener('click', openEditProfileModal);
-            editBasicInfoButton.addEventListener('click', openEditProfileModal);
-            changePasswordButton.addEventListener('click', openChangePasswordModal);
-            
-            closeEditProfileModalButtons.forEach(button => {
-                button.addEventListener('click', closeEditProfileModal);
-            });
-            
-            closeChangePasswordModalButtons.forEach(button => {
-                button.addEventListener('click', closeChangePasswordModal);
-            });
-            
-            // 点击模态框背景关闭
-            editProfileModalBackdrop.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeEditProfileModal();
-                }
-            });
-            
-            changePasswordModalBackdrop.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeChangePasswordModal();
-                }
-            });
-            
-            // 提交编辑个人资料表单
-            editProfileForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                // 收集表单数据
-                const formData = {
-                    name: this.querySelector('input[name="name"]').value,
-                    gender: this.querySelector('select[name="gender"]').value,
-                    birthdate: this.querySelector('input[name="birthdate"]').value,
-                    nationality: this.querySelector('select[name="nationality"]').value,
-                    political: this.querySelector('select[name="political"]').value,
-                    bio: this.querySelector('textarea[name="bio"]').value
-                };
-                
-                // 在实际应用中，这里应该发送表单数据到服务器
-                console.log('个人资料数据:', formData);
-                
-                alert('个人资料更新成功！');
-                closeEditProfileModal();
-                
-                // 模拟更新页面数据
-                document.querySelector('.profile-name').textContent = formData.name;
-                document.querySelector('.profile-bio').textContent = formData.bio;
-                
-                // 更新其他基本信息
-                document.querySelector('.info-item:nth-child(1) .info-value').textContent = formData.name;
-                document.querySelector('.info-item:nth-child(2) .info-value').textContent = formData.gender === 'male' ? '男' : (formData.gender === 'female' ? '女' : '其他');
-                document.querySelector('.info-item:nth-child(3) .info-value').textContent = formData.birthdate;
-                document.querySelector('.info-item:nth-child(4) .info-value').textContent = formData.nationality;
-                document.querySelector('.info-item:nth-child(5) .info-value').textContent = formData.political;
-            });
-            
-            // 提交修改密码表单
-            changePasswordForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const currentPassword = this.querySelector('input[name="current-password"]').value;
-                const newPassword = this.querySelector('input[name="new-password"]').value;
-                const confirmPassword = this.querySelector('input[name="confirm-password"]').value;
-                
-                // 验证密码
-                if (newPassword !== confirmPassword) {
-                    alert('两次输入的新密码不一致，请重新输入！');
-                    return;
-                }
-                
-                if (newPassword.length < 8) {
-                    alert('新密码长度不能少于8个字符！');
-                    return;
-                }
-                
-                // 在实际应用中，这里应该发送密码修改请求到服务器
-                console.log('密码修改请求:', { currentPassword, newPassword });
-                
-                alert('密码修改成功！请重新登录！');
-                closeChangePasswordModal();
-                // 在实际应用中，这里应该跳转到登录页面
-            });
-            
-            // 编辑联系方式按钮点击事件
-            editContactButton.addEventListener('click', function() {
-                alert('编辑联系方式功能将在后续版本中提供！');
-            });
-            
-            // 编辑教育经历按钮点击事件
-            editEducationButton.addEventListener('click', function() {
-                alert('编辑教育经历功能将在后续版本中提供！');
-            });
-            
-            // 编辑技能按钮点击事件
-            editSkillsButton.addEventListener('click', function() {
-                alert('编辑技能功能将在后续版本中提供！');
-            });
-        });
-    </script>
+
+    <script src="/js/common.js"></script>
+    <script src="/js/app-api.js"></script>
+    <script src="/js/profile-settings.js"></script>
 </body>
 </html>

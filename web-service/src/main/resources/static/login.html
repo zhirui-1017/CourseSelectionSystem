@@ -455,7 +455,7 @@
                 <p class="login-subtitle">请选择您的身份并登录</p>
             </div>
 
-            <form id="loginForm" method="post" action="/doLogin">
+            <form id="loginForm" method="post" action="/login/auth">
                 <!-- 角色选择 -->
                 <div class="role-selector">
                     <div class="role-option">
@@ -611,7 +611,7 @@
                     formData.append('role', selectedRole);
                     
                     // 发送AJAX请求到后端登录接口
-                    fetch('/doLogin', {
+                    fetch('/login/auth', {
                         method: 'POST',
                         body: formData
                     })
@@ -631,22 +631,7 @@
                             // 登录成功，保存角色信息到localStorage
                             localStorage.setItem('selectedRole', selectedRole);
                             localStorage.setItem('username', usernameInput.value);
-                            
-                            // 根据角色跳转到相应页面
-                            let redirectPath = '';
-                            switch(selectedRole) {
-                                case 'admin':
-                                    redirectPath = '/admin/index.html';
-                                    break;
-                                case 'teacher':
-                                    redirectPath = '/teacher/index.html';
-                                    break;
-                                case 'student':
-                                    redirectPath = '/student/index.html';
-                                    break;
-                                default:
-                                    redirectPath = '/login';
-                            }
+                            const redirectPath = data.data || '/login';
                             
                             // 延迟跳转，提供加载体验
                             setTimeout(function() {

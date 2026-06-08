@@ -41,8 +41,9 @@
 | 页面脚本 | 当前调用 | 当前归属 | 后续处理 |
 | --- | --- | --- | --- |
 | `static/js/student-courses.js` | `/login/current`、`/api/v1/courses/search`、`/api/v1/courses/active`、`/api/v1/course-selections/...` | 登录态在 `web-service`，业务接口经 Gateway 进入课程/选课服务 | 保持现状，作为阶段 5 的迁移参考基线 |
-| `static/js/admin-dashboard.js` | 列表与计数已改为 `/api/v1/students/list`、`/api/v1/teachers/list`、`/api/v1/courses/list`、`/api/v1/course-selections/stats`；新增、编辑、删除、重置密码已改为 `/api/v1/students/**`、`/api/v1/teachers/**`、`/api/v1/courses/**` | 管理员仪表盘主要业务数据经 Gateway 进入学生/教师/课程/选课服务 | 后续继续迁移管理员自身账号等认证边界操作 |
-| `static/js/teacher-dashboard.js` | `/login/current`、`/api/v1/courses/teacher/{teacherId}`、`/api/v1/course-selections/teacher/...`、`/api/v1/course-selections/{selectionId}/grade` | 教师课程只读列表经 Gateway 进入 `course-service`；学生列表、仪表盘聚合和成绩写入经 Gateway 进入 `selection-service`；登录态仍在 `web-service` | 后续继续评估教师资料、密码等个人设置接口与统一认证边界 |
+| `static/js/admin-dashboard.js` | 列表与计数已改为 `/api/v1/students/list`、`/api/v1/teachers/list`、`/api/v1/courses/list`、`/api/v1/course-selections/stats`；新增、编辑、删除、重置密码已改为 `/api/v1/students/**`、`/api/v1/teachers/**`、`/api/v1/courses/**` | 管理员仪表盘主要业务数据经 Gateway 进入学生/教师/课程/选课服务 | 管理员自身账号暂无独立业务资料页，后续归入统一认证升级 |
+| `static/js/teacher-dashboard.js` | `/login/current`、`/api/v1/courses/teacher/{teacherId}`、`/api/v1/course-selections/teacher/...`、`/api/v1/course-selections/{selectionId}/grade` | 教师课程只读列表经 Gateway 进入 `course-service`；学生列表、仪表盘聚合和成绩写入经 Gateway 进入 `selection-service`；登录态仍在 `web-service` | 教师资料和密码已由 `profile-settings.js` 接入业务服务 |
+| `static/js/profile-settings.js` | `/login/current`、`/api/v1/students/{studentId}`、`/api/v1/students/{studentId}/from-map`、`/api/v1/students/{studentId}/change-password`、`/api/v1/teachers/{teacherId}`、`/api/v1/teachers/{teacherId}/from-map`、`/api/v1/teachers/{teacherId}/change-password` | 学生/教师个人资料和改密经 Gateway 进入学生/教师服务；登录态仍在 `web-service` | 阶段 5 已完成个人设置接口接入，后续认证中心只需复用该业务 API |
 
 ## 阶段 5 下一步边界
 
@@ -62,3 +63,19 @@
 - 教师端成绩保存已从 `/teacher/updateGrade` 切换到 `/api/v1/course-selections/{selectionId}/grade`，由 `selection-service` 写入成绩并校验教师课程归属；当前仍通过前端传递 `teacherId`，后续统一认证前不把它视为最终鉴权方案。
 - 教师端学生名单已从 `/teacher/courseStudents` 切换到 `/api/v1/course-selections/teacher/course/{courseId}/students`，由 `selection-service` 校验教师课程归属并聚合学生只读信息。
 - 教师端首页统计已从 `/teacher/dashboard` 切换到 `/api/v1/course-selections/teacher/dashboard`，由 `selection-service` 聚合课程数、选课人数、成绩录入数、平均分和最近选课记录。
+
+## 本次个人设置接口收尾
+
+- `static/student/profile.html` 已从旧静态模拟页面整理为动态个人资料页面，通过 `static/js/profile-settings.js` 读取 `/login/current` 后调用 `/api/v1/students/{studentId}` 加载档案。
+- 学生个人资料保存已接入 `/api/v1/students/{studentId}/from-map`，当前页面只提交姓名、性别、电话和邮箱；服务端以现有学生记录为基底，避免覆盖专业、学院、班级和密码等未展示字段。
+- 学生修改密码已接入 `/api/v1/students/{studentId}/change-password`；`static/student/settings.html` 已收敛为设置入口页，账号资料和账号安全均跳转到真实个人资料页，不再保留模拟改密弹窗。
+- `static/teacher/personal-info.html` 已从旧静态模拟页面整理为动态个人资料页面，通过 `/api/v1/teachers/{teacherId}` 加载档案。
+- 教师个人资料保存已接入 `/api/v1/teachers/{teacherId}/from-map`，当前页面只提交姓名、性别、职称、电话和邮箱；服务端以现有教师记录为基底，避免覆盖系部、工号和密码等未展示字段。
+- 教师修改密码已接入 `/api/v1/teachers/{teacherId}/change-password`。
+- `static/login.html` 的历史表单和兜底 fetch 已从不存在的 `/doLogin` 收敛为 `/login/auth`，并使用后端返回的跳转地址；浏览器直接访问 `/login.html` 时仍优先由 `LegacyLoginController` 重定向到 `/login`。
+
+## 阶段 5 完成判定
+
+- 阶段 5 到此完成“入口统一、退出统一、前端主要业务 API 迁出兼容控制器、学生/教师个人设置接入业务服务”的目标。
+- 本阶段明确不交付 JWT、OAuth2 或独立认证中心；这些属于后续认证升级阶段，前提是继续沿用当前 `/api/v1/...` 业务 API，并把 `teacherId`、`studentId` 等前端传参逐步替换为服务端认证上下文。
+- 仍保留的历史静态页面中，课程评价、课表、系统日志、系统设置等模拟内容属于后续功能深化范围，不再作为阶段 5 的阻塞项。
