@@ -13,6 +13,7 @@ This note records the current runnable transition state for the Spring Cloud mig
 - `web-service` now mirrors selection stats, teacher course-student lists, teacher dashboard aggregation, and grade update compatibility endpoints for both `/api/v1/selections/**` and `/api/v1/course-selections/**`.
 - `user-service` now owns the user, role, and permission REST APIs.
 - `user-service` user list now aggregates student, teacher, and admin accounts; register, login, password reset, and password change endpoints have concrete student/teacher/admin implementations.
+- User batch deletion now validates the whole request, deduplicates IDs, and deletes student, teacher, and admin accounts by their owning domain in both `user-service` and the `web-service` compatibility fallback.
 - Role list filtering and permission status updates are concrete in `user-service` and mirrored in the `web-service` compatibility fallback.
 - `student-service` now owns the student REST APIs under `/api/v1/students/**`.
 - `teacher-service` now owns the teacher REST APIs under `/api/v1/teachers/**`.

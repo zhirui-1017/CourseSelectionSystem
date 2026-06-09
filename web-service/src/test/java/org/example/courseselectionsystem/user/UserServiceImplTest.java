@@ -29,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -369,6 +370,43 @@ class UserServiceImplTest {
         assertThat(result).isTrue();
         assertThat(admin.getPassword()).isEqualTo("newAdmin123");
         verify(adminRepository).save(admin);
+    }
+
+    @Test
+    void batchDeleteUserDeduplicatesAndDeletesByUserDomain() {
+        UserServiceImpl service = newService();
+        when(studentMapper.selectById(2L)).thenReturn(student(2L, "S0002", "Bob"));
+        when(studentMapper.selectById(3L)).thenReturn(null);
+        when(teacherMapper.selectById(3L)).thenReturn(teacher(3L, "T0001", "Carol"));
+        when(studentMapper.selectById(4L)).thenReturn(null);
+        when(teacherMapper.selectById(4L)).thenReturn(null);
+        when(adminRepository.existsById(4L)).thenReturn(true);
+        when(studentMapper.deleteBatchIds(List.of(2L))).thenReturn(1);
+        when(teacherMapper.deleteBatchIds(List.of(3L))).thenReturn(1);
+
+        boolean result = service.batchDeleteUser(List.of(2L, 2L, 3L, 4L));
+
+        assertThat(result).isTrue();
+        verify(studentMapper).deleteBatchIds(List.of(2L));
+        verify(teacherMapper).deleteBatchIds(List.of(3L));
+        verify(adminRepository).deleteAllByIdInBatch(List.of(4L));
+    }
+
+    @Test
+    void batchDeleteUserRejectsMissingIdBeforeDeleting() {
+        UserServiceImpl service = newService();
+        when(studentMapper.selectById(2L)).thenReturn(student(2L, "S0002", "Bob"));
+        when(studentMapper.selectById(99L)).thenReturn(null);
+        when(teacherMapper.selectById(99L)).thenReturn(null);
+        when(adminRepository.existsById(99L)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.batchDeleteUser(List.of(2L, 99L)))
+                .isInstanceOf(BusinessException.class)
+                .extracting("code")
+                .isEqualTo(Constants.NOT_FOUND_CODE);
+        verify(studentMapper, never()).deleteBatchIds(any());
+        verify(teacherMapper, never()).deleteBatchIds(any());
+        verify(adminRepository, never()).deleteAllByIdInBatch(any());
     }
 
     private UserServiceImpl newService() {

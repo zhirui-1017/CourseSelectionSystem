@@ -28,8 +28,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -507,15 +509,62 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "用户ID列表不能为空");
         }
         
-        // 这里简化处理，逐个删除
-        for (Long userId : userIds) {
-            deleteUser(userId);
-        }
+        // 先校验全部 ID，再按账号归属域批量删除，避免半成功。
+        batchDeleteExistingUsers(userIds);
         
         logger.info("批量删除用户成功，删除数量: {}", userIds.size());
         return true;
     }
     
+    private void batchDeleteExistingUsers(List<Long> userIds) {
+        Set<Long> normalizedIds = new LinkedHashSet<>();
+        for (Long userId : userIds) {
+            if (userId == null || userId <= 0) {
+                throw new BusinessException(Constants.PARAM_ERROR_CODE, "userIds must contain only positive ids");
+            }
+            normalizedIds.add(userId);
+        }
+
+        List<Long> studentIds = new ArrayList<>();
+        List<Long> teacherIds = new ArrayList<>();
+        List<Long> adminIds = new ArrayList<>();
+        List<Long> missingIds = new ArrayList<>();
+
+        for (Long userId : normalizedIds) {
+            Student student = studentMapper.selectById(userId);
+            if (student != null) {
+                studentIds.add(userId);
+                continue;
+            }
+
+            Teacher teacher = teacherMapper.selectById(userId);
+            if (teacher != null) {
+                teacherIds.add(userId);
+                continue;
+            }
+
+            if (adminRepository.existsById(userId)) {
+                adminIds.add(userId);
+                continue;
+            }
+
+            missingIds.add(userId);
+        }
+
+        if (!missingIds.isEmpty()) {
+            throw new BusinessException(Constants.NOT_FOUND_CODE, "users not found: " + missingIds);
+        }
+
+        int deletedStudents = studentIds.isEmpty() ? 0 : studentMapper.deleteBatchIds(studentIds);
+        int deletedTeachers = teacherIds.isEmpty() ? 0 : teacherMapper.deleteBatchIds(teacherIds);
+        if (deletedStudents != studentIds.size() || deletedTeachers != teacherIds.size()) {
+            throw new BusinessException(Constants.FAIL_CODE, "batch delete users failed");
+        }
+        if (!adminIds.isEmpty()) {
+            adminRepository.deleteAllByIdInBatch(adminIds);
+        }
+    }
+
     @Override
     public boolean login(String username, String password, String role) {
         logger.info("用户登录请求处理开始，用户名: {}", username);
