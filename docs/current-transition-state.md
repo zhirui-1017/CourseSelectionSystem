@@ -16,6 +16,7 @@ This note records the current runnable transition state for the Spring Cloud mig
 - `user-service` user list now aggregates student, teacher, and admin accounts; register, login, password reset, and password change endpoints have concrete student/teacher/admin implementations.
 - User batch deletion now validates the whole request, deduplicates IDs, and deletes student, teacher, and admin accounts by their owning domain in both `user-service` and the `web-service` compatibility fallback.
 - `web-service` no longer keeps duplicate `Result` wrappers; controller and handler responses now resolve to the shared `common-lib` `Result` type.
+- `web-service` keeps `exception.GlobalExceptionHandler` as its single global exception handler so business exception codes, access-denied responses, and not-found responses are handled by one advice.
 - Role list filtering and permission status updates are concrete in `user-service` and mirrored in the `web-service` compatibility fallback.
 - `student-service` now owns the student REST APIs under `/api/v1/students/**`.
 - `teacher-service` now owns the teacher REST APIs under `/api/v1/teachers/**`.
