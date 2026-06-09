@@ -35,7 +35,7 @@ public interface MajorRepository extends JpaRepository<Major, Long> {
      * @param departmentId 学院ID
      * @return 专业列表
      */
-    List<Major> findByDepartmentIdOrderBySortAsc(Long departmentId);
+    List<Major> findByDepartmentIdOrderByIdAsc(Long departmentId);
 
     /**
      * 根据学院ID和状态查询专业
@@ -43,14 +43,14 @@ public interface MajorRepository extends JpaRepository<Major, Long> {
      * @param status 状态：1-启用
      * @return 专业列表
      */
-    List<Major> findByDepartmentIdAndStatusOrderBySortAsc(Long departmentId, Integer status);
+    List<Major> findByDepartmentIdAndStatusOrderByIdAsc(Long departmentId, Integer status);
 
     /**
      * 查询启用状态的专业
      * @param status 状态：1-启用
      * @return 专业列表
      */
-    List<Major> findByStatusOrderBySortAsc(Integer status);
+    List<Major> findByStatusOrderByIdAsc(Integer status);
 
     @Query("SELECT m FROM Major m WHERE 1=1 " +
             "AND (:majorName IS NULL OR m.majorName LIKE CONCAT('%', :majorName, '%')) " +

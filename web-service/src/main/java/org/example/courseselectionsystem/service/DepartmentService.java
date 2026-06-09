@@ -23,6 +23,10 @@ public interface DepartmentService {
         Department department = new Department();
         department.setDepartmentName(String.valueOf(deptInfo.getOrDefault("departmentName", "")));
         department.setDepartmentCode(String.valueOf(deptInfo.getOrDefault("departmentCode", "")));
+        Object collegeId = deptInfo.get("collegeId");
+        if (collegeId != null) {
+            department.setCollegeId(Long.valueOf(String.valueOf(collegeId)));
+        }
         return addDepartment(department);
     }
 
@@ -41,6 +45,10 @@ public interface DepartmentService {
         }
         department.setDepartmentName(String.valueOf(deptInfo.getOrDefault("departmentName", "")));
         department.setDepartmentCode(String.valueOf(deptInfo.getOrDefault("departmentCode", "")));
+        Object collegeId = deptInfo.get("collegeId");
+        if (collegeId != null) {
+            department.setCollegeId(Long.valueOf(String.valueOf(collegeId)));
+        }
         return updateDepartment(department);
     }
 

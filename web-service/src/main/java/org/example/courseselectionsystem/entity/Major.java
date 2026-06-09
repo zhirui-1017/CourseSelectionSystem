@@ -40,25 +40,25 @@ public class Major {
     /**
      * 所属学院名称
      */
-    @Column(name = "department_name", length = 100, nullable = false)
+    @Transient
     private String departmentName;
 
     /**
      * 专业负责人ID
      */
-    @Column(name = "director_id")
+    @Transient
     private Long directorId;
 
     /**
      * 专业负责人名称
      */
-    @Column(name = "director_name", length = 50)
+    @Transient
     private String directorName;
 
     /**
      * 专业层次：1-本科，2-硕士，3-博士
      */
-    @Column(name = "level")
+    @Transient
     private Integer level;
 
     /**
@@ -70,7 +70,7 @@ public class Major {
     /**
      * 排序
      */
-    @Column(name = "sort")
+    @Transient
     private Integer sort;
 
     /**
@@ -82,20 +82,19 @@ public class Major {
     /**
      * 创建时间
      */
-    @Column(name = "create_time", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Date createTime;
 
     /**
      * 更新时间
      */
-    @Column(name = "update_time", nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private Date updateTime;
 
     /**
      * 乐观锁版本号
      */
-    @Version
-    @Column(name = "version", nullable = false, columnDefinition = "int default 0")
+    @Transient
     private Integer version;
 
     /**

@@ -1,5 +1,214 @@
 // 公共JavaScript工具函数和交互逻辑
 
+// 旧页面兼容：在不依赖外网 jQuery/Bootstrap 的情况下保留基础交互
+(function initLegacyJqueryShim() {
+    if (window.jQuery || window.$) {
+        return;
+    }
+
+    function queryAll(selector, root) {
+        const scope = root || document;
+        const eqMatch = selector.match(/:eq\((\d+)\)/);
+        let normalized = selector.replace(/:selected/g, ':checked');
+        let eqIndex = null;
+        if (eqMatch) {
+            eqIndex = Number(eqMatch[1]);
+            normalized = normalized.replace(/:eq\(\d+\)/g, '');
+        }
+        const items = Array.from(scope.querySelectorAll(normalized));
+        return eqIndex === null ? items : (items[eqIndex] ? [items[eqIndex]] : []);
+    }
+
+    function toElements(target) {
+        if (!target) {
+            return [];
+        }
+        if (target instanceof MiniQuery) {
+            return target.elements;
+        }
+        if (target === window || target === document || target instanceof Element) {
+            return [target];
+        }
+        if (target instanceof NodeList || Array.isArray(target)) {
+            return Array.from(target);
+        }
+        if (typeof target === 'string') {
+            return queryAll(target);
+        }
+        return [];
+    }
+
+    function MiniQuery(target) {
+        this.elements = toElements(target);
+        this.length = this.elements.length;
+        this.elements.forEach((element, index) => {
+            this[index] = element;
+        });
+    }
+
+    MiniQuery.prototype.ready = function(callback) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', callback);
+        } else {
+            callback();
+        }
+        return this;
+    };
+
+    MiniQuery.prototype.each = function(callback) {
+        this.elements.forEach((element, index) => callback.call(element, index, element));
+        return this;
+    };
+
+    MiniQuery.prototype.text = function(value) {
+        if (value === undefined) {
+            return this.elements[0]?.textContent || '';
+        }
+        return this.each(function() {
+            this.textContent = value;
+        });
+    };
+
+    MiniQuery.prototype.html = function(value) {
+        if (value === undefined) {
+            return this.elements[0]?.innerHTML || '';
+        }
+        return this.each(function() {
+            this.innerHTML = value;
+        });
+    };
+
+    MiniQuery.prototype.empty = function() {
+        return this.html('');
+    };
+
+    MiniQuery.prototype.append = function(value) {
+        return this.each(function() {
+            if (value instanceof Element) {
+                this.appendChild(value.cloneNode(true));
+            } else {
+                this.insertAdjacentHTML('beforeend', String(value));
+            }
+        });
+    };
+
+    MiniQuery.prototype.val = function(value) {
+        if (value === undefined) {
+            return this.elements[0]?.value || '';
+        }
+        return this.each(function() {
+            this.value = value;
+        });
+    };
+
+    MiniQuery.prototype.prop = function(name, value) {
+        if (value === undefined) {
+            return this.elements[0]?.[name];
+        }
+        return this.each(function() {
+            this[name] = value;
+        });
+    };
+
+    MiniQuery.prototype.data = function(name, value) {
+        if (value === undefined) {
+            return this.elements[0]?.dataset?.[name];
+        }
+        return this.each(function() {
+            this.dataset[name] = value;
+        });
+    };
+
+    MiniQuery.prototype.find = function(selector) {
+        return new MiniQuery(this.elements.flatMap((element) => queryAll(selector, element)));
+    };
+
+    MiniQuery.prototype.closest = function(selector) {
+        return new MiniQuery(this.elements.map((element) => element.closest(selector)).filter(Boolean));
+    };
+
+    MiniQuery.prototype.is = function(selector) {
+        const element = this.elements[0];
+        return !!element && element.matches(selector);
+    };
+
+    MiniQuery.prototype.on = function(eventName, callback) {
+        return this.each(function() {
+            this.addEventListener(eventName, callback);
+        });
+    };
+
+    MiniQuery.prototype.click = function(callback) {
+        if (callback) {
+            return this.on('click', callback);
+        }
+        return this.each(function() {
+            this.click();
+        });
+    };
+
+    MiniQuery.prototype.change = function(callback) {
+        if (callback) {
+            return this.on('change', callback);
+        }
+        return this.each(function() {
+            this.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    };
+
+    MiniQuery.prototype.addClass = function(className) {
+        return this.each(function() {
+            this.classList.add(...String(className).split(/\s+/).filter(Boolean));
+        });
+    };
+
+    MiniQuery.prototype.removeClass = function(className) {
+        return this.each(function() {
+            this.classList.remove(...String(className).split(/\s+/).filter(Boolean));
+        });
+    };
+
+    MiniQuery.prototype.scrollTop = function(value) {
+        if (value === undefined) {
+            return this.elements[0] === window ? window.scrollY : (this.elements[0]?.scrollTop || 0);
+        }
+        return this.each(function() {
+            if (this === window) {
+                window.scrollTo(0, value);
+            } else {
+                this.scrollTop = value;
+            }
+        });
+    };
+
+    MiniQuery.prototype.modal = function(action) {
+        return this.each(function() {
+            const shouldShow = action !== 'hide';
+            this.classList.toggle('show', shouldShow);
+            this.style.display = shouldShow ? 'block' : 'none';
+            document.body.classList.toggle('modal-open', shouldShow);
+        });
+    };
+
+    function miniQuery(target) {
+        return new MiniQuery(target);
+    }
+
+    miniQuery.fn = MiniQuery.prototype;
+    window.$ = miniQuery;
+    window.jQuery = miniQuery;
+})();
+
+if (!window.Chart) {
+    window.Chart = function ChartFallback(context, config) {
+        this.context = context;
+        this.config = config || {};
+        this.data = this.config.data || {};
+        this.update = function() {};
+        this.destroy = function() {};
+    };
+}
+
 // DOM 加载完成后执行
 document.addEventListener('DOMContentLoaded', function() {
     // 初始化侧边栏切换
@@ -206,6 +415,31 @@ function initTabs() {
                 }
             });
             document.dispatchEvent(tabChangeEvent);
+        });
+    });
+
+    document.querySelectorAll('[data-toggle="tab"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const tabId = this.getAttribute('href');
+            const tabPane = tabId ? document.querySelector(tabId) : null;
+            if (!tabPane) {
+                return;
+            }
+
+            const nav = this.closest('.nav-tabs');
+            if (nav) {
+                nav.querySelectorAll('li, a').forEach(item => item.classList.remove('active'));
+            }
+            const container = tabPane.closest('.tab-content') || document;
+            container.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active', 'in'));
+
+            this.classList.add('active');
+            const parent = this.closest('li');
+            if (parent) {
+                parent.classList.add('active');
+            }
+            tabPane.classList.add('active', 'in');
         });
     });
 }

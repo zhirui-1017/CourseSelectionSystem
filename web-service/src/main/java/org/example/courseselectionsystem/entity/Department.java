@@ -32,21 +32,27 @@ public class Department {
     private String departmentName;
 
     /**
+     * 所属学院ID
+     */
+    @Column(name = "college_id", nullable = false)
+    private Long collegeId;
+
+    /**
      * 学院负责人ID
      */
-    @Column(name = "director_id")
+    @Transient
     private Long directorId;
 
     /**
      * 学院负责人名称
      */
-    @Column(name = "director_name", length = 50)
+    @Transient
     private String directorName;
 
     /**
      * 联系电话
      */
-    @Column(name = "contact_phone", length = 20)
+    @Transient
     private String contactPhone;
 
     /**
@@ -58,7 +64,7 @@ public class Department {
     /**
      * 排序
      */
-    @Column(name = "sort")
+    @Transient
     private Integer sort;
 
     /**
@@ -70,20 +76,19 @@ public class Department {
     /**
      * 创建时间
      */
-    @Column(name = "create_time", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Date createTime;
 
     /**
      * 更新时间
      */
-    @Column(name = "update_time", nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private Date updateTime;
 
     /**
      * 乐观锁版本号
      */
-    @Version
-    @Column(name = "version", nullable = false, columnDefinition = "int default 0")
+    @Transient
     private Integer version;
 
     /**

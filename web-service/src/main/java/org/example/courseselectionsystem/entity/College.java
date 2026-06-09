@@ -28,10 +28,10 @@ public class College implements Serializable {
     @Column(name = "status", nullable = false, columnDefinition = "int default 1")
     private Integer status;
 
-    @Column(name = "create_time", updatable = false)
+    @Column(name = "created_at", updatable = false)
     private Date createTime;
 
-    @Column(name = "update_time")
+    @Column(name = "updated_at")
     private Date updateTime;
 
     @PrePersist

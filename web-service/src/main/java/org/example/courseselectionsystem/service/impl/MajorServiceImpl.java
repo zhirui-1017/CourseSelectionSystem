@@ -58,6 +58,8 @@ public class MajorServiceImpl implements MajorService {
         // 如果未设置状态，默认为启用
         if (major.getStatus() == null) {
             major.setStatus(1);
+        } else {
+            major.setStatus(normalizeStatus(major.getStatus()));
         }
 
         // 保存专业信息
@@ -84,19 +86,37 @@ public class MajorServiceImpl implements MajorService {
             }
         }
 
+        Long targetDepartmentId = major.getDepartmentId() == null ? existingMajor.getDepartmentId() : major.getDepartmentId();
+
         // 检查专业名称是否与其他专业重复
         if (major.getMajorName() != null && !major.getMajorName().equals(existingMajor.getMajorName())) {
             Major checkMajor = majorRepository.findByMajorName(major.getMajorName());
-            if (checkMajor != null && checkMajor.getDepartmentId().equals(major.getDepartmentId())) {
+            if (checkMajor != null
+                    && !checkMajor.getId().equals(existingMajor.getId())
+                    && checkMajor.getDepartmentId().equals(targetDepartmentId)) {
                 throw new BusinessException(Result.PARAM_ERROR, "同一学院下专业名称不能重复");
             }
         }
 
-        // 设置更新时间
-        major.setUpdateTime(new Date());
+        if (major.getMajorCode() != null) {
+            existingMajor.setMajorCode(major.getMajorCode());
+        }
+        if (major.getMajorName() != null) {
+            existingMajor.setMajorName(major.getMajorName());
+        }
+        if (major.getDepartmentId() != null) {
+            existingMajor.setDepartmentId(major.getDepartmentId());
+        }
+        if (major.getDescription() != null) {
+            existingMajor.setDescription(major.getDescription());
+        }
+        if (major.getStatus() != null) {
+            existingMajor.setStatus(normalizeStatus(major.getStatus()));
+        }
+        existingMajor.setUpdateTime(new Date());
 
         // 保存更新后的专业信息
-        return majorRepository.save(major);
+        return majorRepository.save(existingMajor);
     }
 
     @Override
@@ -164,26 +184,26 @@ public class MajorServiceImpl implements MajorService {
     @Override
     public List<Major> getMajorsByDepartmentId(Long departmentId) {
         // 根据学院ID获取专业列表
-        return majorRepository.findByDepartmentIdOrderBySortAsc(departmentId);
+        return majorRepository.findByDepartmentIdOrderByIdAsc(departmentId);
     }
 
     @Override
     public List<Major> getActiveMajorsByDepartmentId(Long departmentId) {
         // 根据学院ID获取启用的专业列表
-        return majorRepository.findByDepartmentIdAndStatusOrderBySortAsc(departmentId, 1);
+        return majorRepository.findByDepartmentIdAndStatusOrderByIdAsc(departmentId, 1);
     }
 
     @Override
     public List<Major> getActiveMajors() {
         // 获取所有启用的专业
-        return majorRepository.findByStatusOrderBySortAsc(1);
+        return majorRepository.findByStatusOrderByIdAsc(1);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean changeMajorStatus(Long majorId, Integer status) {
         // 验证状态值
-        if (status != 1 && status != 2) {
+        if (status == null || (status != 0 && status != 1 && status != 2)) {
             throw new BusinessException(Result.PARAM_ERROR, "无效的状态值");
         }
 
@@ -192,7 +212,7 @@ public class MajorServiceImpl implements MajorService {
                 .orElseThrow(() -> new BusinessException(Result.NOT_FOUND, "专业不存在"));
 
         // 更新状态
-        major.setStatus(status);
+        major.setStatus(normalizeStatus(status));
         major.setUpdateTime(new Date());
         majorRepository.save(major);
         return true;
@@ -217,16 +237,11 @@ public class MajorServiceImpl implements MajorService {
             return "majorName";
         }
         if ("department".equalsIgnoreCase(normalized)) {
-            return "departmentName";
+            return "departmentId";
         }
         if ("majorCode".equalsIgnoreCase(normalized)
                 || "majorName".equalsIgnoreCase(normalized)
                 || "departmentId".equalsIgnoreCase(normalized)
-                || "departmentName".equalsIgnoreCase(normalized)
-                || "directorId".equalsIgnoreCase(normalized)
-                || "directorName".equalsIgnoreCase(normalized)
-                || "level".equalsIgnoreCase(normalized)
-                || "sort".equalsIgnoreCase(normalized)
                 || "status".equalsIgnoreCase(normalized)
                 || "createTime".equalsIgnoreCase(normalized)
                 || "updateTime".equalsIgnoreCase(normalized)
@@ -238,5 +253,9 @@ public class MajorServiceImpl implements MajorService {
 
     private String blankToNull(String value) {
         return StringUtils.hasText(value) ? value : null;
+    }
+
+    private Integer normalizeStatus(Integer status) {
+        return status == 2 ? 0 : status;
     }
 }

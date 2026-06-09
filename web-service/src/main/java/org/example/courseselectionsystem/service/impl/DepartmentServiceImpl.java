@@ -51,9 +51,15 @@ public class DepartmentServiceImpl implements DepartmentService {
         department.setCreateTime(new Date());
         department.setUpdateTime(new Date());
 
+        if (department.getCollegeId() == null) {
+            department.setCollegeId(1L);
+        }
+
         // 如果未设置状态，默认为启用
         if (department.getStatus() == null) {
             department.setStatus(1);
+        } else {
+            department.setStatus(normalizeStatus(department.getStatus()));
         }
 
         // 保存学院信息
@@ -88,11 +94,25 @@ public class DepartmentServiceImpl implements DepartmentService {
             }
         }
 
-        // 设置更新时间
-        department.setUpdateTime(new Date());
+        if (department.getDepartmentCode() != null) {
+            existingDepartment.setDepartmentCode(department.getDepartmentCode());
+        }
+        if (department.getDepartmentName() != null) {
+            existingDepartment.setDepartmentName(department.getDepartmentName());
+        }
+        if (department.getCollegeId() != null) {
+            existingDepartment.setCollegeId(department.getCollegeId());
+        }
+        if (department.getDescription() != null) {
+            existingDepartment.setDescription(department.getDescription());
+        }
+        if (department.getStatus() != null) {
+            existingDepartment.setStatus(normalizeStatus(department.getStatus()));
+        }
+        existingDepartment.setUpdateTime(new Date());
 
         // 保存更新后的学院信息
-        return departmentRepository.save(department);
+        return departmentRepository.save(existingDepartment);
     }
 
     @Override
@@ -160,14 +180,14 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Override
     public List<Department> getActiveDepartments() {
         // 获取所有启用状态的学院
-        return departmentRepository.findByStatusOrderBySortAsc(1);
+        return departmentRepository.findByStatusOrderByIdAsc(1);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean changeDepartmentStatus(Long departmentId, Integer status) {
         // 验证状态值
-        if (status != 1 && status != 2) {
+        if (status == null || (status != 0 && status != 1 && status != 2)) {
             throw new BusinessException(Result.PARAM_ERROR, "无效的状态值");
         }
 
@@ -176,7 +196,7 @@ public class DepartmentServiceImpl implements DepartmentService {
                 .orElseThrow(() -> new BusinessException(Result.NOT_FOUND, "学院不存在"));
 
         // 更新状态
-        department.setStatus(status);
+        department.setStatus(normalizeStatus(status));
         department.setUpdateTime(new Date());
         departmentRepository.save(department);
         return true;
@@ -202,9 +222,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         }
         if ("departmentCode".equalsIgnoreCase(normalized)
                 || "departmentName".equalsIgnoreCase(normalized)
-                || "directorId".equalsIgnoreCase(normalized)
-                || "directorName".equalsIgnoreCase(normalized)
-                || "sort".equalsIgnoreCase(normalized)
+                || "collegeId".equalsIgnoreCase(normalized)
                 || "status".equalsIgnoreCase(normalized)
                 || "createTime".equalsIgnoreCase(normalized)
                 || "updateTime".equalsIgnoreCase(normalized)
@@ -216,5 +234,9 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     private String blankToNull(String value) {
         return StringUtils.hasText(value) ? value : null;
+    }
+
+    private Integer normalizeStatus(Integer status) {
+        return status == 2 ? 0 : status;
     }
 }

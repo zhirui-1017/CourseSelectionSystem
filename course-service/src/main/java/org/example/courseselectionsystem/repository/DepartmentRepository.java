@@ -35,7 +35,7 @@ public interface DepartmentRepository extends JpaRepository<Department, Long> {
      * @param status 状态：1-启用
      * @return 学院列表
      */
-    List<Department> findByStatusOrderBySortAsc(Integer status);
+    List<Department> findByStatusOrderByIdAsc(Integer status);
 
     @Query("SELECT d FROM Department d WHERE 1=1 " +
             "AND (:departmentName IS NULL OR d.departmentName LIKE CONCAT('%', :departmentName, '%')) " +
