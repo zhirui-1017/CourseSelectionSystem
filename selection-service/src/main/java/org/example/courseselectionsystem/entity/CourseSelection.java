@@ -40,6 +40,18 @@ public class CourseSelection {
     @Transient
     private Double credit;
 
+    @Transient
+    private Long teacherId;
+
+    @Transient
+    private String courseType;
+
+    @Transient
+    private String schedule;
+
+    @Transient
+    private String classroom;
+
     @Column(name = "status", nullable = false, columnDefinition = "int default 1")
     private Integer status;
 

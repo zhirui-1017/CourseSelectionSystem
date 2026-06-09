@@ -396,6 +396,11 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
             selection.setCourseName(course.getCourseName());
             selection.setCourseCode(course.getCourseCode());
             selection.setCredit(course.getCredit());
+            selection.setTeacherId(course.getTeacherId());
+            selection.setTeacherName(course.getTeacherName());
+            selection.setCourseType(course.getCourseType());
+            selection.setSchedule(course.getSchedule());
+            selection.setClassroom(course.getClassroom());
         });
         return selection;
     }
@@ -425,6 +430,12 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
         row.put("courseId", selection.getCourseId());
         row.put("courseCode", course.getCourseCode());
         row.put("courseName", course.getCourseName());
+        row.put("teacherId", course.getTeacherId());
+        row.put("teacherName", course.getTeacherName());
+        row.put("courseType", course.getCourseType());
+        row.put("credit", course.getCredit());
+        row.put("schedule", course.getSchedule());
+        row.put("classroom", course.getClassroom());
         row.put("studentId", selection.getStudentId());
         row.put("selectionTime", selection.getSelectionTime());
         row.put("dailyGrade", selection.getDailyGrade());

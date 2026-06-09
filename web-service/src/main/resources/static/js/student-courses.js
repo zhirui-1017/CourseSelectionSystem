@@ -12,6 +12,9 @@
 
         updateUserChrome(currentUser);
 
+        if (location.pathname.endsWith('/index.html') || location.pathname.endsWith('/student/') || location.pathname.endsWith('/student/index')) {
+            await initStudentDashboardPage();
+        }
         if (location.pathname.endsWith('/course-selection.html')) {
             await initCourseSelectionPage();
         }
@@ -224,5 +227,200 @@
         document.querySelectorAll('.user-name').forEach((element) => {
             element.textContent = user?.user?.name || user?.username || '学生';
         });
+        document.querySelectorAll('.user-role').forEach((element) => {
+            const profile = user?.user || {};
+            element.textContent = profile.majorName || profile.major || profile.className || '学生';
+        });
+    }
+
+    async function initStudentDashboardPage() {
+        normalizeStudentIndexLinks();
+        const studentId = currentUser?.userId;
+        if (!studentId) {
+            return;
+        }
+
+        const [selectionsResult, messagesResult, evaluationsResult] = await Promise.allSettled([
+            api.get(`/api/v1/course-selections/student/${studentId}`, {
+                pageNum: 1,
+                pageSize: 100,
+                orderByColumn: 'selectionTime',
+                isAsc: false,
+                status: 1
+            }),
+            api.get('/api/v1/messages/list', {
+                pageNum: 1,
+                pageSize: 5,
+                recipientId: studentId,
+                recipientType: 2,
+                orderByColumn: 'createdAt',
+                isAsc: false
+            }),
+            api.get(`/api/v1/evaluations/student/${studentId}/courses`)
+        ]);
+
+        const selections = selectionsResult.status === 'fulfilled' ? api.pageItems(selectionsResult.value) : [];
+        const messages = messagesResult.status === 'fulfilled' ? api.pageItems(messagesResult.value) : [];
+        const evaluations = evaluationsResult.status === 'fulfilled' && Array.isArray(evaluationsResult.value)
+            ? evaluationsResult.value
+            : [];
+
+        updateDashboardWelcome();
+        updateDashboardStats(selections, messages, evaluations);
+        renderDashboardSchedule(selections);
+        renderDashboardMessages(messages);
+        renderDashboardDeadlines(evaluations, selections);
+    }
+
+    function normalizeStudentIndexLinks() {
+        const routes = {
+            '#dashboard': '/student/index.html',
+            '#my-courses': '/student/my-courses.html',
+            '#course-selection': '/student/course-selection.html',
+            '#schedule': '/student/schedule.html',
+            '#grades': '/student/grades.html',
+            '#evaluations': '/student/evaluations.html',
+            '#profile': '/student/profile.html',
+            '#messages': '/student/messages.html',
+            '#settings': '/student/settings.html'
+        };
+        document.querySelectorAll('a[href^="#"]').forEach((link) => {
+            const route = routes[link.getAttribute('href')];
+            if (route) {
+                link.setAttribute('href', route);
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    window.location.href = route;
+                }, true);
+            }
+        });
+    }
+
+    function updateDashboardWelcome() {
+        const name = currentUser?.user?.name || currentUser?.username || '同学';
+        const title = document.querySelector('.welcome-section h2');
+        const subtitle = document.querySelector('.welcome-section p');
+        if (title) title.textContent = `欢迎回来，${name}`;
+        if (subtitle) subtitle.textContent = '这里展示的是你的实时选课、课表、成绩和消息。';
+    }
+
+    function updateDashboardStats(selections, messages, evaluations) {
+        const cards = document.querySelectorAll('#dashboard .stats-grid .stat-card');
+        const scores = selections.map((item) => Number(item.score)).filter((score) => !Number.isNaN(score));
+        const averageScore = scores.length ? (scores.reduce((sum, score) => sum + score, 0) / scores.length).toFixed(1) : '-';
+        const weeklySlots = selections.reduce((sum, item) => sum + Math.max(1, parseSchedule(item.schedule).length), 0);
+        const pendingEvaluations = evaluations.filter((item) => !item.evaluated).length;
+        const unread = messages.filter((item) => Number(item.isRead) === 0).length;
+        const stats = [
+            { value: selections.length, title: '当前选课数' },
+            { value: weeklySlots, title: '本周课程安排' },
+            { value: averageScore, title: '平均成绩' },
+            { value: unread || pendingEvaluations, title: '待处理事项' }
+        ];
+
+        cards.forEach((card, index) => {
+            const stat = stats[index];
+            if (!stat) return;
+            const value = card.querySelector('.stat-value');
+            const title = card.querySelector('.stat-title');
+            if (value) value.textContent = stat.value;
+            if (title) title.textContent = stat.title;
+        });
+
+        const badges = document.querySelectorAll('.nav-badge');
+        if (badges[0]) badges[0].textContent = selections.length;
+        if (badges[1]) badges[1].textContent = unread;
+    }
+
+    function renderDashboardSchedule(selections) {
+        const schedule = document.querySelector('.week-schedule');
+        if (!schedule) return;
+        const days = ['周一', '周二', '周三', '周四', '周五'];
+        const byDay = new Map(days.map((day) => [day, []]));
+        selections.forEach((item) => {
+            const slots = parseSchedule(item.schedule);
+            if (!slots.length) {
+                byDay.get('周一').push({ ...item, slot: '待安排' });
+                return;
+            }
+            slots.forEach((slot) => {
+                if (byDay.has(slot.day)) {
+                    byDay.get(slot.day).push({ ...item, slot: slot.time || '待安排' });
+                }
+            });
+        });
+        schedule.innerHTML = days.map((day) => {
+            const items = byDay.get(day) || [];
+            return `
+                <div class="schedule-day">
+                    <div class="day-header">${day}</div>
+                    <div class="day-content">
+                        ${items.length ? items.map(renderScheduleItem).join('') : '<div class="schedule-empty">暂无课程</div>'}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderScheduleItem(item) {
+        return `
+            <div class="schedule-item">
+                <span class="schedule-time">${api.escapeHtml(item.slot || '待安排')}</span>
+                <span class="schedule-course">${api.escapeHtml(item.courseName || '-')}</span>
+                <span class="schedule-location">${api.escapeHtml(item.classroom || '-')}</span>
+            </div>
+        `;
+    }
+
+    function renderDashboardMessages(messages) {
+        const list = document.querySelector('#dashboard .messages-list');
+        if (!list) return;
+        list.innerHTML = messages.length ? messages.map((message) => `
+            <div class="message-item">
+                <div class="message-icon">
+                    <i class="fas ${Number(message.isRead) === 0 ? 'fa-envelope text-warning' : 'fa-envelope-open text-secondary'}"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-title">${api.escapeHtml(message.title)}</div>
+                    <div class="message-time">${api.formatDate(message.createdAt)}</div>
+                </div>
+            </div>
+        `).join('') : '<div class="message-item"><div class="message-content"><div class="message-title">暂无消息</div></div></div>';
+    }
+
+    function renderDashboardDeadlines(evaluations, selections) {
+        const list = document.querySelector('#dashboard .deadlines-list');
+        if (!list) return;
+        const pending = evaluations.filter((item) => !item.evaluated).slice(0, 4);
+        const items = pending.length ? pending : selections.slice(0, 2).map((item) => ({
+            courseName: item.courseName,
+            note: item.score == null ? '成绩待录入' : `成绩 ${item.score}`
+        }));
+        list.innerHTML = items.length ? items.map((item) => `
+            <div class="deadline-item">
+                <div class="deadline-icon">
+                    <i class="fas fa-star text-primary"></i>
+                </div>
+                <div class="deadline-content">
+                    <div class="deadline-title">${api.escapeHtml(item.courseName || '-')}</div>
+                    <div class="deadline-time">${api.escapeHtml(item.note || '待完成课程评价')}</div>
+                </div>
+            </div>
+        `).join('') : '<div class="deadline-item"><div class="deadline-content"><div class="deadline-title">暂无待处理事项</div></div></div>';
+    }
+
+    function parseSchedule(schedule) {
+        if (!schedule) return [];
+        return String(schedule)
+            .split(/[,，;；]/)
+            .map((item) => item.trim())
+            .filter(Boolean)
+            .map((part) => {
+                const match = part.match(/(周[一二三四五六日天])\s*(.*)/);
+                if (!match) return null;
+                return { day: match[1] === '周天' ? '周日' : match[1], time: match[2] || '' };
+            })
+            .filter(Boolean);
     }
 })();
