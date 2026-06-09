@@ -10,8 +10,21 @@
         coursePage: 1,
         gradePage: 1,
         logPage: 1,
+        peoplePage: { student: 1, teacher: 1 },
         selectedClassId: null,
         selectedCourseId: null,
+        selectedPeople: { student: null, teacher: null },
+        peopleOptionsLoaded: { student: false, teacher: false },
+        gradeOptionsLoaded: false,
+        messagePage: 1,
+        messageFilter: { type: 'all', read: '', keyword: '', deleted: false },
+        teacherDashboard: null,
+        teacherCourseSelections: {},
+        teacherCourseEvaluations: {},
+        teacherScoreChartType: 'score-distribution',
+        teacherChartRetryCount: 0,
+        studentGrades: [],
+        scheduleWeekOffset: 0,
         evaluations: []
     };
 
@@ -42,18 +55,121 @@
         return state.current;
     }
 
-    async function renderAdminPeople(role) {
+    async function renderAdminPeople(role, pageNum) {
+        state.peoplePage[role] = Math.max(1, Number(pageNum || state.peoplePage[role] || 1));
+        initAdminPeopleControls(role);
+        await fillPeopleFormOptions(role);
+
         const tbody = document.querySelector('table.data-table tbody');
         if (!tbody) return;
+
+        const pageSize = 20;
         const endpoint = role === 'teacher' ? '/api/v1/teachers/list' : '/api/v1/students/list';
-        tbody.innerHTML = rowMessage(9, '正在加载数据库数据...');
-        const page = await api.get(endpoint, { pageNum: 1, pageSize: 50, orderByColumn: 'id', isAsc: true });
+        tbody.innerHTML = rowMessage(9, '\u6b63\u5728\u52a0\u8f7d\u6570\u636e\u5e93\u6570\u636e...');
+
+        const page = await api.get(endpoint, {
+            ...peopleListParams(role),
+            pageNum: state.peoplePage[role],
+            pageSize,
+            orderByColumn: 'id',
+            sortOrder: 'desc'
+        });
         const rows = api.pageItems(page);
         if (!rows.length) {
-            tbody.innerHTML = rowMessage(9, role === 'teacher' ? '暂无教师数据' : '暂无学生数据');
+            tbody.innerHTML = rowMessage(9, role === 'teacher' ? '\u6682\u65e0\u6559\u5e08\u6570\u636e' : '\u6682\u65e0\u5b66\u751f\u6570\u636e');
+            renderPeoplePager(role, 1);
             return;
         }
+
         tbody.innerHTML = rows.map((item) => role === 'teacher' ? teacherRow(item) : studentRow(item)).join('');
+        bindPeopleRowActions(tbody, role);
+        renderPeoplePager(role, Math.ceil(api.pageTotal(page) / pageSize));
+    }
+
+    function initAdminPeopleControls(role) {
+        const prefix = role === 'teacher' ? 'Teacher' : 'Student';
+        const lower = role === 'teacher' ? 'teacher' : 'student';
+        bindPeopleAction(`search${prefix}Btn`, () => renderAdminPeople(role, 1));
+        bindPeopleAction(`filter${prefix}Btn`, () => renderAdminPeople(role, 1));
+        bindPeopleAction(`submitAdd${prefix}`, () => addPerson(role));
+        bindPeopleAction(`submitEdit${prefix}`, () => updatePerson(role));
+        bindPeopleAction(`export${prefix}sBtn`, () => exportPeople(role));
+        bindPeopleAction(`confirmImport${prefix}s`, () => {
+            notify('error', '\u6279\u91cf\u5bfc\u5165\u672a\u63a5\u5165', '\u8bf7\u5148\u4f7f\u7528\u65b0\u589e\u3001\u7f16\u8f91\u548c\u5220\u9664\u5b8c\u6210\u771f\u5b9e CRUD');
+        });
+
+        const search = document.getElementById(`${lower}Search`);
+        if (search && !search.dataset.dynamicPeopleSearch) {
+            search.dataset.dynamicPeopleSearch = 'true';
+            search.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    renderAdminPeople(role, 1);
+                }
+            });
+        }
+
+        const addForm = document.getElementById(`add${prefix}Form`);
+        if (addForm && !addForm.dataset.dynamicPeopleSubmit) {
+            addForm.dataset.dynamicPeopleSubmit = 'true';
+            addForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                addPerson(role);
+            });
+        }
+
+        const editForm = document.getElementById(`edit${prefix}Form`);
+        if (editForm && !editForm.dataset.dynamicPeopleSubmit) {
+            editForm.dataset.dynamicPeopleSubmit = 'true';
+            editForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                updatePerson(role);
+            });
+        }
+    }
+
+    function bindPeopleAction(id, handler) {
+        const button = document.getElementById(id);
+        if (!button || button.dataset.dynamicPeopleBound) return;
+        button.dataset.dynamicPeopleBound = 'true';
+        button.addEventListener('click', async (event) => {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            try {
+                await handler(event);
+            } catch (error) {
+                notify('error', '\u64cd\u4f5c\u5931\u8d25', error.message);
+            }
+        }, true);
+    }
+
+    function peopleListParams(role) {
+        const isTeacher = role === 'teacher';
+        const search = value(isTeacher ? 'teacherSearch' : 'studentSearch');
+        const params = {};
+        if (search) {
+            const numberLike = /^[A-Za-z]?\d+$/.test(search);
+            params.searchField = isTeacher ? (numberLike ? 'teacherNo' : 'name') : (numberLike ? 'studentNo' : 'name');
+            params.searchValue = search;
+        }
+        if (isTeacher) {
+            const departmentId = numericValue('teacherCollegeFilter');
+            if (departmentId) params.departmentId = departmentId;
+            const title = titleText(value('teacherTitleFilter'));
+            if (title) params.title = title;
+        } else {
+            const collegeId = numericValue('studentCollegeFilter');
+            if (collegeId) params.collegeId = collegeId;
+            const status = normalizePersonStatus(value('studentStatusFilter'));
+            if (status !== '') params.status = status;
+        }
+        return params;
+    }
+
+    function bindPeopleRowActions(tbody, role) {
+        tbody.querySelectorAll('[data-edit-person]').forEach((button) => {
+            button.addEventListener('click', () => openPersonEdit(role, button.dataset.id));
+        });
         tbody.querySelectorAll('[data-delete-person]').forEach((button) => {
             button.addEventListener('click', () => deletePerson(role, button.dataset.id));
         });
@@ -71,11 +187,12 @@
                 <td>${escape(student.collegeName || student.collegeId || '-')}</td>
                 <td>${escape(student.majorName || student.majorId || '-')}</td>
                 <td>${escape(student.className || '-')}</td>
-                <td>${badge(Number(student.status) === 1 ? '在读' : '停用', Number(student.status) === 1 ? 'success' : 'warning')}</td>
+                <td>${badge(peopleStatusText(student.status), peopleStatusBadge(student.status))}</td>
                 <td>${formatDate(student.createdAt)}</td>
                 <td>
-                    <button class="btn btn-sm btn-warning" data-reset-person data-id="${student.id}" title="重置密码"><i class="fas fa-key"></i></button>
-                    <button class="btn btn-sm btn-danger" data-delete-person data-id="${student.id}" title="删除"><i class="fas fa-trash"></i></button>
+                    <button class="btn btn-sm btn-primary" data-edit-person data-id="${student.id}" title="\u7f16\u8f91"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-warning" data-reset-person data-id="${student.id}" title="\u91cd\u7f6e\u5bc6\u7801"><i class="fas fa-key"></i></button>
+                    <button class="btn btn-sm btn-danger" data-delete-person data-id="${student.id}" title="\u5220\u9664"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
         `;
@@ -88,29 +205,365 @@
                 <td>${escape(teacher.name)}</td>
                 <td>${escape(teacher.gender)}</td>
                 <td>${escape(teacher.departmentName || teacher.departmentId || '-')}</td>
-                <td>${badge(teacher.title || '教师', 'primary')}</td>
+                <td>${badge(teacher.title || '\u6559\u5e08', 'primary')}</td>
                 <td>${escape(teacher.phone || '-')}</td>
                 <td>${escape(teacher.email || '-')}</td>
                 <td>${formatDate(teacher.createdAt)}</td>
                 <td>
-                    <button class="btn btn-sm btn-warning" data-reset-person data-id="${teacher.id}" title="重置密码"><i class="fas fa-key"></i></button>
-                    <button class="btn btn-sm btn-danger" data-delete-person data-id="${teacher.id}" title="删除"><i class="fas fa-trash"></i></button>
+                    <button class="btn btn-sm btn-primary" data-edit-person data-id="${teacher.id}" title="\u7f16\u8f91"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-warning" data-reset-person data-id="${teacher.id}" title="\u91cd\u7f6e\u5bc6\u7801"><i class="fas fa-key"></i></button>
+                    <button class="btn btn-sm btn-danger" data-delete-person data-id="${teacher.id}" title="\u5220\u9664"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
         `;
     }
 
+    async function addPerson(role) {
+        const body = role === 'teacher' ? teacherFormBody('') : studentFormBody('');
+        await api.post(`/api/v1/${role === 'teacher' ? 'teachers' : 'students'}/from-map`, body);
+        closeModal(role === 'teacher' ? 'addTeacherModal' : 'addStudentModal');
+        resetForm(role === 'teacher' ? 'addTeacherForm' : 'addStudentForm');
+        notify('success', '\u65b0\u589e\u6210\u529f', '\u8bb0\u5f55\u5df2\u5199\u5165\u6570\u636e\u5e93');
+        await renderAdminPeople(role, 1);
+    }
+
+    async function openPersonEdit(role, id) {
+        const isTeacher = role === 'teacher';
+        const item = await api.get(`/api/v1/${isTeacher ? 'teachers' : 'students'}/${encodeURIComponent(id)}`);
+        state.selectedPeople[role] = id;
+        if (isTeacher) {
+            setValue('editTeacherId', id);
+            setValue('editTeacherName', item.name);
+            setValue('editTeacherGender', reverseGender(item.gender));
+            setValue('editTeacherCollege', item.departmentId);
+            setValue('editTeacherTitle', reverseTeacherTitle(item.title));
+            setValue('editTeacherPhone', item.phone || '');
+            setValue('editTeacherEmail', item.email || '');
+            setValue('editHireDate', dateInput(item.createdAt));
+            openModal('editTeacherModal');
+        } else {
+            setValue('editStudentId', id);
+            setValue('editStudentName', item.name);
+            setValue('editStudentGender', reverseGender(item.gender));
+            setValue('editStudentCollege', item.collegeId);
+            await populateMajorOptions('editStudentMajor', item.collegeId, item.majorId);
+            await populateClassOptions('editStudentClass', item.majorId, item.className);
+            setValue('editStudentStatus', reversePersonStatus(item.status));
+            setValue('editStudentEmail', item.email || '');
+            setValue('editStudentPhone', item.phone || '');
+            openModal('editStudentModal');
+        }
+    }
+
+    async function updatePerson(role) {
+        const id = state.selectedPeople[role] || value(role === 'teacher' ? 'editTeacherId' : 'editStudentId');
+        if (!id) throw new Error('\u8bf7\u5148\u9009\u62e9\u8981\u7f16\u8f91\u7684\u8bb0\u5f55');
+        const body = role === 'teacher' ? teacherFormBody('edit') : studentFormBody('edit');
+        await api.request(`/api/v1/${role === 'teacher' ? 'teachers' : 'students'}/${encodeURIComponent(id)}/from-map`, { method: 'PUT', body });
+        closeModal(role === 'teacher' ? 'editTeacherModal' : 'editStudentModal');
+        notify('success', '\u66f4\u65b0\u6210\u529f', '\u8bb0\u5f55\u5df2\u4fdd\u5b58\u5230\u6570\u636e\u5e93');
+        await renderAdminPeople(role);
+    }
+
     async function deletePerson(role, id) {
-        if (!confirm('确定删除该记录吗？')) return;
+        if (!confirm('\u786e\u5b9a\u5220\u9664\u8be5\u8bb0\u5f55\u5417\uff1f')) return;
         await api.del(`/api/v1/${role === 'teacher' ? 'teachers' : 'students'}/${encodeURIComponent(id)}`);
-        notify('success', '删除成功', '数据库记录已删除');
-        renderAdminPeople(role);
+        notify('success', '\u5220\u9664\u6210\u529f', '\u6570\u636e\u5e93\u8bb0\u5f55\u5df2\u5220\u9664');
+        await renderAdminPeople(role);
     }
 
     async function resetPersonPassword(role, id) {
-        if (!confirm('确定重置密码吗？')) return;
+        if (!confirm('\u786e\u5b9a\u91cd\u7f6e\u5bc6\u7801\u5417\uff1f')) return;
         await api.request(`/api/v1/${role === 'teacher' ? 'teachers' : 'students'}/${encodeURIComponent(id)}/reset-password`, { method: 'PUT' });
-        notify('success', '重置成功', '密码已重置为账号后6位');
+        notify('success', '\u91cd\u7f6e\u6210\u529f', '\u5bc6\u7801\u5df2\u6309\u8d26\u53f7\u89c4\u5219\u91cd\u7f6e');
+    }
+
+    function studentFormBody(prefix) {
+        const p = prefix ? 'editStudent' : 'student';
+        const body = {
+            name: requiredValue(`${p}Name`, '\u8bf7\u586b\u5199\u59d3\u540d'),
+            gender: normalizeGender(value(`${p}Gender`)),
+            collegeId: numericValue(`${p}College`) || 1,
+            majorId: numericValue(`${p}Major`) || 1,
+            className: value(`${p}Class`) || '\u672a\u5206\u73ed',
+            status: normalizePersonStatus(value(`${p}Status`)),
+            email: value(`${p}Email`),
+            phone: value(`${p}Phone`)
+        };
+        if (!prefix) {
+            body.studentNo = requiredValue('studentId', '\u8bf7\u586b\u5199\u5b66\u53f7');
+            body.password = '123456';
+        }
+        return body;
+    }
+
+    function teacherFormBody(prefix) {
+        const p = prefix ? 'editTeacher' : 'teacher';
+        const body = {
+            name: requiredValue(`${p}Name`, '\u8bf7\u586b\u5199\u59d3\u540d'),
+            gender: normalizeGender(value(`${p}Gender`)),
+            departmentId: numericValue(`${p}College`) || 1,
+            title: titleText(value(`${p}Title`)) || '\u8bb2\u5e08',
+            email: value(`${p}Email`),
+            phone: value(`${p}Phone`),
+            status: 1
+        };
+        if (!prefix) {
+            body.teacherNo = requiredValue('teacherId', '\u8bf7\u586b\u5199\u5de5\u53f7');
+            body.password = '123456';
+        }
+        return body;
+    }
+
+    async function fillPeopleFormOptions(role) {
+        if (state.peopleOptionsLoaded[role]) return;
+        state.peopleOptionsLoaded[role] = true;
+        if (role === 'teacher') {
+            await fillTeacherDepartmentOptions();
+            return;
+        }
+        await fillStudentAcademicOptions();
+    }
+
+    async function fillStudentAcademicOptions() {
+        const [collegePage, majorPage, classPage] = await Promise.all([
+            api.get('/api/v1/colleges/list', { pageNum: 1, pageSize: 100 }).catch(() => null),
+            api.get('/api/v1/majors/list', { pageNum: 1, pageSize: 100 }).catch(() => null),
+            api.get('/api/v1/classes/list', { pageNum: 1, pageSize: 100 }).catch(() => null)
+        ]);
+        state.studentColleges = api.pageItems(collegePage);
+        state.studentMajors = api.pageItems(majorPage);
+        state.studentClasses = api.pageItems(classPage);
+        fillSelect('studentCollegeFilter', state.studentColleges, collegeLabel, { allText: '\u6240\u6709\u5b66\u9662' });
+        fillSelect('studentCollege', state.studentColleges, collegeLabel, { placeholder: '\u8bf7\u9009\u62e9\u5b66\u9662' });
+        fillSelect('editStudentCollege', state.studentColleges, collegeLabel, { placeholder: '\u8bf7\u9009\u62e9\u5b66\u9662' });
+        await populateMajorOptions('studentMajor', value('studentCollege'));
+        await populateMajorOptions('editStudentMajor', value('editStudentCollege'));
+        await populateClassOptions('studentClass', value('studentMajor'));
+        await populateClassOptions('editStudentClass', value('editStudentMajor'));
+        bindAcademicCascade();
+    }
+
+    async function fillTeacherDepartmentOptions() {
+        const departmentPage = await api.get('/api/v1/departments/list', { pageNum: 1, pageSize: 100 }).catch(() => null);
+        state.teacherDepartments = api.pageItems(departmentPage);
+        fillSelect('teacherCollegeFilter', state.teacherDepartments, departmentLabel, { allText: '\u6240\u6709\u9662\u7cfb' });
+        fillSelect('teacherCollege', state.teacherDepartments, departmentLabel, { placeholder: '\u8bf7\u9009\u62e9\u9662\u7cfb' });
+        fillSelect('editTeacherCollege', state.teacherDepartments, departmentLabel, { placeholder: '\u8bf7\u9009\u62e9\u9662\u7cfb' });
+        fillTeacherTitleSelect('teacherTitle');
+        fillTeacherTitleSelect('editTeacherTitle');
+        fillTeacherTitleSelect('teacherTitleFilter', true);
+    }
+
+    function bindAcademicCascade() {
+        const pairs = [
+            ['studentCollege', 'studentMajor', 'studentClass'],
+            ['editStudentCollege', 'editStudentMajor', 'editStudentClass']
+        ];
+        pairs.forEach(([collegeId, majorId, classId]) => {
+            const college = document.getElementById(collegeId);
+            const major = document.getElementById(majorId);
+            if (college && !college.dataset.dynamicCascade) {
+                college.dataset.dynamicCascade = 'true';
+                college.addEventListener('change', async () => {
+                    await populateMajorOptions(majorId, value(collegeId));
+                    await populateClassOptions(classId, value(majorId));
+                });
+            }
+            if (major && !major.dataset.dynamicCascade) {
+                major.dataset.dynamicCascade = 'true';
+                major.addEventListener('change', async () => populateClassOptions(classId, value(majorId)));
+            }
+        });
+    }
+
+    async function populateMajorOptions(selectId, collegeId, selectedId) {
+        const allMajors = state.studentMajors || [];
+        const filtered = allMajors.filter((major) => !collegeId || String(major.collegeId || major.departmentId || '') === String(collegeId));
+        const majors = filtered.length ? filtered : allMajors;
+        fillSelect(selectId, majors, majorLabel, { placeholder: '\u8bf7\u9009\u62e9\u4e13\u4e1a', selectedValue: selectedId });
+    }
+
+    async function populateClassOptions(selectId, majorId, selectedValue) {
+        const allClasses = state.studentClasses || [];
+        const filtered = allClasses.filter((item) => !majorId || String(item.majorId || '') === String(majorId));
+        const classes = filtered.length ? filtered : allClasses;
+        const select = document.getElementById(selectId);
+        if (!select || !classes.length) return;
+        select.innerHTML = `<option value="">\u8bf7\u9009\u62e9\u73ed\u7ea7</option>` + classes.map((item) => {
+            const text = item.className || item.name || item.classCode || item.id;
+            const valueText = item.className || item.name || text;
+            return `<option value="${escape(valueText)}" ${String(valueText) === String(selectedValue || '') ? 'selected' : ''}>${escape(text)}</option>`;
+        }).join('');
+    }
+
+    function fillSelect(id, rows, labelFn, options = {}) {
+        const select = document.getElementById(id);
+        if (!select || !Array.isArray(rows) || !rows.length) return;
+        const first = options.allText || options.placeholder || '';
+        select.innerHTML = `<option value="">${escape(first)}</option>` + rows.map((row) => {
+            const selected = String(row.id) === String(options.selectedValue || '') ? 'selected' : '';
+            return `<option value="${escape(row.id)}" ${selected}>${escape(labelFn(row))}</option>`;
+        }).join('');
+    }
+
+    function fillTeacherTitleSelect(id, includeAll) {
+        const select = document.getElementById(id);
+        if (!select) return;
+        const titles = [
+            ['professor', '\u6559\u6388'],
+            ['associate_professor', '\u526f\u6559\u6388'],
+            ['lecturer', '\u8bb2\u5e08'],
+            ['assistant', '\u52a9\u6559']
+        ];
+        select.innerHTML = (includeAll ? '<option value="">\u6240\u6709\u804c\u79f0</option>' : '') +
+            titles.map(([valueText, text]) => `<option value="${valueText}">${text}</option>`).join('');
+    }
+
+    function renderPeoplePager(role, totalPages) {
+        const pager = document.querySelector('.pagination');
+        if (!pager) return;
+        const pages = Math.max(1, Number(totalPages || 1));
+        const current = Math.min(state.peoplePage[role], pages);
+        state.peoplePage[role] = current;
+        const button = (page, text, disabled) => `
+            <button class="btn ${page === current ? 'btn-primary' : 'btn-secondary'} pagination-btn" data-people-page="${page}" ${disabled ? 'disabled' : ''}>${text}</button>
+        `;
+        const middle = Array.from({ length: pages }, (_, index) => index + 1)
+            .filter((page) => pages <= 7 || page === 1 || page === pages || Math.abs(page - current) <= 1)
+            .map((page, index, all) => {
+                const gap = index > 0 && page - all[index - 1] > 1 ? '<span class="pagination-ellipsis">...</span>' : '';
+                return `${gap}${button(page, page, false)}`;
+            }).join('');
+        pager.innerHTML = `${button(Math.max(1, current - 1), '<i class="fas fa-chevron-left"></i>', current <= 1)}${middle}${button(Math.min(pages, current + 1), '<i class="fas fa-chevron-right"></i>', current >= pages)}`;
+        pager.querySelectorAll('[data-people-page]').forEach((item) => {
+            item.addEventListener('click', () => renderAdminPeople(role, item.dataset.peoplePage));
+        });
+    }
+
+    async function exportPeople(role) {
+        const endpoint = role === 'teacher' ? '/api/v1/teachers/list' : '/api/v1/students/list';
+        const data = await api.get(endpoint, { ...peopleListParams(role), pageNum: 1, pageSize: 1000, orderByColumn: 'id', sortOrder: 'desc' });
+        const rows = api.pageItems(data);
+        const header = role === 'teacher'
+            ? ['teacherNo', 'name', 'gender', 'department', 'title', 'phone', 'email']
+            : ['studentNo', 'name', 'gender', 'college', 'major', 'className', 'status', 'phone', 'email'];
+        const csvRows = [header, ...rows.map((row) => role === 'teacher'
+            ? [row.teacherNo, row.name, row.gender, row.departmentName || row.departmentId, row.title, row.phone, row.email]
+            : [row.studentNo, row.name, row.gender, row.collegeName || row.collegeId, row.majorName || row.majorId, row.className, peopleStatusText(row.status), row.phone, row.email]
+        )];
+        downloadCsv(`${role}-records.csv`, csvRows);
+    }
+
+    function downloadCsv(filename, rows) {
+        const csv = rows.map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+        const blob = new Blob(['\ufeff', csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        URL.revokeObjectURL(link.href);
+        link.remove();
+    }
+
+    function checkedValues(selector) {
+        return Array.from(document.querySelectorAll(`${selector}:checked`))
+            .map((item) => item.value)
+            .filter(Boolean);
+    }
+
+    function toggleSelectAll(source) {
+        const sourceElement = source || window.event?.target;
+        const root = sourceElement?.closest('table') || document;
+        root.querySelectorAll('tbody input[type="checkbox"]').forEach((checkbox) => {
+            checkbox.checked = Boolean(sourceElement?.checked);
+        });
+    }
+
+    function unsupportedImport() {
+        notify('error', 'Import unavailable', 'Please use add, edit, delete, and export for database-backed operations.');
+    }
+
+    function resetForm(id) {
+        const form = document.getElementById(id);
+        if (form) form.reset();
+    }
+
+    function collegeLabel(item) {
+        return item.collegeName || item.name || item.collegeCode || item.code || item.id;
+    }
+
+    function departmentLabel(item) {
+        return item.departmentName || item.name || item.departmentCode || item.code || item.id;
+    }
+
+    function majorLabel(item) {
+        return item.majorName || item.name || item.majorCode || item.code || item.id;
+    }
+
+    function numericValue(id) {
+        const result = Number(value(id));
+        return Number.isFinite(result) && result > 0 ? result : '';
+    }
+
+    function normalizeGender(raw) {
+        if (raw === 'male' || raw === '\u7537') return '\u7537';
+        if (raw === 'female' || raw === '\u5973') return '\u5973';
+        return raw || '\u7537';
+    }
+
+    function reverseGender(raw) {
+        if (raw === '\u5973' || raw === 'female') return 'female';
+        return 'male';
+    }
+
+    function normalizePersonStatus(raw) {
+        if (!raw || raw === 'all') return '';
+        if (raw === 'active' || raw === 'normal' || raw === '1') return 1;
+        if (raw === 'graduated' || raw === '2') return 2;
+        if (raw === 'dropout' || raw === '3') return 3;
+        return 0;
+    }
+
+    function reversePersonStatus(status) {
+        if (Number(status) === 2) return 'graduated';
+        if (Number(status) === 3) return 'dropout';
+        if (Number(status) === 0) return 'suspended';
+        return 'active';
+    }
+
+    function peopleStatusText(status) {
+        if (Number(status) === 2) return '\u6bd5\u4e1a';
+        if (Number(status) === 3) return '\u9000\u5b66';
+        if (Number(status) === 0) return '\u4f11\u5b66';
+        return '\u5728\u8bfb';
+    }
+
+    function peopleStatusBadge(status) {
+        if (Number(status) === 1) return 'success';
+        if (Number(status) === 2) return 'info';
+        return 'warning';
+    }
+
+    function titleText(raw) {
+        const map = {
+            professor: '\u6559\u6388',
+            associate_professor: '\u526f\u6559\u6388',
+            lecturer: '\u8bb2\u5e08',
+            assistant: '\u52a9\u6559'
+        };
+        return map[raw] || raw || '';
+    }
+
+    function reverseTeacherTitle(raw) {
+        const map = {
+            '\u6559\u6388': 'professor',
+            '\u526f\u6559\u6388': 'associate_professor',
+            '\u8bb2\u5e08': 'lecturer',
+            '\u52a9\u6559': 'assistant'
+        };
+        return map[raw] || raw || 'lecturer';
     }
 
     async function initAdminClasses() {
@@ -124,6 +577,10 @@
         window.deleteClass = deleteClass;
         window.addClass = addClass;
         window.updateClass = updateClass;
+        window.batchDeleteClasses = batchDeleteClasses;
+        window.exportClassData = exportClassData;
+        window.importClassData = unsupportedImport;
+        window.toggleSelectAll = toggleSelectAll;
         await loadClasses(1);
     }
 
@@ -242,6 +699,42 @@
         await loadClasses(state.classPage);
     }
 
+    async function batchDeleteClasses() {
+        const ids = checkedValues('.class-checkbox');
+        if (!ids.length) {
+            notify('error', 'No selection', 'Please select classes first.');
+            return;
+        }
+        if (!confirm(`Delete ${ids.length} selected classes?`)) return;
+        await api.request('/api/v1/classes/batch', { method: 'DELETE', body: ids.map(Number) });
+        notify('success', 'Deleted', 'Selected classes were removed from the database.');
+        await loadClasses(state.classPage);
+    }
+
+    async function exportClassData() {
+        const data = await api.get('/api/v1/classes/list', {
+            pageNum: 1,
+            pageSize: 1000,
+            keyword: value('searchClassInput'),
+            grade: filterValue('gradeFilter'),
+            status: normalizeClassStatus(value('statusFilter')),
+            orderByColumn: 'id',
+            isAsc: true
+        });
+        const rows = api.pageItems(data).map((item) => [
+            item.classCode,
+            item.className,
+            item.collegeName || item.collegeId,
+            item.majorName || item.majorId,
+            item.grade,
+            item.headTeacherName || '',
+            item.studentCount ?? 0,
+            item.monitorName || '',
+            classStatusText(item.status)
+        ]);
+        downloadCsv('classes.csv', [['classCode', 'className', 'college', 'major', 'grade', 'headTeacher', 'studentCount', 'monitor', 'status'], ...rows]);
+    }
+
     async function showClassStudents() {
         const id = state.selectedClassId;
         if (!id) return;
@@ -274,6 +767,10 @@
         window.showCourseDetail = showAdminCourseDetail;
         window.showEditCourseModal = showEditAdminCourseModal;
         window.showEnrolledStudents = showEnrolledStudents;
+        window.prepareBatchDelete = batchDeleteCourses;
+        window.exportCourseData = exportCourseData;
+        window.importCourseData = unsupportedImport;
+        window.toggleSelectAll = toggleSelectAll;
         await fillCourseFormOptions();
         await loadAdminCourses(1);
     }
@@ -308,7 +805,10 @@
         return `
             <div class="col-md-6 col-lg-4">
                 <div class="panel panel-primary course-card">
-                    <div class="panel-heading"><h3 class="panel-title">${escape(course.courseName)}</h3></div>
+                    <div class="panel-heading">
+                        <label class="pull-right" title="Select course"><input type="checkbox" class="course-checkbox" value="${course.id}"></label>
+                        <h3 class="panel-title">${escape(course.courseName)}</h3>
+                    </div>
                     <div class="panel-body">
                         <p class="text-muted">${escape(course.courseCode)} | ${escape(course.courseType)} | ${escape(course.credit)}学分</p>
                         <p><strong>教师：</strong>${escape(course.teacherName || course.teacherId || '-')}</p>
@@ -351,6 +851,41 @@
         await api.del(`/api/v1/courses/${id}`);
         notify('success', '删除成功', '课程已删除');
         await loadAdminCourses(state.coursePage);
+    }
+
+    async function batchDeleteCourses() {
+        const ids = checkedValues('.course-checkbox');
+        if (!ids.length) {
+            notify('error', 'No selection', 'Please select courses first.');
+            return;
+        }
+        if (!confirm(`Delete ${ids.length} selected courses?`)) return;
+        await api.request('/api/v1/courses/batch', { method: 'DELETE', body: ids.map(Number) });
+        notify('success', 'Deleted', 'Selected courses were removed from the database.');
+        await loadAdminCourses(state.coursePage);
+    }
+
+    async function exportCourseData() {
+        const data = await api.get('/api/v1/courses/list', {
+            pageNum: 1,
+            pageSize: 1000,
+            courseName: value('searchCourseInput'),
+            courseType: filterValue('categoryFilter'),
+            teacherId: filterValue('teacherFilter'),
+            orderByColumn: 'id',
+            isAsc: false
+        });
+        const rows = api.pageItems(data).map((course) => [
+            course.courseCode,
+            course.courseName,
+            course.teacherName || course.teacherId || '',
+            course.courseType || '',
+            course.credit ?? '',
+            course.availableSlots ?? course.maxCapacity ?? '',
+            course.selectedCount ?? course.currentStudents ?? 0,
+            courseStatusText(course.status)
+        ]);
+        downloadCsv('courses.csv', [['courseCode', 'courseName', 'teacher', 'courseType', 'credit', 'capacity', 'selectedCount', 'status'], ...rows]);
     }
 
     async function showAdminCourseDetail(id) {
@@ -422,6 +957,15 @@
         window.showEditGradeModal = showEditGradeModal;
         window.updateGrade = updateAdminGrade;
         window.deleteGrade = clearAdminGrade;
+        window.showGradeInputModal = showGradeInputModal;
+        window.submitGrade = submitGrade;
+        window.batchUpdateGrades = showBatchGradeModal;
+        window.loadCourseStudents = loadCourseStudents;
+        window.submitBatchGrades = submitBatchGrades;
+        window.exportGradeData = exportGradeData;
+        window.importGradeData = unsupportedImport;
+        window.toggleSelectAll = toggleSelectAll;
+        await fillGradeFormOptions();
         await loadAdminGrades(1);
     }
 
@@ -429,7 +973,7 @@
         state.gradePage = Math.max(1, Number(page || 1));
         const body = document.getElementById('gradeTableBody');
         if (!body) return;
-        body.innerHTML = rowMessage(10, '正在加载成绩数据...');
+        body.innerHTML = rowMessage(11, '正在加载成绩数据...');
         const data = await api.get('/api/v1/grades/list', {
             pageNum: state.gradePage,
             pageSize: 10,
@@ -448,8 +992,10 @@
                 <td>${escape(g.studentNo)}</td>
                 <td>${escape(g.studentName)}</td>
                 <td>${escape(g.className || '-')}</td>
+                <td>${escape(g.courseCode || g.courseId)}</td>
                 <td>${escape(g.courseName)}</td>
                 <td>${escape(g.credit)}</td>
+                <td>${escape(g.semester || '-')}</td>
                 <td>${escape(g.score ?? '-')}</td>
                 <td>${escape(scoreLevel(g.score))}</td>
                 <td>${formatDate(g.updatedAt || g.selectionTime)}</td>
@@ -459,7 +1005,7 @@
                     <button class="btn btn-danger" onclick="deleteGrade('${g.selectionId}')">清空</button>
                 </td>
             </tr>
-        `).join('') : rowMessage(10, '暂无成绩数据');
+        `).join('') : rowMessage(11, '暂无成绩数据');
         renderPager('gradePagination', state.gradePage, Math.ceil(api.pageTotal(data) / 10), 'goToPage');
     }
 
@@ -473,7 +1019,9 @@
         setText('detailScore', g.score ?? '未录入');
         setText('detailGradeLevel', scoreLevel(g.score));
         setText('detailInputTime', formatDate(g.updatedAt));
-        setText('detailComment', g.remark || '-');
+        setText('detailGPA', g.score == null ? '-' : Math.max(0, Math.round((Number(g.score) - 50) / 10 * 10) / 10));
+        setText('detailTeacherComment', g.remark || '-');
+        setText('detailUpdateTime', formatDate(g.updatedAt));
         openModal('gradeDetailModal');
     }
 
@@ -504,6 +1052,127 @@
         await api.del(`/api/v1/grades/${id}`);
         notify('success', '清空成功', '成绩已清空');
         await loadAdminGrades(state.gradePage);
+    }
+
+    async function fillGradeFormOptions(force) {
+        if (state.gradeOptionsLoaded && !force) return;
+        const [studentsPage, coursesPage, classesPage] = await Promise.all([
+            api.get('/api/v1/students/list', { pageNum: 1, pageSize: 1000, orderByColumn: 'id', isAsc: true }).catch(() => null),
+            api.get('/api/v1/courses/list', { pageNum: 1, pageSize: 1000, orderByColumn: 'id', isAsc: true }).catch(() => null),
+            api.get('/api/v1/classes/list', { pageNum: 1, pageSize: 1000, orderByColumn: 'id', isAsc: true }).catch(() => null)
+        ]);
+        const students = api.pageItems(studentsPage);
+        const courses = api.pageItems(coursesPage);
+        const classes = api.pageItems(classesPage);
+        fillSelect('studentId', students, (student) => `${student.name || student.studentNo || student.id} (${student.studentNo || student.id})`, { placeholder: 'Select student' });
+        fillSelect('courseId', courses, (course) => `${course.courseName || course.courseCode || course.id} (${course.courseCode || course.id})`, { placeholder: 'Select course' });
+        fillSelect('courseFilter', courses, (course) => `${course.courseName || course.courseCode || course.id}`, { allText: 'All courses' });
+        fillSelect('batchCourseId', courses, (course) => `${course.courseName || course.courseCode || course.id} (${course.courseCode || course.id})`, { placeholder: 'Select course' });
+        const classFilter = document.getElementById('classFilter');
+        if (classFilter && classes.length) {
+            classFilter.innerHTML = '<option value="all">All classes</option>' + classes.map((item) => {
+                const text = item.className || item.classCode || item.id;
+                return `<option value="${escape(text)}">${escape(text)}</option>`;
+            }).join('');
+        }
+        state.gradeOptionsLoaded = true;
+    }
+
+    async function showGradeInputModal() {
+        await fillGradeFormOptions();
+        openModal('gradeInputModal');
+    }
+
+    async function submitGrade() {
+        await api.post('/api/v1/grades', {
+            studentId: Number(requiredValue('studentId', 'Please select a student.')),
+            courseId: Number(requiredValue('courseId', 'Please select a course.')),
+            score: requiredValue('score', 'Please enter a score.'),
+            remark: value('teacherComment')
+        });
+        closeModal('gradeInputModal');
+        resetForm('gradeInputForm');
+        notify('success', 'Saved', 'Grade was written to the database.');
+        await loadAdminGrades(1);
+    }
+
+    async function showBatchGradeModal() {
+        await fillGradeFormOptions();
+        const courseId = value('batchCourseId') || filterValue('courseFilter');
+        if (courseId) {
+            setValue('batchCourseId', courseId);
+            await loadCourseStudents(courseId);
+        }
+        openModal('batchInputModal');
+    }
+
+    async function loadCourseStudents(courseId) {
+        const body = document.getElementById('batchGradeTable');
+        if (!body) return;
+        if (!courseId || courseId === 'all') {
+            body.innerHTML = rowMessage(5, 'Please select a course first.');
+            return;
+        }
+        body.innerHTML = rowMessage(5, 'Loading students...');
+        const data = await api.get(`/api/v1/course-selections/course/${encodeURIComponent(courseId)}`, {
+            pageNum: 1,
+            pageSize: 1000,
+            status: 1,
+            orderByColumn: 'id',
+            isAsc: true
+        });
+        const rows = api.pageItems(data);
+        body.innerHTML = rows.length ? rows.map((row, index) => `
+            <tr data-selection-id="${escape(row.id)}" data-student-id="${escape(row.studentId)}">
+                <td>${index + 1}</td>
+                <td>${escape(row.studentCode || row.studentNo || row.studentId)}</td>
+                <td>${escape(row.studentName || '-')}</td>
+                <td>${escape(row.className || '-')}</td>
+                <td><input type="number" class="form-control score-input" min="0" max="100" step="0.5" value="${escape(row.score ?? '')}"></td>
+            </tr>
+        `).join('') : rowMessage(5, 'No enrolled students.');
+    }
+
+    async function submitBatchGrades() {
+        const rows = Array.from(document.querySelectorAll('#batchGradeTable tr[data-selection-id]'));
+        let saved = 0;
+        for (const row of rows) {
+            const score = row.querySelector('.score-input')?.value;
+            if (score === '') continue;
+            await api.request(`/api/v1/grades/${encodeURIComponent(row.dataset.selectionId)}`, {
+                method: 'PUT',
+                body: { score, remark: '' }
+            });
+            saved++;
+        }
+        closeModal('batchInputModal');
+        notify('success', 'Saved', `${saved} grades were saved.`);
+        await loadAdminGrades(state.gradePage);
+    }
+
+    async function exportGradeData() {
+        const data = await api.get('/api/v1/grades/list', {
+            pageNum: 1,
+            pageSize: 1000,
+            keyword: value('searchGradeInput'),
+            courseId: filterValue('courseFilter'),
+            className: filterValue('classFilter'),
+            graded: gradeStatusFilter(value('statusFilter')),
+            orderByColumn: 'id',
+            isAsc: false
+        });
+        const rows = api.pageItems(data).map((row) => [
+            row.studentNo,
+            row.studentName,
+            row.className || '',
+            row.courseCode,
+            row.courseName,
+            row.credit ?? '',
+            row.score ?? '',
+            scoreLevel(row.score),
+            row.remark || ''
+        ]);
+        downloadCsv('grades.csv', [['studentNo', 'studentName', 'className', 'courseCode', 'courseName', 'credit', 'score', 'level', 'remark'], ...rows]);
     }
 
     async function initAdminLogs() {
@@ -894,6 +1563,629 @@
         `;
     }
 
+    async function initStudentGrades() {
+        const current = await currentUser();
+        const data = await api.get(`/api/v1/course-selections/student/${current.userId}`, {
+            pageNum: 1,
+            pageSize: 1000,
+            status: 1,
+            orderByColumn: 'selectionTime',
+            isAsc: false
+        });
+        state.studentGrades = api.pageItems(data);
+        bindStudentGradeControls();
+        renderStudentGradeStats();
+        renderStudentGradeRows();
+    }
+
+    function renderStudentGradeRows() {
+        const body = document.querySelector('.grades-table tbody');
+        if (!body) return;
+        const rows = filteredStudentGrades();
+        body.innerHTML = rows.length ? rows.map((g) => {
+            const level = scoreLevel(g.score);
+            return `
+                <tr class="grade-row">
+                    <td>${escape(g.courseCode || g.courseId)}</td>
+                    <td>${escape(g.courseName || '-')}</td>
+                    <td>${escape(g.courseType || '-')}</td>
+                    <td>${escape(g.credit || 0)}</td>
+                    <td><span class="grade-badge ${escape(letterGrade(g.score))}">${escape(level)}</span></td>
+                    <td>${escape(g.score ?? '-')}</td>
+                    <td>${escape(gpaValue(g.score))}</td>
+                    <td>${escape(g.semester || '-')}</td>
+                    <td><button class="btn btn-sm btn-outline-primary" type="button" data-student-grade-detail="${escape(g.selectionId || g.id)}">Details</button></td>
+                </tr>
+            `;
+        }).join('') : rowMessage(9, 'No grade data.');
+        body.querySelectorAll('[data-student-grade-detail]').forEach((button) => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                showStudentGradeDetail(button.dataset.studentGradeDetail);
+            }, true);
+        });
+    }
+
+    function filteredStudentGrades() {
+        const keyword = value('course-name-filter').toLowerCase();
+        const typeFilter = value('course-type-filter') || 'all';
+        const gradeFilter = value('grade-range-filter') || 'all';
+        return state.studentGrades.filter((item) => {
+            if (keyword && !String(`${item.courseName || ''} ${item.courseCode || ''}`).toLowerCase().includes(keyword)) return false;
+            if (!evaluationCourseTypeMatches(item.courseType, typeFilter)) return false;
+            return gradeRangeMatches(item.score, gradeFilter);
+        });
+    }
+
+    function renderStudentGradeStats() {
+        const values = document.querySelectorAll('.grade-stats .stat-value, .stats-container .stat-value, .stat-value');
+        if (!values.length) return;
+        const rows = state.studentGrades.filter((item) => item.score != null);
+        const scores = rows.map((item) => Number(item.score)).filter((score) => !Number.isNaN(score));
+        values[0].textContent = scores.length ? gpaValue(average(scores)) : '-';
+        if (values[1]) values[1].textContent = scores.length ? average(scores) : '-';
+        if (values[2]) values[2].textContent = String(rows.length);
+        if (values[3]) values[3].textContent = String(scores.filter((score) => score >= 90).length);
+    }
+
+    function bindStudentGradeControls() {
+        const searchButton = document.querySelector('.filter-actions .btn-primary');
+        if (searchButton && !searchButton.dataset.dynamicGradesBound) {
+            searchButton.dataset.dynamicGradesBound = 'true';
+            searchButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                renderStudentGradeRows();
+            }, true);
+        }
+        const resetButton = document.querySelector('.filter-actions .btn-outline-secondary');
+        if (resetButton && !resetButton.dataset.dynamicGradesBound) {
+            resetButton.dataset.dynamicGradesBound = 'true';
+            resetButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                setValue('semester-filter', 'all');
+                setValue('course-type-filter', 'all');
+                setValue('grade-range-filter', 'all');
+                setValue('course-name-filter', '');
+                renderStudentGradeRows();
+            }, true);
+        }
+        ['semester-filter', 'course-type-filter', 'grade-range-filter', 'course-name-filter'].forEach((id) => {
+            const input = document.getElementById(id);
+            if (!input || input.dataset.dynamicGradesBound) return;
+            input.dataset.dynamicGradesBound = 'true';
+            input.addEventListener(input.tagName === 'INPUT' ? 'input' : 'change', () => renderStudentGradeRows(), true);
+        });
+        const exportButton = document.querySelector('.grades-actions button:first-of-type');
+        if (exportButton && !exportButton.dataset.dynamicGradesBound) {
+            exportButton.dataset.dynamicGradesBound = 'true';
+            exportButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                exportStudentGrades();
+            }, true);
+        }
+        const printButton = document.querySelector('.grades-actions button:last-of-type');
+        if (printButton && !printButton.dataset.dynamicGradesBound) {
+            printButton.dataset.dynamicGradesBound = 'true';
+            printButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                window.print();
+            }, true);
+        }
+        document.querySelector('.grade-details-close')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            const modal = document.querySelector('.grade-details');
+            if (modal) modal.style.display = 'none';
+        }, true);
+    }
+
+    function showStudentGradeDetail(selectionId) {
+        const item = state.studentGrades.find((row) => String(row.selectionId || row.id) === String(selectionId));
+        if (!item) return;
+        const modal = document.querySelector('.grade-details');
+        if (!modal) {
+            alert(`Score: ${item.score ?? '-'}`);
+            return;
+        }
+        const title = modal.querySelector('.grade-details-title');
+        if (title) title.textContent = `${item.courseName || '-'} grade detail`;
+        const values = modal.querySelectorAll('.grade-detail-value');
+        const details = [
+            item.courseCode || item.courseId,
+            item.courseName || '-',
+            item.courseType || '-',
+            item.credit || 0,
+            `${item.score ?? '-'} (${scoreLevel(item.score)})`,
+            gpaValue(item.score),
+            item.teacherName || '-',
+            item.semester || '-',
+            item.dailyGrade ?? '-',
+            item.labGrade ?? '-',
+            item.examGrade ?? '-',
+            formatDateTime(item.updatedAt || item.updateTime || item.selectionTime),
+            item.remark || '-'
+        ];
+        values.forEach((element, index) => {
+            element.textContent = details[index] == null ? '-' : String(details[index]);
+        });
+        modal.style.display = 'flex';
+    }
+
+    function exportStudentGrades() {
+        const rows = filteredStudentGrades();
+        downloadCsv('student-grades.csv', [
+            ['courseCode', 'courseName', 'courseType', 'credit', 'score', 'level', 'gpa', 'semester', 'teacher', 'remark'],
+            ...rows.map((row) => [
+                row.courseCode || row.courseId,
+                row.courseName || '',
+                row.courseType || '',
+                row.credit || 0,
+                row.score ?? '',
+                scoreLevel(row.score),
+                gpaValue(row.score),
+                row.semester || '',
+                row.teacherName || '',
+                row.remark || ''
+            ])
+        ]);
+    }
+
+    function gradeRangeMatches(score, range) {
+        if (!range || range === 'all') return true;
+        const valueText = Number(score);
+        if (Number.isNaN(valueText)) return false;
+        if (range === 'A') return valueText >= 90;
+        if (range === 'B') return valueText >= 80 && valueText < 90;
+        if (range === 'C') return valueText >= 70 && valueText < 80;
+        if (range === 'D') return valueText >= 60 && valueText < 70;
+        if (range === 'F') return valueText < 60;
+        return true;
+    }
+
+    function letterGrade(score) {
+        const valueText = Number(score);
+        if (Number.isNaN(valueText)) return '';
+        if (valueText >= 90) return 'A';
+        if (valueText >= 80) return 'B';
+        if (valueText >= 70) return 'C';
+        if (valueText >= 60) return 'D';
+        return 'F';
+    }
+
+    function gpaValue(score) {
+        const valueText = Number(score);
+        if (Number.isNaN(valueText)) return '-';
+        return Math.max(0, Math.round((valueText - 50) / 10 * 10) / 10);
+    }
+
+    async function initStudentSchedule() {
+        bindStudentScheduleControls();
+        await renderStudentSchedule();
+    }
+
+    async function renderStudentSchedule() {
+        const current = await currentUser();
+        const data = await api.get(`/api/v1/course-selections/student/${current.userId}`, {
+            pageNum: 1,
+            pageSize: 1000,
+            status: 1,
+            orderByColumn: 'selectionTime',
+            isAsc: false
+        });
+        const rows = api.pageItems(data);
+        updateScheduleWeekLabel();
+        const body = document.querySelector('.schedule-table tbody');
+        if (!body) return;
+        body.innerHTML = rows.length ? rows.map((course) => `
+            <tr>
+                <td class="time-column">${escape(course.schedule || 'TBD')}</td>
+                <td colspan="5" class="time-slot">
+                    <div class="course-block ${escape(scheduleCourseTypeClass(course.courseType))}" data-schedule-course="${escape(course.courseId)}">
+                        <div class="course-block-title">${escape(course.courseName || '-')}</div>
+                        <div class="course-block-location">${escape(course.classroom || '-')}</div>
+                        <div class="course-block-info">${escape(course.courseCode || course.courseId)} | ${escape(course.credit || 0)} credits | ${escape(course.teacherName || '-')}</div>
+                    </div>
+                </td>
+            </tr>
+        `).join('') : '<tr><td colspan="6" class="text-center">No schedule data.</td></tr>';
+        body.querySelectorAll('.course-block').forEach((block) => {
+            block.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                const title = block.querySelector('.course-block-title')?.textContent || '-';
+                const info = block.querySelector('.course-block-info')?.textContent || '';
+                alert(`${title}\n${info}`);
+            }, true);
+        });
+    }
+
+    function bindStudentScheduleControls() {
+        const previous = document.querySelector('.navigation-button:first-of-type');
+        const next = document.querySelector('.navigation-button:last-of-type');
+        const today = document.querySelector('.today-button');
+        if (previous && !previous.dataset.dynamicScheduleBound) {
+            previous.dataset.dynamicScheduleBound = 'true';
+            previous.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                state.scheduleWeekOffset -= 1;
+                await renderStudentSchedule();
+            }, true);
+        }
+        if (next && !next.dataset.dynamicScheduleBound) {
+            next.dataset.dynamicScheduleBound = 'true';
+            next.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                state.scheduleWeekOffset += 1;
+                await renderStudentSchedule();
+            }, true);
+        }
+        if (today && !today.dataset.dynamicScheduleBound) {
+            today.dataset.dynamicScheduleBound = 'true';
+            today.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                state.scheduleWeekOffset = 0;
+                await renderStudentSchedule();
+            }, true);
+        }
+        document.querySelectorAll('.semester-button').forEach((button) => {
+            if (button.dataset.dynamicScheduleBound) return;
+            button.dataset.dynamicScheduleBound = 'true';
+            button.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                document.querySelectorAll('.semester-button').forEach((item) => item.classList.remove('active'));
+                button.classList.add('active');
+                await renderStudentSchedule();
+            }, true);
+        });
+    }
+
+    function updateScheduleWeekLabel() {
+        const label = document.querySelector('.current-week');
+        if (!label) return;
+        label.textContent = state.scheduleWeekOffset === 0
+            ? 'Current week'
+            : state.scheduleWeekOffset > 0
+                ? `Week +${state.scheduleWeekOffset}`
+                : `Week ${state.scheduleWeekOffset}`;
+    }
+
+    function scheduleCourseTypeClass(type) {
+        const text = String(type || '').toLowerCase();
+        if (text.includes('elective') || text.includes('\u9009\u4fee')) return 'elective';
+        if (text.includes('general') || text.includes('\u901a\u8bc6')) return 'general';
+        if (text.includes('professional') || text.includes('\u4e13\u4e1a')) return 'professional';
+        return 'required';
+    }
+
+    async function initStudentMessages(pageNum) {
+        const current = await currentUser();
+        state.messagePage = Math.max(1, Number(pageNum || state.messagePage || 1));
+        bindStudentMessageControls();
+        const list = document.querySelector('.messages-list');
+        if (!list) return;
+
+        if (state.messageFilter.deleted) {
+            list.innerHTML = '<div class="empty-message">Deleted messages are removed from the database.</div>';
+            renderMessagePagination(0, 1);
+            await updateMessageCounters(current.userId);
+            return;
+        }
+
+        list.innerHTML = '<div class="empty-message">Loading database messages...</div>';
+        const data = await api.get('/api/v1/messages/list', studentMessageParams(current.userId));
+        const rows = api.pageItems(data);
+        list.innerHTML = rows.length ? rows.map(messageCard).join('') : '<div class="empty-message">No messages.</div>';
+        bindStudentMessageListActions(list, current.userId);
+        renderMessagePagination(api.pageTotal(data), Math.ceil(api.pageTotal(data) / 10));
+        await updateMessageCounters(current.userId);
+    }
+
+    function studentMessageParams(userId) {
+        const params = {
+            pageNum: state.messagePage,
+            pageSize: 10,
+            recipientId: userId,
+            recipientType: 2
+        };
+        if (state.messageFilter.type && state.messageFilter.type !== 'all') params.messageType = state.messageFilter.type;
+        if (state.messageFilter.read !== '') params.isRead = state.messageFilter.read;
+        if (state.messageFilter.keyword) params.keyword = state.messageFilter.keyword;
+        return params;
+    }
+
+    function bindStudentMessageListActions(list, userId) {
+        list.querySelectorAll('[data-read-message]').forEach((button) => {
+            button.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                try {
+                    await api.request(`/api/v1/messages/${button.dataset.id}/read`, { method: 'PUT' });
+                    notify('success', 'Saved', 'Message read status was updated in the database.');
+                    await initStudentMessages();
+                } catch (error) {
+                    notify('error', 'Operation failed', error.message);
+                }
+            }, true);
+        });
+        list.querySelectorAll('[data-delete-message]').forEach((button) => {
+            button.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                if (!confirm('Delete this message?')) return;
+                try {
+                    await api.del(`/api/v1/messages/${button.dataset.id}`);
+                    notify('success', 'Deleted', 'Message was removed from the database.');
+                    await initStudentMessages();
+                } catch (error) {
+                    notify('error', 'Delete failed', error.message);
+                }
+            }, true);
+        });
+        list.querySelectorAll('.message-card[data-message-id]').forEach((card) => {
+            card.addEventListener('click', async (event) => {
+                if (event.target.closest('.message-action-btn')) return;
+                event.stopImmediatePropagation();
+                openMessageDetail(card);
+                if (card.classList.contains('unread')) {
+                    await api.request(`/api/v1/messages/${card.dataset.messageId}/read`, { method: 'PUT' }).catch(() => null);
+                    card.classList.remove('unread');
+                    await updateMessageCounters(userId);
+                }
+            }, true);
+        });
+    }
+
+    function messageCard(item) {
+        const unread = Number(item.isRead) === 0;
+        return `
+            <div class="message-card ${unread ? 'unread' : ''}" data-message-id="${escape(item.id)}" data-message-type="${escape(item.messageType || 'system')}">
+                <div class="message-header">
+                    <div class="message-info">
+                        <span class="message-category ${escape(item.messageType || 'system')}">${escape(messageTypeText(item.messageType))}</span>
+                        <h3 class="message-title">${escape(item.title)}</h3>
+                    </div>
+                    <span class="message-time">${formatDateTime(item.createdAt)}</span>
+                </div>
+                <p class="message-summary">${escape(item.content)}</p>
+                <div class="message-footer">
+                    <span class="message-time">${escape(messageTypeText(item.messageType))}</span>
+                    <div class="message-actions-footer">
+                        <button class="message-action-btn" data-read-message data-id="${escape(item.id)}" aria-label="Mark read" ${unread ? '' : 'disabled'}><i class="fas ${unread ? 'fa-check' : 'fa-envelope-open'}"></i></button>
+                        <button class="message-action-btn" data-delete-message data-id="${escape(item.id)}" aria-label="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function bindStudentMessageControls() {
+        const search = document.querySelector('.search-input');
+        if (search && !search.dataset.dynamicMessagesBound) {
+            search.dataset.dynamicMessagesBound = 'true';
+            let timer;
+            search.addEventListener('input', (event) => {
+                event.stopImmediatePropagation();
+                clearTimeout(timer);
+                state.messageFilter.keyword = search.value.trim();
+                timer = setTimeout(() => initStudentMessages(1), 250);
+            }, true);
+            search.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    state.messageFilter.keyword = search.value.trim();
+                    initStudentMessages(1);
+                }
+            }, true);
+        }
+
+        document.querySelectorAll('.mark-all-read, .sidebar-actions .sidebar-icon-btn:first-child').forEach((button) => {
+            if (button.dataset.dynamicMessagesBound) return;
+            button.dataset.dynamicMessagesBound = 'true';
+            button.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                await markAllStudentMessagesRead();
+            }, true);
+        });
+
+        document.querySelectorAll('.sidebar-actions .sidebar-icon-btn:nth-child(2)').forEach((button) => {
+            if (button.dataset.dynamicMessagesBound) return;
+            button.dataset.dynamicMessagesBound = 'true';
+            button.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                await initStudentMessages(1);
+            }, true);
+        });
+
+        document.querySelectorAll('.category-item').forEach((item, index) => {
+            if (item.dataset.dynamicMessagesBound) return;
+            item.dataset.dynamicMessagesBound = 'true';
+            item.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                document.querySelectorAll('.category-item').forEach((category) => category.classList.remove('active'));
+                item.classList.add('active');
+                applyMessageCategory(index);
+                await initStudentMessages(1);
+            }, true);
+        });
+
+        const filterPanel = document.querySelector('.filter-panel');
+        const filterSelects = filterPanel ? filterPanel.querySelectorAll('.filter-select') : [];
+        const filterKeyword = filterPanel?.querySelector('.filter-input');
+        const applyButton = filterPanel?.querySelector('.filter-actions .btn-primary');
+        const resetButton = filterPanel?.querySelector('.filter-actions .btn-outline-secondary');
+        if (applyButton && !applyButton.dataset.dynamicMessagesBound) {
+            applyButton.dataset.dynamicMessagesBound = 'true';
+            applyButton.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                state.messageFilter.type = normalizeMessageType(filterSelects[0]?.value || 'all');
+                state.messageFilter.read = normalizeMessageRead(filterSelects[1]?.value || 'all');
+                state.messageFilter.keyword = filterKeyword?.value?.trim() || search?.value?.trim() || '';
+                state.messageFilter.deleted = false;
+                await initStudentMessages(1);
+            }, true);
+        }
+        if (resetButton && !resetButton.dataset.dynamicMessagesBound) {
+            resetButton.dataset.dynamicMessagesBound = 'true';
+            resetButton.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                state.messageFilter = { type: 'all', read: '', keyword: '', deleted: false };
+                if (search) search.value = '';
+                if (filterKeyword) filterKeyword.value = '';
+                if (filterSelects[0]) filterSelects[0].value = 'all';
+                if (filterSelects[1]) filterSelects[1].value = 'all';
+                document.querySelectorAll('.category-item').forEach((category, index) => category.classList.toggle('active', index === 0));
+                await initStudentMessages(1);
+            }, true);
+        }
+    }
+
+    function applyMessageCategory(index) {
+        const categories = [
+            { type: 'all', read: '', deleted: false },
+            { type: 'all', read: 0, deleted: false },
+            { type: 'system', read: '', deleted: false },
+            { type: 'course', read: '', deleted: false },
+            { type: 'assignment', read: '', deleted: false },
+            { type: 'announcement', read: '', deleted: false },
+            { type: 'all', read: '', deleted: true }
+        ];
+        state.messageFilter = { ...state.messageFilter, ...(categories[index] || categories[0]) };
+        updateMessageTitle();
+    }
+
+    function updateMessageTitle() {
+        const title = document.querySelector('.messages-title');
+        if (!title) return;
+        title.textContent = state.messageFilter.deleted ? 'Deleted'
+            : state.messageFilter.read === 0 ? 'Unread'
+                : state.messageFilter.type === 'all' ? 'All messages'
+                    : messageTypeText(state.messageFilter.type);
+    }
+
+    async function markAllStudentMessagesRead() {
+        const current = await currentUser();
+        const data = await api.get('/api/v1/messages/list', {
+            pageNum: 1,
+            pageSize: 100,
+            recipientId: current.userId,
+            recipientType: 2,
+            isRead: 0
+        });
+        const ids = api.pageItems(data).map((item) => item.id).filter(Boolean);
+        if (!ids.length) {
+            notify('success', 'No unread messages', 'Current messages are already read.');
+            return;
+        }
+        await Promise.all(ids.map((id) => api.request(`/api/v1/messages/${encodeURIComponent(id)}/read`, { method: 'PUT' })));
+        notify('success', 'Saved', `${ids.length} messages were marked read.`);
+        await initStudentMessages(1);
+    }
+
+    async function updateMessageCounters(userId) {
+        const countParams = (extra) => ({ pageNum: 1, pageSize: 1, recipientId: userId, recipientType: 2, ...extra });
+        const [all, unread, system, course, assignment, announcement] = await Promise.all([
+            api.get('/api/v1/messages/list', countParams({})).catch(() => null),
+            api.get('/api/v1/messages/list', countParams({ isRead: 0 })).catch(() => null),
+            api.get('/api/v1/messages/list', countParams({ messageType: 'system' })).catch(() => null),
+            api.get('/api/v1/messages/list', countParams({ messageType: 'course' })).catch(() => null),
+            api.get('/api/v1/messages/list', countParams({ messageType: 'assignment' })).catch(() => null),
+            api.get('/api/v1/messages/list', countParams({ messageType: 'announcement' })).catch(() => null)
+        ]);
+        const values = [all, unread, system, course, assignment, announcement, null].map((item) => api.pageTotal(item));
+        document.querySelectorAll('.category-item .category-badge').forEach((badgeElement, index) => {
+            badgeElement.textContent = String(values[index] || 0);
+        });
+        document.querySelectorAll('.nav-badge').forEach((badgeElement) => {
+            badgeElement.textContent = String(values[1] || 0);
+        });
+        updateMessageTitle();
+    }
+
+    function renderMessagePagination(total, totalPages) {
+        const pager = document.querySelector('.pagination');
+        if (!pager) return;
+        const pages = Math.max(1, Number(totalPages || 1));
+        const current = Math.min(state.messagePage, pages);
+        state.messagePage = current;
+        if (!total) {
+            pager.innerHTML = '';
+            return;
+        }
+        const button = (page, label, disabled) => `<button class="page-btn ${page === current ? 'active' : ''}" data-message-page="${page}" ${disabled ? 'disabled' : ''}>${label}</button>`;
+        const middle = Array.from({ length: pages }, (_, index) => index + 1)
+            .filter((page) => pages <= 7 || page === 1 || page === pages || Math.abs(page - current) <= 1)
+            .map((page, index, all) => {
+                const gap = index > 0 && page - all[index - 1] > 1 ? '<span>...</span>' : '';
+                return `${gap}${button(page, page, false)}`;
+            }).join('');
+        pager.innerHTML = `${button(Math.max(1, current - 1), '<i class="fas fa-chevron-left"></i>', current <= 1)}${middle}${button(Math.min(pages, current + 1), '<i class="fas fa-chevron-right"></i>', current >= pages)}`;
+        pager.querySelectorAll('[data-message-page]').forEach((buttonElement) => {
+            buttonElement.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                await initStudentMessages(buttonElement.dataset.messagePage);
+            }, true);
+        });
+    }
+
+    function openMessageDetail(card) {
+        const modal = document.querySelector('.message-detail-modal-backdrop');
+        if (!modal) return;
+        const title = card.querySelector('.message-title')?.textContent || '';
+        const time = card.querySelector('.message-header .message-time')?.textContent || '';
+        const from = card.querySelector('.message-footer .message-time')?.textContent || '';
+        const content = card.querySelector('.message-summary')?.textContent || '';
+        if (modal.querySelector('.modal-title')) modal.querySelector('.modal-title').textContent = title;
+        if (modal.querySelector('.date-time')) modal.querySelector('.date-time').textContent = time;
+        if (modal.querySelector('.message-from')) modal.querySelector('.message-from').textContent = from ? ` - ${from}` : '';
+        if (modal.querySelector('.message-content')) modal.querySelector('.message-content').textContent = content;
+        modal.style.display = 'flex';
+        bindMessageDetailClose(modal);
+    }
+
+    function bindMessageDetailClose(modal) {
+        if (modal.dataset.dynamicMessagesBound) return;
+        modal.dataset.dynamicMessagesBound = 'true';
+        modal.querySelectorAll('.close-message-detail').forEach((button) => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                modal.style.display = 'none';
+            }, true);
+        });
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                event.stopImmediatePropagation();
+                modal.style.display = 'none';
+            }
+        }, true);
+    }
+
+    function normalizeMessageType(raw) {
+        return ['system', 'course', 'assignment', 'announcement'].includes(raw) ? raw : 'all';
+    }
+
+    function normalizeMessageRead(raw) {
+        if (raw === 'read') return 1;
+        if (raw === 'unread') return 0;
+        return '';
+    }
+
     async function initStudentEvaluations() {
         const current = await currentUser();
         state.evaluations = await api.get(`/api/v1/evaluations/student/${current.userId}/courses`);
@@ -959,6 +2251,231 @@
         await initStudentEvaluations();
     }
 
+    async function initStudentEvaluations() {
+        const current = await currentUser();
+        const data = await api.get(`/api/v1/evaluations/student/${current.userId}/courses`);
+        state.evaluations = Array.isArray(data) ? data : [];
+        bindEvaluationControls();
+        renderEvaluationStats();
+        renderEvaluationCards();
+        const form = document.getElementById('evaluation-form');
+        if (form && !form.dataset.dynamicEvaluationBound) {
+            form.dataset.dynamicEvaluationBound = 'true';
+            form.addEventListener('submit', submitEvaluation, true);
+        }
+    }
+
+    function renderEvaluationStats() {
+        const values = document.querySelectorAll('.evaluation-stats .stat-value');
+        if (!values.length) return;
+        const total = state.evaluations.length;
+        const completed = state.evaluations.filter((item) => item.evaluated).length;
+        const scores = state.evaluations
+            .map((item) => Number(item.evaluationScore))
+            .filter((score) => !Number.isNaN(score) && score > 0);
+        const average = scores.length ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length * 10) / 10 : 0;
+        values[0].textContent = `${completed}/${total}`;
+        if (values[1]) values[1].textContent = average || '-';
+        if (values[2]) values[2].textContent = '-';
+        if (values[3]) values[3].textContent = String(Math.max(0, total - completed));
+    }
+
+    function renderEvaluationCards() {
+        const container = document.querySelector('.evaluation-cards');
+        if (!container) return;
+        const rows = filteredEvaluations();
+        container.innerHTML = rows.length ? rows.map((item) => {
+            const status = item.evaluated ? 'evaluated' : 'not-evaluated';
+            return `
+                <div class="evaluation-card" data-status="${status}" data-course-type="${escape(item.courseType || '')}">
+                    <div class="course-header">
+                        <div class="course-info">
+                            <h4>${escape(item.courseName)}</h4>
+                            <p>${escape(item.courseCode)} | ${escape(item.teacherName || '-')} | ${escape(item.courseType || '-')}</p>
+                        </div>
+                        <div class="course-status ${status}">${item.evaluated ? '\u5df2\u8bc4\u4ef7' : '\u672a\u8bc4\u4ef7'}</div>
+                    </div>
+                    ${item.evaluated ? `
+                        <div class="evaluation-rating">
+                            <div class="rating-stars">${evaluationStars(item.evaluationScore)}</div>
+                            <div class="evaluation-date">\u8bc4\u4ef7\u65f6\u95f4: ${escape(formatDate(item.evaluationTime))}</div>
+                        </div>
+                        <div class="evaluation-content"><p>${escape(item.evaluationContent || '-')}</p></div>
+                    ` : ''}
+                    <div class="evaluation-actions">
+                        <button class="btn btn-sm ${item.evaluated ? 'btn-outline-secondary' : 'btn-primary'} start-evaluation" data-course-id="${escape(item.courseId)}">
+                            ${item.evaluated ? '\u4fee\u6539\u8bc4\u4ef7' : '\u5f00\u59cb\u8bc4\u4ef7'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('') : '<div class="empty-message">\u6682\u65e0\u7b26\u5408\u6761\u4ef6\u7684\u8bc4\u4ef7\u8bfe\u7a0b</div>';
+        container.querySelectorAll('.start-evaluation').forEach((button) => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                openEvaluationForm(button.dataset.courseId);
+            }, true);
+        });
+    }
+
+    function filteredEvaluations() {
+        const activeTab = document.querySelector('.tab-button.active')?.dataset.tab || 'all';
+        const statusFilter = value('status-filter') || 'all';
+        const typeFilter = value('course-type-filter') || 'all';
+        return state.evaluations.filter((item) => {
+            const status = item.evaluated ? 'evaluated' : 'not-evaluated';
+            if (activeTab !== 'all' && status !== activeTab) return false;
+            if (statusFilter !== 'all' && status !== statusFilter) return false;
+            return evaluationCourseTypeMatches(item.courseType, typeFilter);
+        });
+    }
+
+    function evaluationCourseTypeMatches(courseType, filter) {
+        if (!filter || filter === 'all') return true;
+        const text = String(courseType || '').toLowerCase();
+        const keywords = {
+            required: ['required', '\u5fc5\u4fee'],
+            elective: ['elective', '\u9009\u4fee'],
+            general: ['general', '\u901a\u8bc6'],
+            professional: ['professional', '\u4e13\u4e1a']
+        };
+        return (keywords[filter] || [filter]).some((keyword) => text.includes(keyword));
+    }
+
+    function bindEvaluationControls() {
+        document.querySelectorAll('.tab-button').forEach((button) => {
+            if (button.dataset.dynamicEvaluationBound) return;
+            button.dataset.dynamicEvaluationBound = 'true';
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                document.querySelectorAll('.tab-button').forEach((item) => item.classList.remove('active'));
+                button.classList.add('active');
+                renderEvaluationCards();
+            }, true);
+        });
+
+        ['status-filter', 'course-type-filter', 'semester-filter'].forEach((id) => {
+            const select = document.getElementById(id);
+            if (!select || select.dataset.dynamicEvaluationBound) return;
+            select.dataset.dynamicEvaluationBound = 'true';
+            select.addEventListener('change', () => renderEvaluationCards());
+        });
+
+        const searchButton = document.getElementById('search-button');
+        if (searchButton && !searchButton.dataset.dynamicEvaluationBound) {
+            searchButton.dataset.dynamicEvaluationBound = 'true';
+            searchButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                renderEvaluationCards();
+            }, true);
+        }
+
+        const resetButton = document.getElementById('reset-button');
+        if (resetButton && !resetButton.dataset.dynamicEvaluationBound) {
+            resetButton.dataset.dynamicEvaluationBound = 'true';
+            resetButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                setValue('semester-filter', 'all');
+                setValue('status-filter', 'all');
+                setValue('course-type-filter', 'all');
+                document.querySelectorAll('.tab-button').forEach((button, index) => button.classList.toggle('active', index === 0));
+                renderEvaluationCards();
+            }, true);
+        }
+
+        ['close-form-button', 'cancel-evaluation'].forEach((id) => {
+            const button = document.getElementById(id);
+            if (!button || button.dataset.dynamicEvaluationBound) return;
+            button.dataset.dynamicEvaluationBound = 'true';
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                closeEvaluationForm();
+            }, true);
+        });
+    }
+
+    function openEvaluationForm(courseId) {
+        const item = state.evaluations.find((row) => String(row.courseId) === String(courseId));
+        if (!item) return;
+        setText('current-course-name', item.courseName);
+        const form = document.getElementById('evaluation-form');
+        if (form) {
+            form.dataset.courseId = item.courseId;
+            form.dataset.evaluationId = item.evaluationId || '';
+        }
+        const content = document.querySelector('textarea[name="evaluation-content"]');
+        if (content) content.value = item.evaluationContent || '';
+        const anonymous = document.getElementById('anonymous-evaluation');
+        if (anonymous) anonymous.checked = Number(item.isAnonymous) === 1 || item.isAnonymous === true;
+        updateEvaluationRatingInputs(Number(item.evaluationScore || 0));
+        const container = document.getElementById('evaluation-form-container');
+        if (container) {
+            container.style.display = 'block';
+            container.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    function closeEvaluationForm() {
+        const container = document.getElementById('evaluation-form-container');
+        if (container) container.style.display = 'none';
+        const form = document.getElementById('evaluation-form');
+        if (form) {
+            form.reset();
+            delete form.dataset.courseId;
+            delete form.dataset.evaluationId;
+        }
+        updateEvaluationRatingInputs(0);
+    }
+
+    function updateEvaluationRatingInputs(score) {
+        document.querySelectorAll('.rating-stars-input').forEach((group) => {
+            const stars = group.querySelectorAll('.star');
+            const first = stars[0];
+            const hiddenId = first?.dataset.category ? `${first.dataset.category}-rating` : 'overall-rating';
+            const hidden = document.getElementById(hiddenId);
+            const valueText = hiddenId === 'overall-rating' ? Number(score || 0) : 0;
+            if (hidden) hidden.value = String(valueText);
+            stars.forEach((star) => {
+                const active = Number(star.dataset.rating) <= valueText;
+                star.innerHTML = `<i class="${active ? 'fas' : 'far'} fa-star"></i>`;
+                star.classList.toggle('active', active);
+            });
+        });
+    }
+
+    async function submitEvaluation(event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const current = await currentUser();
+        const form = event.currentTarget;
+        const score = Number(value('overall-rating'));
+        if (!score) {
+            alert('\u8bf7\u81f3\u5c11\u9009\u62e9\u603b\u4f53\u8bc4\u5206');
+            return;
+        }
+        await api.post('/api/v1/evaluations', {
+            studentId: current.userId,
+            courseId: Number(form.dataset.courseId),
+            score,
+            content: document.querySelector('textarea[name="evaluation-content"]')?.value || '',
+            isAnonymous: document.getElementById('anonymous-evaluation')?.checked,
+            status: 1
+        });
+        notify('success', '\u63d0\u4ea4\u6210\u529f', '\u8bc4\u4ef7\u5df2\u5199\u5165\u6570\u636e\u5e93');
+        closeEvaluationForm();
+        await initStudentEvaluations();
+    }
+
+    function evaluationStars(score) {
+        const valueText = Math.max(0, Math.min(5, Math.round(Number(score || 0))));
+        return Array.from({ length: 5 }, (_, index) => `<i class="${index < valueText ? 'fas' : 'far'} fa-star"></i>`).join('');
+    }
+
     async function initTeacherStatistics() {
         const current = await currentUser();
         const dashboard = await api.get('/api/v1/course-selections/teacher/dashboard', { teacherId: current.userId });
@@ -975,6 +2492,267 @@
                 <tr><td>${escape(row.courseName)}</td><td>${escape(row.studentName)}</td><td>${escape(row.className || '-')}</td><td>${escape(row.score ?? '-')}</td><td>${formatDate(row.selectionTime)}</td></tr>
             `).join('');
         }
+    }
+
+    async function initTeacherStatistics() {
+        const current = await currentUser();
+        bindTeacherStatisticsControls();
+        const dashboard = await api.get('/api/v1/course-selections/teacher/dashboard', { teacherId: current.userId });
+        state.teacherDashboard = dashboard || {};
+        await loadTeacherStatisticsDetails();
+        renderTeacherStatistics();
+    }
+
+    async function loadTeacherStatisticsDetails() {
+        const courses = state.teacherDashboard?.courses || [];
+        const selections = {};
+        const evaluations = {};
+        await Promise.all(courses.map(async (course) => {
+            const courseId = course.id;
+            const [selectionPage, evaluationPage] = await Promise.all([
+                api.get(`/api/v1/course-selections/course/${encodeURIComponent(courseId)}`, {
+                    pageNum: 1,
+                    pageSize: 1000,
+                    status: 1,
+                    orderByColumn: 'id',
+                    isAsc: true
+                }).catch(() => null),
+                api.get('/api/v1/evaluations/list', {
+                    pageNum: 1,
+                    pageSize: 100,
+                    courseId,
+                    status: 1,
+                    orderByColumn: 'evaluationTime',
+                    isAsc: false
+                }).catch(() => null)
+            ]);
+            selections[courseId] = api.pageItems(selectionPage);
+            evaluations[courseId] = api.pageItems(evaluationPage);
+        }));
+        state.teacherCourseSelections = selections;
+        state.teacherCourseEvaluations = evaluations;
+    }
+
+    function renderTeacherStatistics() {
+        const courseSummaries = teacherCourseSummaries();
+        renderTeacherCourseSelect(courseSummaries);
+        const selectedCourse = value('course-select') || 'all';
+        const visible = selectedCourse === 'all'
+            ? courseSummaries
+            : courseSummaries.filter((item) => String(item.courseId) === String(selectedCourse));
+        renderTeacherStatisticsCards(visible);
+        renderTeacherStatisticsTable(visible);
+        renderTeacherStatisticsCharts(visible);
+    }
+
+    function teacherCourseSummaries() {
+        const courses = state.teacherDashboard?.courses || [];
+        return courses.map((course) => {
+            const selections = state.teacherCourseSelections?.[course.id] || [];
+            const evaluations = state.teacherCourseEvaluations?.[course.id] || [];
+            const scores = selections.map((row) => Number(row.score)).filter((score) => !Number.isNaN(score));
+            const evaluationScores = evaluations.map((row) => Number(row.score)).filter((score) => !Number.isNaN(score));
+            return {
+                courseId: course.id,
+                courseCode: course.courseCode || course.id,
+                courseName: course.courseName || '-',
+                studentCount: selections.length,
+                averageScore: average(scores),
+                excellentRate: percent(scores.filter((score) => score >= 90).length, scores.length),
+                passRate: percent(scores.filter((score) => score >= 60).length, scores.length),
+                attendanceRate: 100,
+                evaluationScore: average(evaluationScores),
+                scores
+            };
+        });
+    }
+
+    function renderTeacherStatisticsCards(rows) {
+        const cards = document.querySelectorAll('.stats-container .stat-info h3');
+        if (!cards.length) return;
+        const scores = rows.flatMap((row) => row.scores);
+        const studentCount = rows.reduce((sum, row) => sum + row.studentCount, 0);
+        const evaluationScores = rows.map((row) => row.evaluationScore).filter((score) => score !== '-');
+        const values = [
+            rows.length,
+            studentCount,
+            scores.length,
+            evaluationScores.length ? average(evaluationScores) : '-'
+        ];
+        cards.forEach((card, index) => {
+            card.textContent = values[index] ?? '-';
+        });
+    }
+
+    function renderTeacherCourseSelect(rows) {
+        const select = document.getElementById('course-select');
+        if (!select || select.dataset.dynamicOptionsLoaded) return;
+        const current = select.value || 'all';
+        select.innerHTML = '<option value="all">All courses</option>' + rows.map((course) => (
+            `<option value="${escape(course.courseId)}">${escape(course.courseName)} (${escape(course.courseCode)})</option>`
+        )).join('');
+        select.value = rows.some((row) => String(row.courseId) === String(current)) ? current : 'all';
+        select.dataset.dynamicOptionsLoaded = 'true';
+    }
+
+    function renderTeacherStatisticsTable(rows) {
+        const tbody = document.querySelector('.data-table tbody');
+        if (!tbody) return;
+        tbody.innerHTML = rows.length ? rows.map((row) => `
+            <tr>
+                <td>${escape(row.courseCode)}</td>
+                <td>${escape(row.courseName)}</td>
+                <td>${escape(row.studentCount)}</td>
+                <td>${escape(row.averageScore)}</td>
+                <td>${escape(row.excellentRate)}%</td>
+                <td>${escape(row.passRate)}%</td>
+                <td>${escape(row.attendanceRate)}%</td>
+                <td>${escape(row.evaluationScore === '-' ? '-' : `${row.evaluationScore}/5.0`)}</td>
+            </tr>
+        `).join('') : rowMessage(8, 'No course statistics.');
+    }
+
+    function bindTeacherStatisticsControls() {
+        const select = document.getElementById('course-select');
+        if (select && !select.dataset.dynamicStatsBound) {
+            select.dataset.dynamicStatsBound = 'true';
+            select.addEventListener('change', (event) => {
+                event.stopImmediatePropagation();
+                renderTeacherStatistics();
+            }, true);
+        }
+        document.querySelectorAll('#semester-select, #start-date, #end-date').forEach((item) => {
+            if (item.dataset.dynamicStatsBound) return;
+            item.dataset.dynamicStatsBound = 'true';
+            item.addEventListener('change', (event) => {
+                event.stopImmediatePropagation();
+                renderTeacherStatistics();
+            }, true);
+        });
+        const exportButton = document.getElementById('btn-export');
+        if (exportButton && !exportButton.dataset.dynamicStatsBound) {
+            exportButton.dataset.dynamicStatsBound = 'true';
+            exportButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                exportTeacherStatistics();
+            }, true);
+        }
+        document.querySelectorAll('.chart-selector .selector-btn').forEach((button) => {
+            if (button.dataset.dynamicStatsBound) return;
+            button.dataset.dynamicStatsBound = 'true';
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                document.querySelectorAll('.chart-selector .selector-btn').forEach((item) => item.classList.remove('active'));
+                button.classList.add('active');
+                state.teacherScoreChartType = button.dataset.chart || 'score-distribution';
+                renderTeacherStatistics();
+            }, true);
+        });
+    }
+
+    function exportTeacherStatistics() {
+        const selectedCourse = value('course-select') || 'all';
+        const rows = teacherCourseSummaries().filter((row) => selectedCourse === 'all' || String(row.courseId) === String(selectedCourse));
+        const csvRows = [
+            ['courseCode', 'courseName', 'studentCount', 'averageScore', 'excellentRate', 'passRate', 'attendanceRate', 'evaluationScore'],
+            ...rows.map((row) => [row.courseCode, row.courseName, row.studentCount, row.averageScore, `${row.excellentRate}%`, `${row.passRate}%`, `${row.attendanceRate}%`, row.evaluationScore])
+        ];
+        downloadCsv('teacher-statistics.csv', csvRows);
+    }
+
+    function renderTeacherStatisticsCharts(rows) {
+        if (!window.Chart) {
+            if (state.teacherChartRetryCount < 10) {
+                state.teacherChartRetryCount += 1;
+                setTimeout(() => renderTeacherStatisticsCharts(rows), 200);
+            }
+            return;
+        }
+        state.teacherChartRetryCount = 0;
+        renderTeacherScoreChart(rows);
+        renderTeacherAttendanceChart(rows);
+        renderTeacherRatingChart(rows);
+        renderTeacherComparisonChart(rows);
+    }
+
+    function renderTeacherScoreChart(rows) {
+        const labels = state.teacherScoreChartType === 'score-range'
+            ? ['90-100', '80-89', '70-79', '60-69', '<60']
+            : ['Excellent', 'Good', 'Average', 'Pass', 'Fail'];
+        const distribution = scoreDistribution(rows.flatMap((row) => row.scores));
+        createOrReplaceChart('scoreDistributionChart', state.teacherScoreChartType === 'score-range' ? 'bar' : 'pie', {
+            labels,
+            datasets: [{
+                data: distribution,
+                backgroundColor: ['#43a047', '#1e88e5', '#fb8c00', '#fdd835', '#e53935']
+            }]
+        }, { responsive: true, plugins: { legend: { position: 'bottom' } } });
+    }
+
+    function renderTeacherAttendanceChart(rows) {
+        createOrReplaceChart('attendanceChart', 'line', {
+            labels: rows.map((row) => row.courseName),
+            datasets: [{
+                label: 'Attendance rate',
+                data: rows.map((row) => row.attendanceRate),
+                borderColor: '#1e88e5',
+                backgroundColor: 'rgba(30, 136, 229, 0.12)',
+                tension: 0.3,
+                fill: true
+            }]
+        }, { responsive: true, scales: { y: { min: 0, max: 100 } } });
+    }
+
+    function renderTeacherRatingChart(rows) {
+        createOrReplaceChart('ratingTrendChart', 'bar', {
+            labels: rows.map((row) => row.courseName),
+            datasets: [{
+                label: 'Evaluation score',
+                data: rows.map((row) => row.evaluationScore === '-' ? 0 : row.evaluationScore),
+                backgroundColor: '#43a047'
+            }]
+        }, { responsive: true, scales: { y: { min: 0, max: 5 } } });
+    }
+
+    function renderTeacherComparisonChart(rows) {
+        createOrReplaceChart('gradeComparisonChart', 'bar', {
+            labels: rows.map((row) => row.courseName),
+            datasets: [{
+                label: 'Average score',
+                data: rows.map((row) => row.averageScore === '-' ? 0 : row.averageScore),
+                backgroundColor: '#fb8c00'
+            }]
+        }, { responsive: true, scales: { y: { min: 0, max: 100 } } });
+    }
+
+    function createOrReplaceChart(canvasId, type, data, options) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas || !window.Chart) return;
+        const existing = typeof window.Chart.getChart === 'function' ? window.Chart.getChart(canvas) : null;
+        if (existing) existing.destroy();
+        new window.Chart(canvas.getContext('2d'), { type, data, options });
+    }
+
+    function scoreDistribution(scores) {
+        return [
+            scores.filter((score) => score >= 90).length,
+            scores.filter((score) => score >= 80 && score < 90).length,
+            scores.filter((score) => score >= 70 && score < 80).length,
+            scores.filter((score) => score >= 60 && score < 70).length,
+            scores.filter((score) => score < 60).length
+        ];
+    }
+
+    function average(values) {
+        const rows = values.map(Number).filter((valueText) => !Number.isNaN(valueText));
+        if (!rows.length) return '-';
+        return Math.round(rows.reduce((sum, valueText) => sum + valueText, 0) / rows.length * 10) / 10;
+    }
+
+    function percent(part, total) {
+        return total ? Math.round(part / total * 1000) / 10 : 0;
     }
 
     async function fillCourseFormOptions() {
