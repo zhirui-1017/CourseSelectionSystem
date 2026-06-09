@@ -22,7 +22,11 @@ This note records the current runnable transition state for the Spring Cloud mig
 - Top-level `PageRequest` and `PageResult` now live in `common-lib` under the shared `org.example.courseselectionsystem.vo` package; service modules reuse the shared pagination VO classes.
 - Role list filtering and permission status updates are concrete in `user-service` and mirrored in the `web-service` compatibility fallback.
 - `student-service` now owns the student REST APIs under `/api/v1/students/**`.
+- `student-service` now owns class management APIs under `/api/v1/classes/**`, backed by the existing `class_info` table.
 - `teacher-service` now owns the teacher REST APIs under `/api/v1/teachers/**`.
+- `course-service` now owns semester and course-announcement APIs under `/api/v1/semesters/**` and `/api/v1/course-announcements/**`.
+- `selection-service` now owns course-evaluation and grade-book APIs under `/api/v1/evaluations/**` and `/api/v1/grades/**`.
+- `user-service` now owns message, operation-log, and system-setting APIs under `/api/v1/messages/**`, `/api/v1/operation-logs/**`, and `/api/v1/system-settings/**`.
 - Student list pagination now normalizes page and sort parameters, supports name/student number/college/department/major/class/status filtering, and is mirrored in the `web-service` compatibility fallback.
 - Teacher list pagination now normalizes page and sort parameters, supports name/teacher number/department/title/gender/status filtering, and is mirrored in the `web-service` compatibility fallback.
 - Student and teacher page paths remain routed to `web-service` for compatibility.

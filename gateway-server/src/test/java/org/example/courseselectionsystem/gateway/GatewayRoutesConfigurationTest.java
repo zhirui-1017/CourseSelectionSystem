@@ -17,12 +17,12 @@ class GatewayRoutesConfigurationTest {
     @Test
     void apiDomainRoutesPointToOwnedServicesBeforeLegacyFallback() {
         assertRoute(0, ServiceNames.COURSE_SERVICE,
-                "/api/v1/courses/**,/api/v1/colleges/**,/api/v1/departments/**,/api/v1/majors/**");
+                "/api/v1/courses/**,/api/v1/colleges/**,/api/v1/departments/**,/api/v1/majors/**,/api/v1/semesters/**,/api/v1/course-announcements/**");
         assertRoute(1, ServiceNames.SELECTION_SERVICE,
-                "/api/v1/selections/**,/api/v1/course-selections/**");
+                "/api/v1/selections/**,/api/v1/course-selections/**,/api/v1/evaluations/**,/api/v1/grades/**");
         assertRoute(2, ServiceNames.USER_SERVICE,
-                "/api/v1/users/**,/api/v1/roles/**,/api/v1/permissions/**");
-        assertRoute(3, ServiceNames.STUDENT_SERVICE, "/api/v1/students/**");
+                "/api/v1/users/**,/api/v1/roles/**,/api/v1/permissions/**,/api/v1/messages/**,/api/v1/operation-logs/**,/api/v1/system-settings/**");
+        assertRoute(3, ServiceNames.STUDENT_SERVICE, "/api/v1/students/**,/api/v1/classes/**");
         assertRoute(4, ServiceNames.TEACHER_SERVICE, "/api/v1/teachers/**");
     }
 
