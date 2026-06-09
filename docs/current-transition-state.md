@@ -18,6 +18,7 @@ This note records the current runnable transition state for the Spring Cloud mig
 - `web-service` no longer keeps duplicate `Result` wrappers; controller and handler responses now resolve to the shared `common-lib` `Result` type.
 - `web-service` keeps `exception.GlobalExceptionHandler` as its single global exception handler so business exception codes, access-denied responses, and not-found responses are handled by one advice.
 - `BusinessException` now lives in `common-lib` under the shared `org.example.courseselectionsystem.exception` package; service modules no longer keep copied exception classes.
+- `Constants` now lives in `common-lib` under the shared `org.example.courseselectionsystem.common` package; user, student, teacher, and web modules no longer keep copied constants.
 - Role list filtering and permission status updates are concrete in `user-service` and mirrored in the `web-service` compatibility fallback.
 - `student-service` now owns the student REST APIs under `/api/v1/students/**`.
 - `teacher-service` now owns the teacher REST APIs under `/api/v1/teachers/**`.
