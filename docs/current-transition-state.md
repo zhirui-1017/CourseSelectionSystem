@@ -3,6 +3,7 @@
 This note records the current runnable transition state for the Spring Cloud migration.
 
 - Page paths, static resources, and Session login remain hosted by `web-service`.
+- The project now tracks UTF-8 editor defaults through `.editorconfig`; service `application.properties` comments are kept as readable UTF-8 text.
 - `course-service` now owns the course, college, department, and major REST APIs.
 - College list pagination now uses repository-backed paging and sort normalization in `course-service`, mirrored in the `web-service` compatibility fallback.
 - Course list pagination now normalizes page and sort parameters, supports course type filtering, and is mirrored in the `web-service` compatibility fallback.
@@ -14,6 +15,7 @@ This note records the current runnable transition state for the Spring Cloud mig
 - `user-service` now owns the user, role, and permission REST APIs.
 - `user-service` user list now aggregates student, teacher, and admin accounts; register, login, password reset, and password change endpoints have concrete student/teacher/admin implementations.
 - User batch deletion now validates the whole request, deduplicates IDs, and deletes student, teacher, and admin accounts by their owning domain in both `user-service` and the `web-service` compatibility fallback.
+- `web-service` no longer keeps duplicate `Result` wrappers; controller and handler responses now resolve to the shared `common-lib` `Result` type.
 - Role list filtering and permission status updates are concrete in `user-service` and mirrored in the `web-service` compatibility fallback.
 - `student-service` now owns the student REST APIs under `/api/v1/students/**`.
 - `teacher-service` now owns the teacher REST APIs under `/api/v1/teachers/**`.
