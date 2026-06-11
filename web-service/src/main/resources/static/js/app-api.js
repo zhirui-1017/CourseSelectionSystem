@@ -105,6 +105,8 @@
         return pageLike.total ?? pageLike.totalElements ?? pageLike.totalCount ?? pageItems(pageLike).length;
     }
 
+    document.documentElement.dataset.appApi = 'ready';
+
     window.AppApi = {
         request,
         get,

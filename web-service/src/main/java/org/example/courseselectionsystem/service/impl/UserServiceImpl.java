@@ -356,9 +356,11 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "新密码不能为空");
         }
 
+        String encodedPassword = passwordEncoder.encode(password);
+
         Student student = studentMapper.selectById(userId);
         if (student != null) {
-            student.setPassword(password);
+            student.setPassword(encodedPassword);
             int result = studentMapper.updateById(student);
             if (result > 0) {
                 return true;
@@ -368,7 +370,7 @@ public class UserServiceImpl implements UserService {
 
         Teacher teacher = teacherMapper.selectById(userId);
         if (teacher != null) {
-            teacher.setPassword(password);
+            teacher.setPassword(encodedPassword);
             int result = teacherMapper.updateById(teacher);
             if (result > 0) {
                 return true;
@@ -378,7 +380,7 @@ public class UserServiceImpl implements UserService {
 
         Admin admin = adminRepository.findById(userId).orElse(null);
         if (admin != null) {
-            admin.setPassword(password);
+            admin.setPassword(encodedPassword);
             adminRepository.save(admin);
             return true;
         }

@@ -1,8 +1,21 @@
 (function () {
     const api = window.AppApi;
     if (!api) {
+        document.documentElement.dataset.legacyDynamicPages = 'waiting-app-api';
+        window.addEventListener('load', () => {
+            if (!window.AppApi || window.__legacyDynamicPagesRetrying) return;
+            window.__legacyDynamicPagesRetrying = true;
+            const script = document.createElement('script');
+            script.src = `/js/legacy-dynamic-pages.js?retry=${Date.now()}`;
+            document.head.appendChild(script);
+        }, { once: true });
         return;
     }
+    if (window.__legacyDynamicPagesBooted) {
+        return;
+    }
+    window.__legacyDynamicPagesBooted = true;
+    document.documentElement.dataset.legacyDynamicPages = 'booted';
 
     const state = {
         current: null,
@@ -34,6 +47,7 @@
 
     async function init() {
         const path = window.location.pathname;
+        document.documentElement.dataset.legacyDynamicPage = path;
         if (path.endsWith('/admin/student-management.html')) return renderAdminPeople('student');
         if (path.endsWith('/admin/teacher-management.html')) return renderAdminPeople('teacher');
         if (path.endsWith('/admin/class-management.html')) return initAdminClasses();
@@ -1573,9 +1587,129 @@
             isAsc: false
         });
         state.studentGrades = api.pageItems(data);
+        ensureStudentGradesLayout();
         bindStudentGradeControls();
         renderStudentGradeStats();
         renderStudentGradeRows();
+    }
+
+    function ensureStudentGradesLayout() {
+        if (document.querySelector('.grades-table tbody') && document.getElementById('course-name-filter')) {
+            return;
+        }
+        const wrapper = document.querySelector('.content-wrapper') || document.querySelector('.main-content') || document.body;
+        wrapper.innerHTML = `
+            <div class="stats-cards dynamic-student-grades">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-chart-pie"></i></div>
+                    <div class="stat-info">
+                        <div class="stat-value">-</div>
+                        <div class="stat-label">\u5f53\u524d\u5e73\u5747\u7ee9\u70b9</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <div class="stat-info">
+                        <div class="stat-value">-</div>
+                        <div class="stat-label">\u5e73\u5747\u5206</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-book"></i></div>
+                    <div class="stat-info">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">\u5df2\u6709\u6210\u7ee9\u8bfe\u7a0b</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-award"></i></div>
+                    <div class="stat-info">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">A\u7b49\u7ea7\u8bfe\u7a0b</div>
+                    </div>
+                </div>
+            </div>
+            <div class="filter-bar">
+                <div class="filter-item">
+                    <div class="filter-label">\u5b66\u671f\u9009\u62e9</div>
+                    <select class="filter-select" id="semester-filter">
+                        <option value="all">\u5168\u90e8\u5b66\u671f</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <div class="filter-label">\u8bfe\u7a0b\u7c7b\u578b</div>
+                    <select class="filter-select" id="course-type-filter">
+                        <option value="all">\u5168\u90e8\u7c7b\u578b</option>
+                        <option value="required">\u5fc5\u4fee\u8bfe</option>
+                        <option value="elective">\u9009\u4fee\u8bfe</option>
+                        <option value="general">\u901a\u8bc6\u8bfe</option>
+                        <option value="professional">\u4e13\u4e1a\u8bfe</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <div class="filter-label">\u6210\u7ee9\u8303\u56f4</div>
+                    <select class="filter-select" id="grade-range-filter">
+                        <option value="all">\u5168\u90e8\u6210\u7ee9</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="F">F</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <div class="filter-label">\u8bfe\u7a0b\u540d\u79f0</div>
+                    <input type="text" class="filter-input" id="course-name-filter" placeholder="\u641c\u7d22\u8bfe\u7a0b\u540d\u79f0">
+                </div>
+                <div class="filter-actions">
+                    <button class="btn btn-primary" type="button">\u67e5\u8be2</button>
+                    <button class="btn btn-outline-secondary" type="button">\u91cd\u7f6e</button>
+                </div>
+            </div>
+            <div class="grades-container">
+                <div class="grades-header">
+                    <h3 class="grades-title">\u6210\u7ee9\u660e\u7ec6</h3>
+                    <div class="grades-actions">
+                        <button class="btn btn-outline-secondary" type="button"><i class="fas fa-download"></i> \u5bfc\u51fa\u6210\u7ee9</button>
+                        <button class="btn btn-outline-secondary" type="button"><i class="fas fa-print"></i> \u6253\u5370\u6210\u7ee9</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="grades-table">
+                        <thead>
+                            <tr>
+                                <th>\u8bfe\u7a0b\u4ee3\u7801</th>
+                                <th>\u8bfe\u7a0b\u540d\u79f0</th>
+                                <th>\u8bfe\u7a0b\u7c7b\u578b</th>
+                                <th>\u5b66\u5206</th>
+                                <th>\u6210\u7ee9\u7b49\u7ea7</th>
+                                <th>\u5206\u6570\u6210\u7ee9</th>
+                                <th>\u5b66\u5206\u7ee9\u70b9</th>
+                                <th>\u5b66\u671f</th>
+                                <th>\u64cd\u4f5c</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="grade-details">
+                <div class="grade-details-content">
+                    <div class="grade-details-header">
+                        <h2 class="grade-details-title">\u6210\u7ee9\u8be6\u60c5</h2>
+                        <button class="grade-details-close" type="button"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="grade-details-grid">
+                        ${['\u8bfe\u7a0b\u4ee3\u7801', '\u8bfe\u7a0b\u540d\u79f0', '\u8bfe\u7a0b\u7c7b\u578b', '\u5b66\u5206', '\u6700\u7ec8\u6210\u7ee9', '\u5b66\u5206\u7ee9\u70b9', '\u6388\u8bfe\u6559\u5e08', '\u5b66\u671f', '\u5e73\u65f6\u6210\u7ee9', '\u5b9e\u9a8c\u6210\u7ee9', '\u8003\u8bd5\u6210\u7ee9', '\u66f4\u65b0\u65f6\u95f4', '\u5907\u6ce8'].map((label) => `
+                            <div class="grade-detail-item">
+                                <div class="grade-detail-label">${label}</div>
+                                <div class="grade-detail-value">-</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     function renderStudentGradeRows() {
