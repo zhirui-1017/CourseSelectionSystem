@@ -405,4 +405,9 @@ public class StudentServiceImpl implements StudentService {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "学号已存在");
         }
     }
+
+    @Override
+    public long count() {
+        return studentMapper.selectCount(null);
+    }
 }

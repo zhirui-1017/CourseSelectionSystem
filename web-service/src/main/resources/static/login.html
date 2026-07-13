@@ -610,14 +610,18 @@
                     formData.append('password', passwordInput.value);
                     formData.append('role', selectedRole);
                     
-                    // 发送AJAX请求到后端登录接口
-                    fetch('/login/auth', {
+                    // 发送 AJAX 请求到 JWT 登录接口（走 Gateway → user-service）
+                    fetch('/api/v1/auth/login', {
                         method: 'POST',
-                        body: formData
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: usernameInput.value,
+                            password: passwordInput.value
+                        })
                     })
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error('网络请求失败');
+                            throw new Error('HTTP ' + response.status);
                         }
                         return response.json();
                     })
@@ -627,26 +631,37 @@
                         buttonText.textContent = '登录';
                         buttonLoader.style.display = 'none';
                         
-                        if (data.code === 200) {
-                            // 登录成功，保存角色信息到localStorage
+                        if (data.code === 200 && data.data && data.data.token) {
+                            // === JWT 登录成功 ===
+                            // 1. 存储 Token
+                            localStorage.setItem('token', data.data.token);
+                            // 2. 存储用户信息
+                            const user = data.data.user;
+                            localStorage.setItem('userInfo', JSON.stringify(user));
+                            localStorage.setItem('username', user.username || user.userCode || usernameInput.value);
                             localStorage.setItem('selectedRole', selectedRole);
-                            localStorage.setItem('username', usernameInput.value);
-                            const redirectPath = data.data || '/login';
                             
-                            // 延迟跳转，提供加载体验
+                            // 3. 根据用户类型跳转
+                            let redirectPath = '/login';
+                            const userType = user.userType;
+                            if (userType === 3 || selectedRole === 'admin') {
+                                redirectPath = '/admin/index.html';
+                            } else if (userType === 2 || selectedRole === 'teacher') {
+                                redirectPath = '/teacher/index.html';
+                            } else {
+                                redirectPath = '/student/index.html';
+                            }
+                            
                             setTimeout(function() {
                                 window.location.href = redirectPath;
                             }, 800);
                         } else {
-                            // 登录失败，显示错误信息
                             showGlobalError(data.message || '用户名或密码错误');
-                            // 刷新验证码
                             generateCaptcha();
                         }
                     })
                     .catch(error => {
                         console.error('登录请求错误:', error);
-                        // 恢复按钮状态
                         loginButton.disabled = false;
                         buttonText.textContent = '登录';
                         buttonLoader.style.display = 'none';

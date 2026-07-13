@@ -166,4 +166,9 @@ public class UserController {
     public Result getUsersByUserType(@PathVariable Integer userType) {
         return Result.success(userService.getUsersByUserType(userType));
     }
+
+    @GetMapping("/count")
+    public Result<Long> count() {
+        return Result.success(userService.count());
+    }
 }

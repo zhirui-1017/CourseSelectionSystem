@@ -54,7 +54,7 @@ class UserServiceImplTest {
 
         Map<String, Object> result = service.login(loginRequest("S1001", "abc123"));
 
-        assertThat(result.get("token")).asString().startsWith("session-");
+        assertThat(result.get("token")).asString().startsWith("eyJ");
         User user = (User) result.get("user");
         assertThat(user.getUsername()).isEqualTo("S1001");
         assertThat(user.getUserType()).isEqualTo(1);

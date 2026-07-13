@@ -26,51 +26,99 @@
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-item">
-                    <a href="#dashboard" class="nav-link active">
+                    <a href="/admin" class="nav-link active">
                         <i class="nav-icon fas fa-tachometer-alt"></i>
-                        <span class="nav-text">仪表盘</span>
+                        <span class="nav-text">控制台首页</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="#user-management" class="nav-link">
-                        <i class="nav-icon fas fa-users-cog"></i>
-                        <span class="nav-text">用户管理</span>
+                    <a href="/admin/student-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-user-graduate"></i>
+                        <span class="nav-text">学生管理</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="#course-management" class="nav-link">
+                    <a href="/admin/teacher-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-chalkboard-teacher"></i>
+                        <span class="nav-text">教师管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/course-management.html" class="nav-link">
                         <i class="nav-icon fas fa-book"></i>
                         <span class="nav-text">课程管理</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="#role-management" class="nav-link">
-                        <i class="nav-icon fas fa-user-shield"></i>
-                        <span class="nav-text">角色权限</span>
+                    <a href="/admin/class-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-users"></i>
+                        <span class="nav-text">班级管理</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="#selection-records" class="nav-link">
-                        <i class="nav-icon fas fa-list-alt"></i>
-                        <span class="nav-text">选课记录</span>
+                    <a href="/admin/grade-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-chart-line"></i>
+                        <span class="nav-text">成绩管理</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="#school-management" class="nav-link">
+                    <a href="/admin/college-management.html" class="nav-link">
                         <i class="nav-icon fas fa-university"></i>
-                        <span class="nav-text">学院专业</span>
+                        <span class="nav-text">学院管理</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="#system-settings" class="nav-link">
-                        <i class="nav-icon fas fa-sliders-h"></i>
+                    <a href="/admin/department-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-sitemap"></i>
+                        <span class="nav-text">系部管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/major-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-graduation-cap"></i>
+                        <span class="nav-text">专业管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/role-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-user-shield"></i>
+                        <span class="nav-text">角色管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/permission-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-key"></i>
+                        <span class="nav-text">权限管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/admin-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-user-cog"></i>
+                        <span class="nav-text">管理员管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/semester-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-calendar-alt"></i>
+                        <span class="nav-text">学期管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/announcement-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-bullhorn"></i>
+                        <span class="nav-text">公告管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/system-settings.html" class="nav-link">
+                        <i class="nav-icon fas fa-cog"></i>
                         <span class="nav-text">系统设置</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="#system-logs" class="nav-link">
+                    <a href="/admin/system-logs.html" class="nav-link">
                         <i class="nav-icon fas fa-history"></i>
-                        <span class="nav-text">操作日志</span>
+                        <span class="nav-text">系统日志</span>
                     </a>
                 </div>
             </nav>
@@ -163,16 +211,16 @@
                             <div class="card-header">
                                 <h3 class="card-title">学生选课情况趋势</h3>
                             </div>
-                            <div class="card-body">
-                                <canvas id="selectionTrendChart" height="250"></canvas>
+                            <div class="card-body" style="max-height:260px;">
+                                <canvas id="selectionTrendChart" height="220" style="max-height:220px;width:100%;"></canvas>
                             </div>
                         </div>
                         <div class="card">
                             <div class="card-header">
                                 <h3 class="card-title">用户角色分布</h3>
                             </div>
-                            <div class="card-body">
-                                <canvas id="roleDistributionChart" height="250"></canvas>
+                            <div class="card-body" style="max-height:260px;">
+                                <canvas id="roleDistributionChart" height="220" style="max-height:220px;width:100%;"></canvas>
                             </div>
                         </div>
                     </div>
@@ -825,25 +873,23 @@
     </div>
 
     <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
     <script src="/js/common.js"></script>
     <script src="/js/app-api.js"></script>
     <script src="/js/admin-dashboard.js"></script>
     <script>
         // 管理员页面特定脚本
         document.addEventListener('DOMContentLoaded', function() {
-            // 初始化图表
-            initCharts();
-            
             // 初始化功能按钮
             initFunctionButtons();
         });
 
-        // 初始化图表
-        function initCharts() {
+        // 供 admin-dashboard.js 调用的图表初始化函数
+        window.initDashboardCharts = function(statsData) {
             if (typeof Chart === 'undefined') {
                 return;
             }
-            // 选课趋势图表
+            // 选课趋势图表（使用硬编码示范数据，可后续对接真实API）
             const trendCtx = document.getElementById('selectionTrendChart');
             if (trendCtx) {
                 new Chart(trendCtx, {
@@ -860,6 +906,7 @@
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
                         plugins: {
                             legend: {
                                 display: false
@@ -872,34 +919,44 @@
             // 角色分布图表
             const roleCtx = document.getElementById('roleDistributionChart');
             if (roleCtx) {
+                var roleData = [1256, 86, 3];
+                var roleLabels = ['学生', '教师', '管理员'];
+                if (statsData) {
+                    roleData = [
+                        statsData.studentCount || 1256,
+                        statsData.teacherCount || 86,
+                        statsData.adminCount || 3
+                    ];
+                }
                 new Chart(roleCtx, {
                     type: 'doughnut',
                     data: {
-                        labels: ['学生', '教师', '管理员'],
+                        labels: roleLabels,
                         datasets: [{
-                            data: [1256, 86, 3],
+                            data: roleData,
                             backgroundColor: ['#3498db', '#2ecc71', '#e74c3c']
                         }]
                     },
                     options: {
-                        responsive: true
+                        responsive: true,
+                        maintainAspectRatio: false
                     }
                 });
             }
-        }
+        };
 
         // 初始化功能按钮
         function initFunctionButtons() {
             // 导出用户按钮
             document.getElementById('exportUsersBtn')?.addEventListener('click', function() {
                 // 导出用户逻辑
-                notifications.success('导出成功', '用户数据已导出为CSV文件');
+                window.notifications?.success('导出成功', '用户数据已导出为CSV文件');
             });
 
             // 导出课程按钮
             document.getElementById('exportCoursesBtn')?.addEventListener('click', function() {
                 // 导出课程逻辑
-                notifications.success('导出成功', '课程数据已导出为CSV文件');
+                window.notifications?.success('导出成功', '课程数据已导出为CSV文件');
             });
 
             // 保存添加用户

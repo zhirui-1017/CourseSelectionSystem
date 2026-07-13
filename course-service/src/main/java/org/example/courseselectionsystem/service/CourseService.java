@@ -227,4 +227,10 @@ public interface CourseService {
      * @return 课程列表
      */
     List<Course> searchCourses(String keyword, Long departmentId, Integer courseType, Integer credit);
+
+    /**
+     * 获取课程总数
+     * @return 课程总数
+     */
+    long count();
 }

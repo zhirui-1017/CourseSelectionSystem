@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6周实习冲刺计划 - 廖志锐</title>
+<style>
+:root {
+  --primary: #2563eb;
+  --primary-light: #dbeafe;
+  --success: #16a34a;
+  --success-light: #dcfce7;
+  --warning: #ea580c;
+  --warning-light: #fed7aa;
+  --danger: #dc2626;
+  --danger-light: #fee2e2;
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* ===== Layout ===== */
+.sidebar {
+  position: fixed;
+  left: 0; top: 0;
+  width: 240px; height: 100vh;
+  background: var(--card-bg);
+  border-right: 1px solid var(--border);
+  padding: 20px 0;
+  overflow-y: auto;
+  z-index: 100;
+}
+.sidebar-header {
+  padding: 0 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-header h2 { font-size: 1.1rem; margin-bottom: 4px; }
+.sidebar-header p { font-size: 0.8rem; color: var(--text-muted); }
+.nav-item {
+  display: block;
+  padding: 12px 20px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.9rem;
+  border-left: 3px solid transparent;
+  transition: all 0.15s;
+}
+.nav-item:hover { background: var(--primary-light); }
+.nav-item.active {
+  border-left-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 600;
+}
+.main {
+  margin-left: 240px;
+  padding: 40px;
+  max-width: 1000px;
+}
+
+/* ===== Section ===== */
+.section {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+.section.active { display: block; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Hero ===== */
+.hero {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: white;
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 32px;
+}
+.hero h1 { font-size: 1.6rem; margin-bottom: 8px; }
+.hero .deadline {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+.hero .stat-row {
+  display: flex;
+  gap: 24px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+.hero .stat {
+  text-align: center;
+}
+.hero .stat .num { font-size: 1.8rem; font-weight: 800; }
+.hero .stat .label { font-size: 0.75rem; opacity: 0.8; }
+
+/* ===== Card ===== */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+}
+.card h2 {
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border);
+}
+.card h3 {
+  font-size: 1rem;
+  margin: 16px 0 8px;
+  color: var(--primary);
+}
+
+/* ===== Timeline ===== */
+.timeline {
+  position: relative;
+  padding-left: 28px;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 4px; bottom: 4px;
+  width: 2px;
+  background: var(--border);
+}
+.tl-item {
+  position: relative;
+  margin-bottom: 24px;
+}
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -24px; top: 4px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  border: 3px solid var(--primary);
+}
+.tl-item.done::before { background: var(--success); border-color: var(--success); }
+.tl-item .tl-date {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.tl-item .tl-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.tl-item .tl-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ===== Table ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 0.85rem;
+}
+th, td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+th { background: var(--bg); font-weight: 600; }
+
+/* ===== Badge ===== */
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin: 2px;
+}
+.badge-blue { background: var(--primary-light); color: var(--primary); }
+.badge-green { background: var(--success-light); color: var(--success); }
+.badge-orange { background: var(--warning-light); color: var(--warning); }
+.badge-red { background: var(--danger-light); color: var(--danger); }
+.badge-gray { background: #f1f5f9; color: var(--text-muted); }
+
+/* ===== Checklist ===== */
+.checklist { list-style: none; }
+.checklist li {
+  padding: 8px 0;
+  padding-left: 28px;
+  position: relative;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+.checklist li::before {
+  content: '☐';
+  position: absolute;
+  left: 0; top: 8px;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+}
+
+/* ===== Progress Bar ===== */
+.progress-bar {
+  background: var(--border);
+  border-radius: 20px;
+  height: 24px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+}
+
+/* ===== Role Card ===== */
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+.role-card {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s;
+}
+.role-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+.role-card.primary { border-color: var(--success); }
+.role-card h4 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+.role-card .match {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 8px 0;
+}
+
+/* ===== Alert ===== */
+.alert {
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-size: 0.85rem;
+}
+.alert-warning { background: var(--warning-light); border-left: 4px solid var(--warning); }
+.alert-danger { background: var(--danger-light); border-left: 4px solid var(--danger); }
+.alert-info { background: var(--primary-light); border-left: 4px solid var(--primary); }
+.alert-success { background: var(--success-light); border-left: 4px solid var(--success); }
+
+/* ===== Week Plan ===== */
+.week-block {
+  border-left: 4px solid var(--primary);
+  padding: 12px 20px;
+  margin-bottom: 16px;
+  background: var(--bg);
+  border-radius: 0 8px 8px 0;
+}
+.week-block.urgent { border-color: var(--danger); }
+.week-block.action { border-color: var(--warning); }
+.week-block.final { border-color: var(--success); }
+.week-block h3 { margin-top: 0; }
+
+/* ===== Phone script ===== */
+.script-box {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.82rem;
+  line-height: 1.8;
+}
+.script-box .label {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  margin-bottom: 8px;
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <h2>实习冲刺计划</h2>
+    <p>7.14 → 8.31 | 6 周</p>
+  </div>
+  <a href="#overview" class="nav-item active" onclick="showSection('overview', this)">总览</a>
+  <a href="#week1" class="nav-item" onclick="showSection('week1', this)">第1周：简历+开投</a>
+  <a href="#week2-3" class="nav-item" onclick="showSection('week2-3', this)">第2-3周：面试期</a>
+  <a href="#week4-5" class="nav-item" onclick="showSection('week4-5', this)">第4-5周：收Offer</a>
+  <a href="#roles" class="nav-item" onclick="showSection('roles', this)">5大岗位策略</a>
+  <a href="#resume" class="nav-item" onclick="showSection('resume', this)">简历修改要点</a>
+  <a href="#scripts" class="nav-item" onclick="showSection('scripts', this)">投递话术模板</a>
+  <a href="#checklist" class="nav-item" onclick="showSection('checklist', this)">每周检查清单</a>
+  <a href="#emergency" class="nav-item" onclick="showSection('emergency', this)">紧急预案</a>
+</nav>
+
+<!-- Main -->
+<main class="main">
+
+<!-- ===== Overview ===== -->
+<section id="overview" class="section active">
+  <div class="hero">
+    <h1>6 周实习冲刺计划</h1>
+    <p>目标：9 月前拿到实习 offer | 策略：广撒网 + 多岗位 + 快准备</p>
+    <span class="deadline">⏰ 截止日期：2026.08.31</span>
+    <div class="stat-row">
+      <div class="stat"><div class="num">220+</div><div class="label">投递目标</div></div>
+      <div class="stat"><div class="num">20+</div><div class="label">预期面试</div></div>
+      <div class="stat"><div class="num">2-3</div><div class="label">预期Offer</div></div>
+      <div class="stat"><div class="num">5</div><div class="label">目标岗位</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>核心策略：先上车再换座</h2>
+    <div class="alert alert-danger">
+      <strong>关键认知</strong>：你的项目经验（9 模块 Spring Cloud 微服务 / 140+ Java 文件 / 16 个 API）已经远超同龄人水平。
+      <strong>但简历只写了"Spring Boot + MySQL"</strong>，严重低估了自己。改好简历 + 立即投递 = 最快出 offer。
+    </div>
+    <table>
+      <thead>
+        <tr><th>阶段</th><th>时间</th><th>核心任务</th><th>投递量</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="badge badge-red">第1周</span></td><td>7.14-7.20</td><td>简历定稿 + 立即开投</td><td>80-100 家</td></tr>
+        <tr><td><span class="badge badge-orange">第2-3周</span></td><td>7.21-8.3</td><td>持续投递 + 第一批面试</td><td>+100 家</td></tr>
+        <tr><td><span class="badge badge-orange">第4-5周</span></td><td>8.4-8.17</td><td>面试高峰 + 收 offer</td><td>+40 家</td></tr>
+        <tr><td><span class="badge badge-green">第6周</span></td><td>8.18-8.31</td><td>确定 offer + 入职准备</td><td>-</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>5 大目标岗位一览</h2>
+    <div class="role-grid">
+      <div class="role-card primary">
+        <h4>Java 后端实习 <span class="badge badge-green">主投</span></h4>
+        <div class="match" style="color:var(--success)">⭐⭐⭐⭐⭐</div>
+        <p style="font-size:0.8rem;color:var(--text-muted)">投 100 家 | 你的项目直接匹配</p>
+      </div>
+      <div class="role-card">
+        <h4>测试开发实习 <span class="badge badge-blue">副投</span></h4>
+        <div class="match" style="color:var(--primary)">⭐⭐⭐⭐</div>
+        <p style="font-size:0.8rem;color:var(--text-muted)">投 50 家 | 门槛低，容易进</p>
+      </div>
+      <div class="role-card">
+        <h4>Python/AI 应用 <span class="badge badge-blue">副投</span></h4>
+        <div class="match" style="color:var(--primary)">⭐⭐⭐</div>
+        <p style="font-size:0.8rem;color:var(--text-muted)">投 30 家 | 突出 AI Agent 项目</p>
+      </div>
+      <div class="role-card">
+        <h4>前端开发实习 <span class="badge badge-gray">备选</span></h4>
+        <div class="match" style="color:var(--text-muted)">⭐⭐⭐</div>
+        <p style="font-size:0.8rem;color:var(--text-muted)">投 20 家 | 33 个前端页面</p>
+      </div>
+      <div class="role-card">
+        <h4>运维/技术支持 <span class="badge badge-gray">保底</span></h4>
+        <div class="match" style="color:var(--text-muted)">⭐⭐</div>
+        <p style="font-size:0.8rem;color:var(--text-muted)">投 20 家 | 门槛最低</p>
+      </div>
+    </div>
+    <div class="alert alert-info">
+      <strong>策略</strong>：5 个岗位并行投递，不把鸡蛋放一个篮子里。Java 后端回复率通常最高，但测试/运维最容易快速拿 offer。
+    </div>
+  </div>
+</section>
+
+<!-- ===== Week 1 ===== -->
+<section id="week1" class="section">
+  <div class="card">
+    <h2>第 1 周：简历 + 立即开投（7.14 - 7.20）</h2>
+
+    <div class="week-block urgent">
+      <h3>Day 1-2（7.14-7.15）：简历定稿</h3>
+      <p>准备 <strong>3 版简历</strong>，同一基础，微调求职意向和技能重点：</p>
+      <table>
+        <thead><tr><th>版本</th><th>求职意向</th><th>投递岗位</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-green">A 版</span></td><td>Java 后端开发实习生</td><td>Java 后端（主投）</td></tr>
+          <tr><td><span class="badge badge-blue">B 版</span></td><td>测试开发实习生</td><td>测试开发 / QA</td></tr>
+          <tr><td><span class="badge badge-blue">C 版</span></td><td>后端开发实习生</td><td>Python 后端 / AI 应用</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="week-block action">
+      <h3>Day 3（7.16）：注册所有平台 + 首批投递</h3>
+      <p><strong>必须注册的平台</strong>（按优先级）：</p>
+      <table>
+        <thead><tr><th>平台</th><th>重要性</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>BOSS直聘</td><td>⭐⭐⭐⭐⭐</td><td>实习生回复率最高，直接和 HR 聊</td></tr>
+          <tr><td>实习僧</td><td>⭐⭐⭐⭐⭐</td><td>专门做实习，大量中小公司</td></tr>
+          <tr><td>牛客网</td><td>⭐⭐⭐⭐</td><td>技术社区 + 实习广场 + 面经</td></tr>
+          <tr><td>拉勾网</td><td>⭐⭐⭐⭐</td><td>互联网公司多</td></tr>
+          <tr><td>智联/前程无忧</td><td>⭐⭐⭐</td><td>传统企业和国企多</td></tr>
+          <tr><td>学校就业网</td><td>⭐⭐⭐</td><td>别忽略，门槛最低</td></tr>
+        </tbody>
+      </table>
+      <div class="alert alert-warning">
+        <strong>Day 3 目标</strong>：各平台共投 30 家，不要犹豫，80 分就投！
+      </div>
+    </div>
+
+    <div class="week-block">
+      <h3>Day 4-7（7.17-7.20）：持续投递 + 八股速背</h3>
+      <p><strong>每天 3-4 小时分配</strong>：</p>
+      <table>
+        <thead><tr><th>时间</th><th>任务</th></tr></thead>
+        <tbody>
+          <tr><td>1 小时</td><td>投简历（BOSS 直聘主动打招呼 20 个 HR）</td></tr>
+          <tr><td>1.5 小时</td><td>背八股文（用 50 题文档，每天背 5-8 道）</td></tr>
+          <tr><td>0.5 小时</td><td>复盘投递情况，记录哪些公司回复了</td></tr>
+          <tr><td>1 小时</td><td>准备项目话术（把选课系统讲清楚）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert-success">
+      <strong>第 1 周末必须完成</strong>：
+      <ul style="margin-top:8px;padding-left:20px;">
+        <li>3 版简历定稿</li>
+        <li>7 个平台注册完成</li>
+        <li>累计投递 80+ 家</li>
+        <li>背完 20 道八股文</li>
+        <li>能流畅讲出选课系统的架构和亮点（3 分钟版本）</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Week 2-3 ===== -->
+<section id="week2-3" class="section">
+  <div class="card">
+    <h2>第 2-3 周：面试期 + 查漏补缺（7.21 - 8.3）</h2>
+
+    <div class="week-block action">
+      <h3>投递策略调整</h3>
+      <p>到第 2 周，你会知道哪些岗位回复率高。根据回复情况调整：</p>
+      <table>
+        <thead><tr><th>情况</th><th>对策</th></tr></thead>
+        <tbody>
+          <tr><td>Java 后端回复多</td><td>重点面 Java，补 Spring 源码 + MySQL 索引</td></tr>
+          <tr><td>测试/Python 回复多</td><td>转向测试/Python，补 pytest/Selenium</td></tr>
+          <tr><td>都没回复</td><td>简历有问题，立刻改！降低期望薪资 500-1000</td></tr>
+        </tbody>
+      </table>
+      <p><strong>累计投递目标</strong>：第 3 周末累计 200+ 家</p>
+    </div>
+
+    <div class="week-block">
+      <h3>面试前准备清单</h3>
+      <p><strong>通用准备（所有岗位都要）</strong>：</p>
+      <ul class="checklist">
+        <li>自我介绍（1 分钟版 + 3 分钟版，背熟）</li>
+        <li>项目讲解（选课系统：架构 → 技术选型 → 难点 → 解决方案 → 量化结果）</li>
+        <li>期望薪资：实习生 100-250/天，别太高也别太低</li>
+        <li>到岗时间：说「一周内」或「随时」，别拖</li>
+        <li>能实习多久：「至少 3 个月，可以更长」</li>
+        <li>一周能来几天：「5 天」（别一开始就说 3 天）</li>
+      </ul>
+    </div>
+
+    <div class="week-block">
+      <h3>Java 后端 8 道必考题</h3>
+      <table>
+        <thead><tr><th>#</th><th>题目</th><th>关键要点</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>HashMap 底层</td><td>数组+链表+红黑树，负载因子 0.75</td></tr>
+          <tr><td>2</td><td>线程池参数</td><td>7 大参数 + 4 种拒绝策略</td></tr>
+          <tr><td>3</td><td>Spring IoC/AOP</td><td>工厂+反射 / 动态代理</td></tr>
+          <tr><td>4</td><td>@Transactional 失效</td><td>非 public / 自调用 / 异常被吞</td></tr>
+          <tr><td>5</td><td>MySQL 索引失效</td><td>函数/类型转换/LIKE前导模糊</td></tr>
+          <tr><td>6</td><td>Redis 缓存三大问题</td><td>穿透/雪崩/击穿</td></tr>
+          <tr><td>7</td><td>选课怎么防超卖</td><td>行锁 + 容量校验 + 候补队列</td></tr>
+          <tr><td>8</td><td>微服务组件</td><td>Eureka/Gateway/Feign/Resilience4j</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="week-block">
+      <h3>测试开发 6 道必考题</h3>
+      <table>
+        <thead><tr><th>#</th><th>题目</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>接口测试流程（Postman / curl）</td></tr>
+          <tr><td>2</td><td>你项目中接口怎么测的</td></tr>
+          <tr><td>3</td><td>常见 HTTP 状态码</td></tr>
+          <tr><td>4</td><td>GET vs POST 区别</td></tr>
+          <tr><td>5</td><td>怎么设计测试用例</td></tr>
+          <tr><td>6</td><td>Python 基础（列表/字典/文件操作）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert-info">
+      <strong>面试技巧</strong>：先投不想去的公司练手，再投想去的。每次面试完立刻记录问题和答案，下一场就不会再栽同一个坑。
+    </div>
+  </div>
+</section>
+
+<!-- ===== Week 4-5 ===== -->
+<section id="week4-5" class="section">
+  <div class="card">
+    <h2>第 4-5 周：面试高峰 + 收 Offer（8.4 - 8.17）</h2>
+
+    <div class="week-block action">
+      <h3>面试节奏安排</h3>
+      <p>到第 4 周，你应该有 5-15 个面试邀约。安排策略：</p>
+      <table>
+        <thead><tr><th>面试类型</th><th>策略</th></tr></thead>
+        <tbody>
+          <tr><td>最不想去的公司</td><td><strong>先面</strong>，当练手，积累经验</td></tr>
+          <tr><td>中等意向的公司</td><td>第 2 周面，已经有一定经验</td></tr>
+          <tr><td>最想去的公司</td><td><strong>最后面</strong>，这时候你最熟练</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="week-block">
+      <h3>2026 实习生日薪参考</h3>
+      <table>
+        <thead><tr><th>城市/公司类型</th><th>日薪范围</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>一线大厂（深圳/广州）</td><td><span class="badge badge-green">200-400/天</span></td><td>腾讯/字节等</td></tr>
+          <tr><td>一线中厂</td><td><span class="badge badge-blue">150-250/天</span></td><td>携程/贝壳等</td></tr>
+          <tr><td>广州本地中小公司</td><td><span class="badge badge-blue">100-200/天</span></td><td>多数在此区间</td></tr>
+          <tr><td>远程实习</td><td><span class="badge badge-gray">100-200/天</span></td><td>不限城市</td></tr>
+          <tr><td>外包/传统企业</td><td><span class="badge badge-gray">80-150/天</span></td><td>技术成长有限</td></tr>
+        </tbody>
+      </table>
+      <div class="alert alert-warning">
+        <strong>建议</strong>：第一份实习不要太看重薪资，100-150/天能学到技术就行，重点是简历上有企业经历。
+      </div>
+    </div>
+
+    <div class="week-block">
+      <h3>面试后复盘模板（每次必做！）</h3>
+      <div class="script-box">
+        <div class="label">手机备忘录记录格式：</div>
+        公司：xxx<br>
+        岗位：xxx<br>
+        日期：xxx<br>
+        面试轮次：一面/二面/HR面<br><br>
+        问的问题：<br>
+        1. xxx → 我答的 xxx → 正确答案 xxx<br>
+        2. ...<br>
+        3. ...<br><br>
+        感觉：良好/一般/差<br>
+        是否通过：待定/通过/挂<br><br>
+        需要补的知识点：xxx
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Roles ===== -->
+<section id="roles" class="section">
+  <div class="card">
+    <h2>5 大目标岗位详细对比</h2>
+    <table>
+      <thead>
+        <tr><th>维度</th><th>Java 后端</th><th>测试开发</th><th>Python/数据</th><th>前端</th><th>运维/支持</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>你的匹配度</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐⭐</td><td>⭐⭐⭐</td><td>⭐⭐⭐</td><td>⭐⭐</td></tr>
+        <tr><td>招聘量</td><td>大</td><td>大</td><td>中</td><td>大</td><td>中</td></tr>
+        <tr><td>简历门槛</td><td>中</td><td><strong>低</strong></td><td>中低</td><td>中</td><td><strong>低</strong></td></tr>
+        <tr><td>面试难度</td><td>中高</td><td><strong>低</strong></td><td>中</td><td>中</td><td><strong>低</strong></td></tr>
+        <tr><td>日薪参考</td><td>120-250</td><td>100-200</td><td>120-200</td><td>120-200</td><td>80-150</td></tr>
+        <tr><td>技术成长</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐</td><td>⭐⭐⭐⭐</td><td>⭐⭐⭐⭐</td><td>⭐⭐</td></tr>
+        <tr><td>转正前景</td><td>好</td><td>中</td><td>好</td><td>好</td><td>差</td></tr>
+        <tr><td>建议投递比</td><td>45%</td><td>23%</td><td>14%</td><td>9%</td><td>9%</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>各岗位简历怎么改</h2>
+
+    <h3>Java 后端版（主投，投 100 家）</h3>
+    <p><strong>技能重点</strong>：Spring Cloud、MyBatis-Plus、MySQL、Redis</p>
+    <p><strong>项目重点</strong>：微服务架构、选课并发控制、统一异常处理</p>
+    <div class="alert alert-info">
+      项目标题改为：<strong>「基于 Spring Cloud 微服务架构的在线选课管理系统」</strong><br>
+      不要写「Spring Boot + MySQL」，你的项目实际有 Eureka + Gateway + 5 个微服务模块！
+    </div>
+
+    <h3>测试开发版（副投，投 50 家）</h3>
+    <p><strong>技能重点</strong>：Java + Python + 接口测试 + Postman</p>
+    <p><strong>项目重点</strong>：「独立完成 16 个 REST API 的接口设计和联调测试」</p>
+    <p>加一句：熟悉 Postman 接口测试、了解 pytest 自动化测试</p>
+
+    <h3>Python/AI 应用版（副投，投 30 家）</h3>
+    <p><strong>技能重点</strong>：Python + Flask + OpenAI API + 数据处理</p>
+    <p><strong>项目重点</strong>：AI Agent 项目放第一！选课系统放第二</p>
+
+    <h3>前端开发版（备选，投 20 家）</h3>
+    <p><strong>技能重点</strong>：HTML/CSS/JavaScript/AJAX</p>
+    <p><strong>项目重点</strong>：「独立完成 33 个前端页面开发」「封装统一 API 请求模块」</p>
+
+    <h3>运维/技术支持版（保底，投 20 家）</h3>
+    <p><strong>技能重点</strong>：Linux 基础命令、TCP/IP、MySQL</p>
+    <p><strong>项目重点</strong>：全栈开发经验 + 部署能力</p>
+  </div>
+
+  <div class="card">
+    <h2>投递数量规划</h2>
+    <table>
+      <thead><tr><th>岗位类型</th><th>投递数量</th><th>预期面试数</th><th>预期 offer 数</th></tr></thead>
+      <tbody>
+        <tr><td>Java 后端</td><td>100 家</td><td>8-12</td><td>1-3</td></tr>
+        <tr><td>测试开发</td><td>50 家</td><td>5-8</td><td>1-2</td></tr>
+        <tr><td>Python/AI</td><td>30 家</td><td>3-5</td><td>0-1</td></tr>
+        <tr><td>前端</td><td>20 家</td><td>2-4</td><td>0-1</td></tr>
+        <tr><td>运维/技术支持</td><td>20 家</td><td>3-5</td><td>1-2</td></tr>
+        <tr style="font-weight:bold;background:var(--bg)"><td>合计</td><td>220 家</td><td>21-34</td><td>3-9</td></tr>
+      </tbody>
+    </table>
+    <div class="alert alert-success">
+      <strong>目标</strong>：拿到 2-3 个 offer，从中选最好的。220 家投出去，不可能一个回复都没有。
+    </div>
+  </div>
+</section>
+
+<!-- ===== Resume ===== -->
+<section id="resume" class="section">
+  <div class="card">
+    <h2>简历核心修改点（对比你原版）</h2>
+
+    <h3>1. 项目标题必须改</h3>
+    <table>
+      <thead><tr><th>你原来的写法</th><th>改成</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--danger)">在线课程选课管理系统</td>
+          <td style="color:var(--success)"><strong>基于 Spring Cloud 微服务架构的在线选课管理系统</strong></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="alert alert-danger">
+      一字之差，HR 眼里你是「会写 CRUD 的学生」还是「懂微服务架构的工程师」，全看这行字。
+    </div>
+
+    <h3>2. 加量化数据</h3>
+    <table>
+      <thead><tr><th>指标</th><th>数据</th></tr></thead>
+      <tbody>
+        <tr><td>Maven 模块数</td><td>9 个</td></tr>
+        <tr><td>Java 文件数</td><td>140+</td></tr>
+        <tr><td>Controller 数</td><td>16 个</td></tr>
+        <tr><td>REST API 接口数</td><td>16 组</td></tr>
+        <tr><td>数据表数</td><td>9 张</td></tr>
+        <tr><td>前端页面数</td><td>33 个</td></tr>
+        <tr><td>角色数</td><td>3 种（学生/教师/管理员）</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3. 加技术亮点（你原来完全没写的）</h3>
+    <ul style="padding-left:20px; font-size:0.9rem;">
+      <li>统一响应封装 <code>Result&lt;T&gt;</code> + 全局异常处理 <code>GlobalExceptionHandler</code></li>
+      <li>选课候补队列 + 退课自动提升（事务一致性）</li>
+      <li>BCrypt 密码加密 + Session 拦截器 RBAC 权限控制</li>
+      <li>排序字段白名单防 SQL 注入</li>
+      <li>成绩加权计算（平时 40% + 实验 20% + 考试 40%）</li>
+      <li>MyBatis-Plus + JPA 双 ORM 集成</li>
+      <li>Maven 多模块依赖管理</li>
+    </ul>
+
+    <h3>4. 教育经历顺序调整</h3>
+    <div class="alert alert-warning">
+      <strong>原来</strong>：先写大专，再写本科 → HR 第一眼看到的是大专<br>
+      <strong>改成</strong>：先写本科（广州应用科技学院），再写大专 → 第一眼看到的是本科
+    </div>
+
+    <h3>5. 删掉空泛自我评价</h3>
+    <p>你原来写的：</p>
+    <div class="script-box">
+      <div class="label">❌ 删掉这种空话：</div>
+      具备扎实的 Java 编程基础，理解面向对象编程思想，具备良好的代码规范意识。<br>
+      熟悉后端开发，熟悉 Spring Boot 框架应用，理解 IOC、AOP 等核心概念，具备 B/S 项目开发经验。<br>
+      ...（太长了，没有具体例子）
+    </div>
+    <p>改成：</p>
+    <div class="script-box">
+      <div class="label">✅ 换成具体的：</div>
+      • 独立完成选课系统（140+ 文件、9 张表、16 个 Controller），熟悉微服务架构<br>
+      • 独立完成 AI Agent 项目，了解 LLM 工具调用和流式输出<br>
+      • 熟练使用 AI 工具辅助编码，学习能力强，可立即到岗
+    </div>
+  </div>
+</section>
+
+<!-- ===== Scripts ===== -->
+<section id="scripts" class="section">
+  <div class="card">
+    <h2>BOSS直聘打招呼话术</h2>
+
+    <h3>Java 后端版</h3>
+    <div class="script-box">
+      <div class="label">复制粘贴用：</div>
+      你好，我是2027届计算机科学与技术本科在读，有Spring Cloud微服务项目经验（9模块/140+类/16个REST接口），熟悉Spring Boot + MyBatis-Plus + MySQL，可立即到岗，请问贵司还有Java实习岗位吗？
+    </div>
+
+    <h3>测试开发版</h3>
+    <div class="script-box">
+      <div class="label">复制粘贴用：</div>
+      你好，我是计算机本科在读，有Java + Python开发经验，独立完成过16个REST API的设计和接口测试，熟悉Postman，可立即到岗，请问贵司招测试实习吗？
+    </div>
+
+    <h3>通用版（什么岗都能用）</h3>
+    <div class="script-box">
+      <div class="label">复制粘贴用：</div>
+      你好，计算机科学与技术本科在读，有完整的全栈项目经验（Spring Boot后端 + 前端页面 + MySQL），学习能力强，可立即到岗，一周内可入职。请问还有实习岗位吗？
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>HR 常问问题应答</h2>
+    <table>
+      <thead><tr><th>HR 问</th><th>你答</th></tr></thead>
+      <tbody>
+        <tr><td>什么时候能到岗？</td><td>「一周内」或「随时」</td></tr>
+        <tr><td>能实习多久？</td><td>「至少 3 个月，可以更长」</td></tr>
+        <tr><td>一周能来几天？</td><td>「5 天」（别一开始就说 3 天）</td></tr>
+        <tr><td>期望薪资？</td><td>「按公司标准就行，我更看重学习机会」</td></tr>
+        <tr><td>为什么选我们公司？</td><td>「贵司在 xxx 领域有积累，和我的技术方向匹配」</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>项目讲解话术（背熟！3 分钟版本）</h2>
+    <div class="script-box">
+      <div class="label">面试官问：「介绍一下你的项目」</div>
+      <br>
+      我做了一个基于 Spring Cloud 微服务架构的在线选课系统。<br>
+      整个项目是 Maven 多模块结构，有 9 个模块：一个 Eureka 注册中心、一个 Gateway 网关、
+      5 个按业务域拆分的微服务（用户、学生、教师、课程、选课），还有一个公共库模块和前端服务。<br>
+      <br>
+      技术栈是 Spring Boot 2.7 + Spring Cloud 2021 + MyBatis-Plus + JPA + MySQL。
+      我设计了 9 张表，覆盖学院-系部-专业三级组织架构、学生/教师/管理员三角色权限、课程管理和选课全流程。<br>
+      <br>
+      选课是核心业务。我做了几个关键设计：<br>
+      第一，用 MySQL 行锁 + 容量校验防止超选；<br>
+      第二，课程满员后自动进入候补队列，有人退课时自动按时间顺序提升候补学生；<br>
+      第三，成绩按平时 40% + 实验 20% + 考试 40% 自动计算。<br>
+      <br>
+      我还做了统一响应封装 Result、全局异常处理、BCrypt 密码加密、排序字段白名单防 SQL 注入。<br>
+      前端部分我写了 33 个 HTML 页面，覆盖管理员、学生、教师三个端。
+    </div>
+
+    <div class="script-box">
+      <div class="label">面试官问：「项目中遇到什么难点？」</div>
+      <br>
+      最大的难点是选课的并发问题。比如一门课容量 40 人，如果 50 人同时点选课，不能超过 40 人成功。<br>
+      <br>
+      我一开始用先查后插的方式，发现有并发问题——两个线程同时查到当前 39 人，都插入就超了。
+      后来改用 MySQL 的 SELECT FOR UPDATE 行锁，在事务里先锁住课程行，再查容量，再插入选课记录，保证原子性。<br>
+      <br>
+      另一个难点是候补队列的自动提升。退课时我要把最早进入候补的学生提升为已选，
+      这个操作必须在退课事务里完成，我用 @Transactional 保证退课+提升是一个原子操作。
+    </div>
+
+    <div class="script-box">
+      <div class="label">面试官问：「微服务怎么拆的？为什么要拆？」</div>
+      <br>
+      按业务域拆。学生、教师、课程、选课各自是独立服务，有自己的数据库表。<br>
+      好处是各模块独立开发部署，坏处是跨服务调用需要处理 Session 共享问题。<br>
+      <br>
+      我现在用了 Eureka 做服务注册发现，Gateway 做统一入口和路由。
+      但坦白说，目前因为 Session 跨服务共享的问题，Gateway 配置的是把请求统一转发到 web-service，
+      微服务路由暂时注释掉了。如果要真正拆开，需要引入 Redis 共享 Session 或者改成 JWT 无状态认证，
+      这是我后续计划优化的点。
+    </div>
+
+    <div class="alert alert-success">
+      <strong>关键技巧</strong>：主动说出项目的不足和改进方向，面试官会觉得你有思考能力，比假装完美强 100 倍。
+    </div>
+  </div>
+</section>
+
+<!-- ===== Checklist ===== -->
+<section id="checklist" class="section">
+  <div class="card">
+    <h2>每周检查清单</h2>
+
+    <h3>第 1 周末（7.20）</h3>
+    <ul class="checklist">
+      <li>3 版简历定稿（Java / 测试 / Python）</li>
+      <li>7 个平台注册完成</li>
+      <li>累计投递 80+ 家</li>
+      <li>背完 20 道八股文</li>
+      <li>能 3 分钟讲完项目</li>
+      <li>GitHub 建好，pin 选课系统项目</li>
+    </ul>
+
+    <h3>第 2 周末（7.27）</h3>
+    <ul class="checklist">
+      <li>累计投递 150+ 家</li>
+      <li>完成 2-3 场面试</li>
+      <li>背完 35 道八股文</li>
+      <li>根据面试反馈调整简历</li>
+      <li>每次面试后写了复盘记录</li>
+    </ul>
+
+    <h3>第 3 周末（8.3）</h3>
+    <ul class="checklist">
+      <li>累计投递 200+ 家</li>
+      <li>完成 5-8 场面试</li>
+      <li>背完 50 道八股文</li>
+      <li>至少进入 1 个二面</li>
+    </ul>
+
+    <h3>第 4 周末（8.10）</h3>
+    <ul class="checklist">
+      <li>持续面试中</li>
+      <li>至少 1 个终面/HR 面</li>
+      <li>面试话术已经很熟练</li>
+    </ul>
+
+    <h3>第 5 周末（8.17）</h3>
+    <ul class="checklist">
+      <li>拿到 1-2 个 offer</li>
+      <li>对比选择</li>
+      <li>如果还没 offer → 启动紧急预案</li>
+    </ul>
+
+    <h3>第 6 周末（8.31）</h3>
+    <ul class="checklist">
+      <li>确定最终 offer</li>
+      <li>准备入职材料</li>
+      <li>入职时间确认</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>投递渠道优先级</h2>
+    <table>
+      <thead><tr><th>渠道</th><th>投递量</th><th>回复率</th><th>特点</th></tr></thead>
+      <tbody>
+        <tr><td>BOSS直聘</td><td>100+</td><td>15-25%</td><td>直接和 HR 聊，回复最快</td></tr>
+        <tr><td>实习僧</td><td>50+</td><td>10-20%</td><td>专门做实习，岗位精准</td></tr>
+        <tr><td>牛客网</td><td>30+</td><td>10%</td><td>技术岗为主，有面经</td></tr>
+        <tr><td>拉勾网</td><td>20+</td><td>5-10%</td><td>互联网公司</td></tr>
+        <tr><td>智联/前程无忧</td><td>20+</td><td>5%</td><td>传统企业多</td></tr>
+        <tr><td>公司官网直投</td><td>10+</td><td>10%</td><td>大公司走官网</td></tr>
+        <tr><td>学校就业群</td><td>10+</td><td>20%</td><td>门槛最低</td></tr>
+        <tr><td>内推</td><td>5+</td><td>40%</td><td>找学长/老师内推</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>公司类型选择</h2>
+    <table>
+      <thead><tr><th>公司类型</th><th>投递比例</th><th>优势</th><th>劣势</th></tr></thead>
+      <tbody>
+        <tr><td>互联网中厂（100-2000人）</td><td>30%</td><td>技术规范、成长快</td><td>竞争大</td></tr>
+        <tr><td>互联网小厂/创业公司</td><td>25%</td><td>门槛低、面试简单</td><td>不稳定</td></tr>
+        <tr><td>外包公司（中软/软通）</td><td>15%</td><td>量大、容易进</td><td>技术成长有限</td></tr>
+        <tr><td>传统企业 IT 部门</td><td>15%</td><td>稳定、面试简单</td><td>技术老旧</td></tr>
+        <tr><td>国企/事业单位</td><td>10%</td><td>稳定</td><td>流程慢，可能赶不上</td></tr>
+        <tr><td>远程实习</td><td>5%</td><td>不限城市</td><td>岗位少</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>地域策略</h2>
+    <table>
+      <thead><tr><th>城市</th><th>投递比例</th><th>原因</th></tr></thead>
+      <tbody>
+        <tr><td><strong>广州</strong></td><td>50%</td><td>学校所在城市，通勤方便</td></tr>
+        <tr><td><strong>深圳</strong></td><td>25%</td><td>互联网公司多，薪资高</td></tr>
+        <tr><td>佛山/东莞</td><td>10%</td><td>离家近，生活成本低</td></tr>
+        <tr><td>远程</td><td>10%</td><td>不限城市</td></tr>
+        <tr><td>其他（杭州/成都等）</td><td>5%</td><td>如果有好的机会</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== Emergency ===== -->
+<section id="emergency" class="section">
+  <div class="card">
+    <h2>紧急情况预案</h2>
+
+    <div class="alert alert-danger">
+      <strong>情况 1：投了 100 家，0 回复</strong><br>
+      <strong>原因</strong>：简历有问题<br>
+      <strong>对策</strong>：
+      <ol style="margin-top:8px;padding-left:20px;">
+        <li>检查求职意向是否写清楚</li>
+        <li>检查是否有明显错别字</li>
+        <li>降低期望薪资 500</li>
+        <li>找学长/老师帮忙看简历</li>
+        <li>尝试换平台（BOSS → 实习僧 → 牛客）</li>
+      </ol>
+    </div>
+
+    <div class="alert alert-warning">
+      <strong>情况 2：有面试但全挂</strong><br>
+      <strong>原因</strong>：面试表达不行<br>
+      <strong>对策</strong>：
+      <ol style="margin-top:8px;padding-left:20px;">
+        <li>每次面试录音，回来复盘</li>
+        <li>对着镜子练自我介绍</li>
+        <li>先投不想去的公司练手</li>
+        <li>重点练项目讲解（最核心）</li>
+      </ol>
+    </div>
+
+    <div class="alert alert-warning">
+      <strong>情况 3：8 月中还没 offer</strong><br>
+      <strong>原因</strong>：时间不够了<br>
+      <strong>对策</strong>：
+      <ol style="margin-top:8px;padding-left:20px;">
+        <li>扩大岗位范围（投运维、技术支持、实施工程师）</li>
+        <li>接受更低薪资（80-100/天）</li>
+        <li>接受更远通勤</li>
+        <li>找远程实习</li>
+        <li>找外包公司的实习岗（门槛最低）</li>
+      </ol>
+    </div>
+
+    <div class="alert alert-success">
+      <strong>情况 4：offer 不满意但快到 9 月</strong><br>
+      <strong>对策</strong>：<strong>先接了！</strong><br>
+      进去干 1-2 个月，简历上有企业经历后再跳。
+      第一份实习的最大价值不是公司多好，而是<strong>简历上有企业名</strong>。
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>绝对不要做的事</h2>
+    <table>
+      <thead><tr><th>❌ 不要</th><th>✅ 要</th></tr></thead>
+      <tbody>
+        <tr><td>等简历"完美"了再投</td><td>80 分就投，边投边改</td></tr>
+        <tr><td>只投一个岗位</td><td>Java + 测试 + Python 并行</td></tr>
+        <tr><td>只投大厂</td><td>中小公司才是拿 offer 的主力</td></tr>
+        <tr><td>在意薪资差 50 块</td><td>第一份实习看成长不是看钱</td></tr>
+        <tr><td>拒绝面试练手</td><td>哪怕不想去也面，积累经验</td></tr>
+        <tr><td>在周一/周五投</td><td>周二/三/四投递回复率最高</td></tr>
+        <tr><td>只等线上</td><td>有内推机会一定用</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>每天时间分配（3-4 小时）</h2>
+    <table>
+      <thead><tr><th>时间段</th><th>时长</th><th>任务</th></tr></thead>
+      <tbody>
+        <tr><td>投简历</td><td>1 小时</td><td>BOSS 直聘主动打招呼 20 个 HR</td></tr>
+        <tr><td>背八股</td><td>1.5 小时</td><td>用 50 题文档，每天背 5-8 道</td></tr>
+        <tr><td>复盘</td><td>0.5 小时</td><td>记录哪些公司回复了</td></tr>
+        <tr><td>项目话术</td><td>1 小时</td><td>练讲项目，对着镜子说</td></tr>
+      </tbody>
+    </table>
+    <div class="alert alert-info">
+      <strong>周末加量</strong>：周末可以加到 6 小时，多刷 LeetCode 简单题 + 中等题（重点刷数组、链表、哈希表）
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+function showSection(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>

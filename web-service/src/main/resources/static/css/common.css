@@ -112,8 +112,8 @@ html, body {
     transition: all var(--transition-normal);
 }
 
-/* 侧边栏 */
-.sidebar {
+/* 侧边栏（仅在新布局 .page-container 内生效） */
+.page-container .sidebar {
     width: var(--sidebar-width);
     background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
     color: var(--text-light);
@@ -127,11 +127,11 @@ html, body {
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
 }
 
-.sidebar.collapsed {
+.page-container .sidebar.collapsed {
     width: var(--sidebar-width-collapsed);
 }
 
-.sidebar-header {
+.page-container .sidebar-header {
     padding: var(--spacing-lg);
     display: flex;
     align-items: center;
@@ -139,7 +139,7 @@ html, body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.sidebar-brand {
+.page-container .sidebar-brand {
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
@@ -149,7 +149,7 @@ html, body {
     text-decoration: none;
 }
 
-.sidebar-brand-icon {
+.page-container .sidebar-brand-icon {
     width: 36px;
     height: 36px;
     display: flex;
@@ -161,18 +161,18 @@ html, body {
     font-size: var(--font-size-lg);
 }
 
-.sidebar-brand-text {
+.page-container .sidebar-brand-text {
     white-space: nowrap;
     transition: opacity var(--transition-fast);
 }
 
-.sidebar.collapsed .sidebar-brand-text {
+.page-container .sidebar.collapsed .sidebar-brand-text {
     opacity: 0;
     width: 0;
     overflow: hidden;
 }
 
-.sidebar-toggle {
+.page-container .sidebar-toggle {
     background: transparent;
     border: none;
     color: var(--text-light);
@@ -181,20 +181,20 @@ html, body {
     transition: transform var(--transition-fast);
 }
 
-.sidebar.collapsed .sidebar-toggle {
+.page-container .sidebar.collapsed .sidebar-toggle {
     transform: rotate(180deg);
 }
 
 /* 侧边栏导航 */
-.sidebar-nav {
+.page-container .sidebar-nav {
     padding: var(--spacing-md) 0;
 }
 
-.nav-item {
+.page-container .nav-item {
     position: relative;
 }
 
-.nav-link {
+.page-container .nav-link {
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
@@ -205,34 +205,34 @@ html, body {
     white-space: nowrap;
 }
 
-.nav-link:hover {
+.page-container .nav-link:hover {
     background-color: rgba(255, 255, 255, 0.1);
     color: var(--text-light);
     padding-left: calc(var(--spacing-lg) + var(--spacing-xs));
 }
 
-.nav-link.active {
+.page-container .nav-link.active {
     background-color: rgba(255, 255, 255, 0.2);
     color: var(--text-light);
     border-left: 3px solid var(--text-light);
 }
 
-.nav-icon {
+.page-container .nav-icon {
     width: 24px;
     text-align: center;
 }
 
-.nav-text {
+.page-container .nav-text {
     transition: opacity var(--transition-fast);
 }
 
-.sidebar.collapsed .nav-text {
+.page-container .sidebar.collapsed .nav-text {
     opacity: 0;
     width: 0;
     overflow: hidden;
 }
 
-.nav-badge {
+.page-container .nav-badge {
     margin-left: auto;
     padding: var(--spacing-xs) var(--spacing-sm);
     background-color: rgba(255, 255, 255, 0.2);
@@ -245,12 +245,12 @@ html, body {
     transition: opacity var(--transition-fast);
 }
 
-.sidebar.collapsed .nav-badge {
+.page-container .sidebar.collapsed .nav-badge {
     opacity: 0;
 }
 
-/* 主内容区 */
-.main-content {
+/* 主内容区（仅在新布局 .page-container 内生效） */
+.page-container .main-content {
     flex: 1;
     margin-left: var(--sidebar-width);
     transition: all var(--transition-normal);
@@ -258,7 +258,7 @@ html, body {
     background-color: var(--bg-primary);
 }
 
-.sidebar.collapsed + .main-content {
+.page-container .sidebar.collapsed + .main-content {
     margin-left: var(--sidebar-width-collapsed);
 }
 
@@ -709,17 +709,17 @@ html, body {
     100% { transform: rotate(360deg); }
 }
 
-/* 响应式设计 */
+/* 响应式设计（仅新布局） */
 @media (max-width: 768px) {
-    .sidebar {
+    .page-container .sidebar {
         transform: translateX(-100%);
     }
     
-    .sidebar.active {
+    .page-container .sidebar.active {
         transform: translateX(0);
     }
     
-    .main-content {
+    .page-container .main-content {
         margin-left: 0;
     }
     
@@ -728,6 +728,10 @@ html, body {
     }
     
     .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .grid-cols-2 {
         grid-template-columns: 1fr;
     }
     
@@ -1176,6 +1180,17 @@ html, body {
 .timetable-course-info {
     font-size: var(--font-size-xs);
     opacity: 0.8;
+}
+
+/* 通用网格工具类 */
+.grid {
+    display: grid;
+}
+.grid-cols-2 {
+    grid-template-columns: 1fr 1fr;
+}
+.gap-lg {
+    gap: var(--spacing-lg, 20px);
 }
 
 /* 卡片网格 */

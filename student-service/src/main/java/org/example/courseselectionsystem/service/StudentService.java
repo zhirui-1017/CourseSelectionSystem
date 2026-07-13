@@ -195,4 +195,10 @@ public interface StudentService {
      * @return 学生列表
      */
     List<Student> searchStudentsByName(String name);
+
+    /**
+     * 获取学生总数
+     * @return 学生总数
+     */
+    long count();
 }

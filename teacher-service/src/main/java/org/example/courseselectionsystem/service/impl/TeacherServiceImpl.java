@@ -388,4 +388,9 @@ public class TeacherServiceImpl implements TeacherService {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "工号已存在");
         }
     }
+
+    @Override
+    public long count() {
+        return teacherMapper.selectCount(null);
+    }
 }

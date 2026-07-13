@@ -1,5 +1,6 @@
 package org.example.courseselectionsystem.service.impl;
 
+import org.example.courseselectionsystem.auth.JwtUtil;
 import org.example.courseselectionsystem.common.Constants;
 import org.example.courseselectionsystem.entity.Admin;
 import org.example.courseselectionsystem.entity.Student;
@@ -32,7 +33,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -645,8 +645,21 @@ public class UserServiceImpl implements UserService {
     }
 
     private Map<String, Object> buildLoginResult(User user) {
+        // 根据用户类型确定角色字符串
+        String role;
+        if (user.getUserType() == 3) {
+            role = "admin";
+        } else if (user.getUserType() == 2) {
+            role = "teacher";
+        } else {
+            role = "student";
+        }
+
+        // 使用 JWT 生成真实的 Token
+        String token = JwtUtil.generateToken(user.getId(), user.getUsername(), role);
+
         Map<String, Object> result = new HashMap<>();
-        result.put("token", "session-" + UUID.randomUUID());
+        result.put("token", token);
         result.put("user", user);
         return result;
     }
@@ -886,5 +899,13 @@ public class UserServiceImpl implements UserService {
         // Keep the UI usable without rewriting local database rows.
         return "123456".equals(rawPassword)
                 && "$2a$10$N.zmdr9k7uOCQbF9SvOPe.XqKdJhG5HnTmqxY6uI6v1eAHsVbDp/W".equals(storedPassword);
+    }
+
+    @Override
+    public long count() {
+        // 统计所有类型用户总数：学生 + 教师 + 管理员
+        return studentMapper.selectCount(null)
+                + teacherMapper.selectCount(null)
+                + adminRepository.count();
     }
 }

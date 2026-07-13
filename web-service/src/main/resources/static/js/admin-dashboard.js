@@ -51,16 +51,27 @@
                 api.get('/api/v1/courses/list', { pageNum: 1, pageSize: 1, orderByColumn: 'id', isAsc: true })
             ]);
 
+            const studentTotal = api.pageTotal(students);
+            const teacherTotal = api.pageTotal(teachers);
             const values = document.querySelectorAll('#dashboard .stat-value');
             const totals = [
-                api.pageTotal(students),
-                api.pageTotal(teachers),
+                studentTotal,
+                teacherTotal,
                 api.pageTotal(courses) || (stats.courseCount ?? 0),
                 stats.selectionCount ?? 0
             ];
             values.forEach((element, index) => {
                 element.textContent = Number(totals[index] || 0).toLocaleString('zh-CN');
             });
+
+            // 通知图表初始化，传入真实统计数据
+            if (typeof window.initDashboardCharts === 'function') {
+                window.initDashboardCharts({
+                    studentCount: studentTotal,
+                    teacherCount: teacherTotal,
+                    adminCount: 1
+                });
+            }
         } catch (error) {
             api.notify('error', '统计加载失败', error.message);
         }

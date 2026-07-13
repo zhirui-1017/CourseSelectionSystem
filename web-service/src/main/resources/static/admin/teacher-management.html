@@ -36,33 +36,78 @@
                     <a href="/admin/student-management.html" class="nav-link">
                         <i class="nav-icon fas fa-user-graduate"></i>
                         <span class="nav-text">学生管理</span>
-                        <span class="nav-badge">128</span>
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="/admin/teacher-management.html" class="nav-link active">
                         <i class="nav-icon fas fa-chalkboard-teacher"></i>
                         <span class="nav-text">教师管理</span>
-                        <span class="nav-badge">32</span>
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="/admin/course-management.html" class="nav-link">
                         <i class="nav-icon fas fa-book"></i>
                         <span class="nav-text">课程管理</span>
-                        <span class="nav-badge">86</span>
                     </a>
+                </div>
                 <div class="nav-item">
                     <a href="/admin/class-management.html" class="nav-link">
                         <i class="nav-icon fas fa-users"></i>
                         <span class="nav-text">班级管理</span>
-                        <span class="nav-badge">16</span>
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="/admin/grade-management.html" class="nav-link">
                         <i class="nav-icon fas fa-chart-line"></i>
                         <span class="nav-text">成绩管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/college-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-university"></i>
+                        <span class="nav-text">学院管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/department-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-sitemap"></i>
+                        <span class="nav-text">系部管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/major-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-graduation-cap"></i>
+                        <span class="nav-text">专业管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/role-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-user-shield"></i>
+                        <span class="nav-text">角色管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/permission-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-key"></i>
+                        <span class="nav-text">权限管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/admin-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-user-cog"></i>
+                        <span class="nav-text">管理员管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/semester-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-calendar-alt"></i>
+                        <span class="nav-text">学期管理</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin/announcement-management.html" class="nav-link">
+                        <i class="nav-icon fas fa-bullhorn"></i>
+                        <span class="nav-text">公告管理</span>
                     </a>
                 </div>
                 <div class="nav-item">
@@ -198,129 +243,14 @@
                                         <th>操作</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>T0001</td>
-                                        <td>张教授</td>
-                                        <td>男</td>
-                                        <td>计算机学院</td>
-                                        <td><span class="badge badge-primary">教授</span></td>
-                                        <td>13800138001</td>
-                                        <td>zhang@example.com</td>
-                                        <td>2010-09-01</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editTeacherModal" data-id="T0001">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="T0001">
-                                                <i class="fas fa-key"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteTeacherModal" data-id="T0001">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>T0002</td>
-                                        <td>李副教授</td>
-                                        <td>女</td>
-                                        <td>计算机学院</td>
-                                        <td><span class="badge badge-secondary">副教授</span></td>
-                                        <td>13800138002</td>
-                                        <td>li@example.com</td>
-                                        <td>2015-03-15</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editTeacherModal" data-id="T0002">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="T0002">
-                                                <i class="fas fa-key"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteTeacherModal" data-id="T0002">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>T0003</td>
-                                        <td>王讲师</td>
-                                        <td>男</td>
-                                        <td>电子工程学院</td>
-                                        <td><span class="badge badge-info">讲师</span></td>
-                                        <td>13800138003</td>
-                                        <td>wang@example.com</td>
-                                        <td>2018-07-20</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editTeacherModal" data-id="T0003">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="T0003">
-                                                <i class="fas fa-key"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteTeacherModal" data-id="T0003">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>T0004</td>
-                                        <td>赵助教</td>
-                                        <td>女</td>
-                                        <td>商学院</td>
-                                        <td><span class="badge badge-secondary">助教</span></td>
-                                        <td>13800138004</td>
-                                        <td>zhao@example.com</td>
-                                        <td>2020-09-01</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editTeacherModal" data-id="T0004">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="T0004">
-                                                <i class="fas fa-key"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteTeacherModal" data-id="T0004">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>T0005</td>
-                                        <td>钱教授</td>
-                                        <td>男</td>
-                                        <td>机械工程学院</td>
-                                        <td><span class="badge badge-primary">教授</span></td>
-                                        <td>13800138005</td>
-                                        <td>qian@example.com</td>
-                                        <td>2008-06-10</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editTeacherModal" data-id="T0005">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal" data-id="T0005">
-                                                <i class="fas fa-key"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteTeacherModal" data-id="T0005">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
+                                <tbody id="teacherTableBody">
+                                    <tr><td colspan="9" class="text-center" style="padding:40px 0;">正在加载数据...</td></tr>
                                 </tbody>
                             </table>
                         </div>
                         
                         <!-- 分页 -->
-                        <div class="pagination">
-                            <button class="btn btn-secondary pagination-btn" disabled>
-                                <i class="fas fa-chevron-left"></i>
-                            </button>
-                            <button class="btn btn-primary pagination-btn">1</button>
-                            <button class="btn btn-secondary pagination-btn">2</button>
-                            <button class="btn btn-secondary pagination-btn">3</button>
-                            <span class="pagination-ellipsis">...</span>
-                            <button class="btn btn-secondary pagination-btn">6</button>
-                            <button class="btn btn-secondary pagination-btn">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
+                        <div class="pagination" id="teacherPagination">
                         </div>
                     </div>
                 </div>
@@ -585,136 +515,107 @@
         </div>
     </div>
 
-    <!-- 引入公共JavaScript -->
     <script src="/js/common.js" defer></script>
-    <script>
-        // 页面特定的JavaScript逻辑
-        document.addEventListener('DOMContentLoaded', function() {
-            // 筛选和搜索功能
-            document.getElementById('searchTeacherBtn').addEventListener('click', function() {
-                const searchText = document.getElementById('teacherSearch').value.trim();
-                // 实现搜索逻辑
-                notifications.info('搜索', `搜索教师: ${searchText}`);
-            });
-
-            document.getElementById('filterTeacherBtn').addEventListener('click', function() {
-                const college = document.getElementById('teacherCollegeFilter').value;
-                const title = document.getElementById('teacherTitleFilter').value;
-                // 实现筛选逻辑
-                notifications.info('筛选', `筛选条件: 学院=${college}, 职称=${title}`);
-            });
-
-            // 导出教师数据
-            document.getElementById('exportTeachersBtn').addEventListener('click', function() {
-                notifications.info('导出', '正在导出教师数据...');
-                // 模拟导出延迟
-                setTimeout(() => {
-                    notifications.success('导出成功', '教师数据已成功导出');
-                }, 1500);
-            });
-
-            // 添加教师表单提交
-            document.getElementById('submitAddTeacher').addEventListener('click', function() {
-                const form = document.getElementById('addTeacherForm');
-                if (validateForm(form)) {
-                    notifications.info('添加', '正在添加教师...');
-                    // 模拟添加延迟
-                    setTimeout(() => {
-                        closeModal(document.getElementById('addTeacherModal'));
-                        notifications.success('添加成功', '教师信息已成功添加');
-                        form.reset();
-                    }, 1500);
-                }
-            });
-
-            // 编辑教师模态框
-            const editButtons = document.querySelectorAll('[data-target="#editTeacherModal"]');
-            editButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const teacherId = this.getAttribute('data-id');
-                    document.getElementById('editTeacherId').value = teacherId;
-                    // 这里应该根据teacherId加载教师数据
-                    // 模拟数据加载
-                    setTimeout(() => {
-                        document.getElementById('editTeacherName').value = '示例教师';
-                        document.getElementById('editTeacherGender').value = 'male';
-                        // 其他字段...
-                    }, 300);
-                });
-            });
-
-            // 提交编辑表单
-            document.getElementById('submitEditTeacher').addEventListener('click', function() {
-                const form = document.getElementById('editTeacherForm');
-                if (validateForm(form)) {
-                    notifications.info('保存', '正在保存教师信息...');
-                    // 模拟保存延迟
-                    setTimeout(() => {
-                        closeModal(document.getElementById('editTeacherModal'));
-                        notifications.success('保存成功', '教师信息已成功更新');
-                    }, 1500);
-                }
-            });
-
-            // 重置密码模态框
-            const resetButtons = document.querySelectorAll('[data-target="#resetPasswordModal"]');
-            resetButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const teacherId = this.getAttribute('data-id');
-                    document.getElementById('resetPasswordTeacherId').value = teacherId;
-                    document.getElementById('resetPasswordTeacherName').textContent = teacherId;
-                });
-            });
-
-            // 确认重置密码
-            document.getElementById('confirmResetPassword').addEventListener('click', function() {
-                notifications.info('重置密码', '正在重置密码...');
-                // 模拟重置延迟
-                setTimeout(() => {
-                    closeModal(document.getElementById('resetPasswordModal'));
-                    notifications.success('重置成功', '密码已重置为默认密码');
-                }, 1500);
-            });
-
-            // 删除教师模态框
-            const deleteButtons = document.querySelectorAll('[data-target="#deleteTeacherModal"]');
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const teacherId = this.getAttribute('data-id');
-                    document.getElementById('deleteTeacherId').value = teacherId;
-                    document.getElementById('deleteTeacherName').textContent = teacherId;
-                });
-            });
-
-            // 确认删除教师
-            document.getElementById('confirmDeleteTeacher').addEventListener('click', function() {
-                notifications.info('删除', '正在删除教师...');
-                // 模拟删除延迟
-                setTimeout(() => {
-                    closeModal(document.getElementById('deleteTeacherModal'));
-                    notifications.success('删除成功', '教师已成功删除');
-                }, 1500);
-            });
-
-            // 批量导入教师
-            document.getElementById('confirmImportTeachers').addEventListener('click', function() {
-                const fileInput = document.getElementById('importFile');
-                if (!fileInput.files || fileInput.files.length === 0) {
-                    notifications.error('导入失败', '请选择要导入的文件');
-                    return;
-                }
-                
-                notifications.info('导入', '正在导入教师数据...');
-                // 模拟导入延迟
-                setTimeout(() => {
-                    closeModal(document.getElementById('importTeachersModal'));
-                    notifications.success('导入成功', '教师数据已成功导入');
-                    fileInput.value = '';
-                }, 2000);
-            });
-        });
-    </script>
     <script src="/js/app-api.js"></script>
-    <script src="/js/legacy-dynamic-pages.js"></script>
-</body>
-</html>
+    <script>
+        var api = window.AppApi;
+        var curPage = 1, pageSize = 10;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTeachers(1);
+            document.getElementById('searchTeacherBtn').addEventListener('click', function() { loadTeachers(1); });
+            document.getElementById('teacherSearch').addEventListener('keydown', function(e) { if (e.key === 'Enter') loadTeachers(1); });
+            document.getElementById('filterTeacherBtn').addEventListener('click', function() { loadTeachers(1); });
+            document.getElementById('exportTeachersBtn').addEventListener('click', function() { api.notify('info', '导出', '正在导出...'); });
+            document.getElementById('submitAddTeacher').addEventListener('click', addTeacher);
+            document.getElementById('submitEditTeacher').addEventListener('click', updateTeacher);
+            document.getElementById('confirmResetPassword').addEventListener('click', resetPassword);
+            document.getElementById('confirmDeleteTeacher').addEventListener('click', deleteTeacher);
+            document.getElementById('confirmImportTeachers').addEventListener('click', importTeachers);
+        });
+
+        async function loadTeachers(page) {
+            curPage = page;
+            var tb = document.getElementById('teacherTableBody');
+            tb.innerHTML = '<tr><td colspan="9" class="text-center" style="padding:40px 0;"><i class="fas fa-spinner fa-spin"></i> 加载中...</td></tr>';
+            try {
+                var data = await api.get('/api/v1/teachers/list', { pageNum: curPage, pageSize: pageSize, orderByColumn: 'id', isAsc: true });
+                var items = api.pageItems(data), total = api.pageTotal(data);
+                if (!items || !items.length) {
+                    tb.innerHTML = '<tr><td colspan="9" class="text-center" style="padding:40px 0;">暂无数据</td></tr>';
+                } else {
+                    tb.innerHTML = items.map(function(t) {
+                        var tm = { '教授': '<span class="badge badge-primary">教授</span>', '副教授': '<span class="badge badge-secondary">副教授</span>', '讲师': '<span class="badge badge-info">讲师</span>', '助教': '<span class="badge badge-secondary">助教</span>' };
+                        var gm = { '男': '男', '女': '女', 'M': '男', 'F': '女' };
+                        return '<tr><td>' + api.escapeHtml(t.teacherNo || '-') + '</td><td>' + api.escapeHtml(t.name) + '</td><td>' + (gm[t.gender] || t.gender) + '</td><td>' + api.escapeHtml(t.collegeId || t.departmentId || '-') + '</td><td>' + (tm[t.title] || '<span class="badge badge-secondary">' + api.escapeHtml(t.title || '-') + '</span>') + '</td><td>' + api.escapeHtml(t.phone || '-') + '</td><td>' + api.escapeHtml(t.email || '-') + '</td><td>' + api.formatDate(t.createdAt) + '</td><td>' +
+                            '<button class="btn btn-sm btn-primary js-edit" data-id="' + t.id + '" title="编辑"><i class="fas fa-edit"></i></button> ' +
+                            '<button class="btn btn-sm btn-warning js-reset" data-id="' + t.id + '" title="重置密码"><i class="fas fa-key"></i></button> ' +
+                            '<button class="btn btn-sm btn-danger js-delete" data-id="' + t.id + '" title="删除"><i class="fas fa-trash"></i></button></td></tr>';
+                    }).join('');
+                    tb.querySelectorAll('.js-edit').forEach(function(b) { b.onclick = function() { prepareEditTeacher(this.dataset.id); }; });
+                    tb.querySelectorAll('.js-reset').forEach(function(b) { b.onclick = function() { prepareResetPassword(this.dataset.id); }; });
+                    tb.querySelectorAll('.js-delete').forEach(function(b) { b.onclick = function() { prepareDeleteTeacher(this.dataset.id); }; });
+                }
+                renderPagination(total);
+            } catch (err) {
+                tb.innerHTML = '<tr><td colspan="9" class="text-center" style="padding:40px 0;color:#dc3545;">加载失败: ' + api.escapeHtml(err.message) + '</td></tr>';
+            }
+        }
+
+        function renderPagination(total) {
+            var tp = Math.ceil(total / pageSize) || 1;
+            var h = '<button class="btn btn-secondary pagination-btn" onclick="loadTeachers(1)" ' + (curPage === 1 ? 'disabled' : '') + '><i class="fas fa-chevron-left"></i></button>';
+            for (var i = 1; i <= tp; i++) {
+                if (i === 1 || i === tp || Math.abs(i - curPage) <= 1) {
+                    h += '<button class="btn ' + (i === curPage ? 'btn-primary' : 'btn-secondary') + ' pagination-btn" onclick="loadTeachers(' + i + ')">' + i + '</button>';
+                } else if (i === curPage - 2 || i === curPage + 2) { h += '<span class="pagination-ellipsis">...</span>'; }
+            }
+            h += '<button class="btn btn-secondary pagination-btn" onclick="loadTeachers(' + tp + ')" ' + (curPage === tp ? 'disabled' : '') + '><i class="fas fa-chevron-right"></i></button>';
+            document.getElementById('teacherPagination').innerHTML = h;
+        }
+
+        async function addTeacher() {
+            var f = document.getElementById('addTeacherForm');
+            var d = { teacherNo: f.querySelector('#teacherId').value.trim(), name: f.querySelector('#teacherName').value.trim(), gender: f.querySelector('#teacherGender').value === 'male' ? '男' : '女', collegeId: Number(f.querySelector('#teacherCollege').value) || 1, title: f.querySelector('#teacherTitle').value || '讲师', status: 1, email: f.querySelector('#teacherEmail').value.trim(), phone: f.querySelector('#teacherPhone').value.trim() };
+            if (!d.teacherNo || !d.name) { api.notify('warning', '提示', '请填写工号和姓名'); return; }
+            try { await api.post('/api/v1/teachers', d); closeModal(document.getElementById('addTeacherModal')); f.reset(); api.notify('success', '添加成功', '教师已添加'); loadTeachers(1); } catch (e) { api.notify('error', '添加失败', e.message); }
+        }
+
+        async function prepareEditTeacher(id) {
+            try {
+                var t = await api.get('/api/v1/teachers/' + id);
+                document.getElementById('editTeacherId').value = t.id;
+                document.getElementById('editTeacherName').value = t.name;
+                document.getElementById('editTeacherGender').value = t.gender === '女' ? 'female' : 'male';
+                document.getElementById('editTeacherTitle').value = t.title || 'lecturer';
+                document.getElementById('editTeacherEmail').value = t.email || '';
+                document.getElementById('editTeacherPhone').value = t.phone || '';
+                openModal(document.getElementById('editTeacherModal'));
+            } catch (e) { api.notify('error', '加载失败', e.message); }
+        }
+
+        async function updateTeacher() {
+            var id = document.getElementById('editTeacherId').value;
+            var d = { name: document.getElementById('editTeacherName').value.trim(), gender: document.getElementById('editTeacherGender').value === 'female' ? '女' : '男', title: document.getElementById('editTeacherTitle').value, email: document.getElementById('editTeacherEmail').value.trim(), phone: document.getElementById('editTeacherPhone').value.trim() };
+            try { await api.request('/api/v1/teachers/' + id, { method: 'PUT', body: d }); closeModal(document.getElementById('editTeacherModal')); api.notify('success', '更新成功', '教师信息已更新'); loadTeachers(curPage); } catch (e) { api.notify('error', '更新失败', e.message); }
+        }
+
+        function prepareResetPassword(id) { document.getElementById('resetPasswordTeacherId').value = id; openModal(document.getElementById('resetPasswordModal')); }
+        async function resetPassword() {
+            var id = document.getElementById('resetPasswordTeacherId').value;
+            try { await api.request('/api/v1/teachers/' + id + '/reset-password', { method: 'PUT' }); closeModal(document.getElementById('resetPasswordModal')); api.notify('success', '重置成功', '密码已重置'); } catch (e) { api.notify('error', '重置失败', e.message); }
+        }
+
+        function prepareDeleteTeacher(id) { document.getElementById('deleteTeacherId').value = id; openModal(document.getElementById('deleteTeacherModal')); }
+        async function deleteTeacher() {
+            var id = document.getElementById('deleteTeacherId').value;
+            try { await api.del('/api/v1/teachers/' + id); closeModal(document.getElementById('deleteTeacherModal')); api.notify('success', '删除成功', '教师已删除'); loadTeachers(1); } catch (e) { api.notify('error', '删除失败', e.message); }
+        }
+
+        function importTeachers() {
+            var f = document.getElementById('importFile');
+            if (!f.files || !f.files[0]) { api.notify('warning', '提示', '请选择文件'); return; }
+            api.notify('info', '导入', '正在导入...');
+            setTimeout(function() { closeModal(document.getElementById('importTeachersModal')); api.notify('success', '导入成功'); loadTeachers(1); }, 1500);
+        }
+    </script>

@@ -103,47 +103,51 @@
     </style>
 </head>
 <body>
-    <!-- 顶部导航栏 -->
-    <header class="navbar navbar-inverse navbar-fixed-top">
-        <div class="container-fluid">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-                    <span class="sr-only">切换导航</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="index.html">网上选课系统</a>
+    <div class="page-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/admin" class="sidebar-brand">
+                    <div class="sidebar-brand-icon"><i class="fas fa-cogs"></i></div>
+                    <span class="sidebar-brand-text">管理员控制台</span>
+                </a>
+                <button class="sidebar-toggle"><i class="fas fa-chevron-left"></i></button>
             </div>
-            <div id="navbar" class="navbar-collapse collapse">
-                <ul class="nav navbar-nav navbar-right">
-                    <li><a href="javascript:void(0)" onclick="showUserInfo()"><span class="glyphicon glyphicon-user"></span> 用户信息</a></li>
-                    <li><a href="javascript:void(0)" onclick="logout()"><span class="glyphicon glyphicon-log-out"></span> 退出登录</a></li>
-                </ul>
-            </div>
-        </div>
-    </header>
-
-    <!-- 侧边栏导航 -->
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-sm-3 col-md-2 sidebar">
-                <ul class="nav nav-sidebar">
-                    <li><a href="index.html"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
-                    <li><a href="student-management.html"><span class="glyphicon glyphicon-user"></span> 学生管理</a></li>
-                    <li><a href="teacher-management.html"><span class="glyphicon glyphicon-book"></span> 教师管理</a></li>
-                    <li><a href="course-management.html"><span class="glyphicon glyphicon-book"></span> 课程管理</a></li>
-                    <li><a href="class-management.html"><span class="glyphicon glyphicon-th-list"></span> 班级管理</a></li>
-                    <li><a href="grade-management.html"><span class="glyphicon glyphicon-education"></span> 成绩管理</a></li>
-                    <li><a href="system-settings.html"><span class="glyphicon glyphicon-cog"></span> 系统设置</a></li>
-                    <li class="active"><a href="system-logs.html"><span class="glyphicon glyphicon-list-alt"></span> 系统日志</a></li>
-                </ul>
-            </div>
-
-            <!-- 主内容区域 -->
-            <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+            <nav class="sidebar-nav">
+                <div class="nav-item"><a href="/admin" class="nav-link"><i class="nav-icon fas fa-tachometer-alt"></i><span class="nav-text">控制台首页</span></a></div>
+                <div class="nav-item"><a href="/admin/student-management.html" class="nav-link"><i class="nav-icon fas fa-user-graduate"></i><span class="nav-text">学生管理</span></a></div>
+                <div class="nav-item"><a href="/admin/teacher-management.html" class="nav-link"><i class="nav-icon fas fa-chalkboard-teacher"></i><span class="nav-text">教师管理</span></a></div>
+                <div class="nav-item"><a href="/admin/course-management.html" class="nav-link"><i class="nav-icon fas fa-book"></i><span class="nav-text">课程管理</span></a></div>
+                <div class="nav-item"><a href="/admin/class-management.html" class="nav-link"><i class="nav-icon fas fa-users"></i><span class="nav-text">班级管理</span></a></div>
+                <div class="nav-item"><a href="/admin/grade-management.html" class="nav-link"><i class="nav-icon fas fa-chart-line"></i><span class="nav-text">成绩管理</span></a></div>
+                <div class="nav-item"><a href="/admin/college-management.html" class="nav-link"><i class="nav-icon fas fa-university"></i><span class="nav-text">学院管理</span></a></div>
+                <div class="nav-item"><a href="/admin/department-management.html" class="nav-link"><i class="nav-icon fas fa-sitemap"></i><span class="nav-text">系部管理</span></a></div>
+                <div class="nav-item"><a href="/admin/major-management.html" class="nav-link"><i class="nav-icon fas fa-graduation-cap"></i><span class="nav-text">专业管理</span></a></div>
+                <div class="nav-item"><a href="/admin/role-management.html" class="nav-link"><i class="nav-icon fas fa-user-shield"></i><span class="nav-text">角色管理</span></a></div>
+                <div class="nav-item"><a href="/admin/permission-management.html" class="nav-link"><i class="nav-icon fas fa-key"></i><span class="nav-text">权限管理</span></a></div>
+                <div class="nav-item"><a href="/admin/admin-management.html" class="nav-link"><i class="nav-icon fas fa-user-cog"></i><span class="nav-text">管理员管理</span></a></div>
+                <div class="nav-item"><a href="/admin/semester-management.html" class="nav-link"><i class="nav-icon fas fa-calendar-alt"></i><span class="nav-text">学期管理</span></a></div>
+                <div class="nav-item"><a href="/admin/announcement-management.html" class="nav-link"><i class="nav-icon fas fa-bullhorn"></i><span class="nav-text">公告管理</span></a></div>
+                <div class="nav-item"><a href="/admin/system-settings.html" class="nav-link"><i class="nav-icon fas fa-cog"></i><span class="nav-text">系统设置</span></a></div>
+                <div class="nav-item"><a href="/admin/system-logs.html" class="nav-link active"><i class="nav-icon fas fa-history"></i><span class="nav-text">系统日志</span></a></div>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <header class="top-navbar">
+                <div class="nav-left">
+                    <button class="mobile-sidebar-toggle"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title">系统日志</h1>
+                </div>
+                <div class="nav-right">
+                    <button class="nav-icon-btn" id="notification-btn"><i class="fas fa-bell"></i><span class="badge"></span></button>
+                    <div class="user-profile">
+                        <div class="user-avatar"><i class="fas fa-user"></i></div>
+                        <div class="user-info"><span class="user-name">管理员</span><span class="user-role">Admin</span></div>
+                    </div>
+                </div>
+            </header>
+            <div class="content-wrapper">
                 <div class="logs-container">
-                    <h2 class="sub-header">系统日志</h2>
+                    <h2 class="page-header" style="margin-top:0;">系统日志</h2>
                     
                     <!-- 日志筛选区域 -->
                     <div class="logs-filter">
@@ -287,7 +291,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 
     <!-- 日志详情模态框 -->

@@ -265,4 +265,9 @@ public class CourseServiceImpl implements CourseService {
     private String blankToNull(String value) {
         return StringUtils.hasText(value) ? value : null;
     }
+
+    @Override
+    public long count() {
+        return courseRepository.count();
+    }
 }

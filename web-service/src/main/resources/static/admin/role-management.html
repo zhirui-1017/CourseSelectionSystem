@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>角色管理 - 管理员控制台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="/css/common.css">
+</head>
+<body>
+    <div class="page-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/admin" class="sidebar-brand">
+                    <div class="sidebar-brand-icon"><i class="fas fa-cogs"></i></div>
+                    <span class="sidebar-brand-text">管理员控制台</span>
+                </a>
+                <button class="sidebar-toggle"><i class="fas fa-chevron-left"></i></button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item"><a href="/admin" class="nav-link"><i class="nav-icon fas fa-tachometer-alt"></i><span class="nav-text">控制台首页</span></a></div>
+                <div class="nav-item"><a href="/admin/student-management.html" class="nav-link"><i class="nav-icon fas fa-user-graduate"></i><span class="nav-text">学生管理</span></a></div>
+                <div class="nav-item"><a href="/admin/teacher-management.html" class="nav-link"><i class="nav-icon fas fa-chalkboard-teacher"></i><span class="nav-text">教师管理</span></a></div>
+                <div class="nav-item"><a href="/admin/course-management.html" class="nav-link"><i class="nav-icon fas fa-book"></i><span class="nav-text">课程管理</span></a></div>
+                <div class="nav-item"><a href="/admin/class-management.html" class="nav-link"><i class="nav-icon fas fa-users"></i><span class="nav-text">班级管理</span></a></div>
+                <div class="nav-item"><a href="/admin/grade-management.html" class="nav-link"><i class="nav-icon fas fa-chart-line"></i><span class="nav-text">成绩管理</span></a></div>
+                <div class="nav-item"><a href="/admin/college-management.html" class="nav-link"><i class="nav-icon fas fa-university"></i><span class="nav-text">学院管理</span></a></div>
+                <div class="nav-item"><a href="/admin/department-management.html" class="nav-link"><i class="nav-icon fas fa-sitemap"></i><span class="nav-text">系部管理</span></a></div>
+                <div class="nav-item"><a href="/admin/major-management.html" class="nav-link"><i class="nav-icon fas fa-graduation-cap"></i><span class="nav-text">专业管理</span></a></div>
+                <div class="nav-item"><a href="/admin/role-management.html" class="nav-link active"><i class="nav-icon fas fa-user-shield"></i><span class="nav-text">角色管理</span></a></div>
+                <div class="nav-item"><a href="/admin/permission-management.html" class="nav-link"><i class="nav-icon fas fa-key"></i><span class="nav-text">权限管理</span></a></div>
+                <div class="nav-item"><a href="/admin/admin-management.html" class="nav-link"><i class="nav-icon fas fa-user-cog"></i><span class="nav-text">管理员管理</span></a></div>
+                <div class="nav-item"><a href="/admin/semester-management.html" class="nav-link"><i class="nav-icon fas fa-calendar-alt"></i><span class="nav-text">学期管理</span></a></div>
+                <div class="nav-item"><a href="/admin/announcement-management.html" class="nav-link"><i class="nav-icon fas fa-bullhorn"></i><span class="nav-text">公告管理</span></a></div>
+                <div class="nav-item"><a href="/admin/system-settings.html" class="nav-link"><i class="nav-icon fas fa-cog"></i><span class="nav-text">系统设置</span></a></div>
+                <div class="nav-item"><a href="/admin/system-logs.html" class="nav-link"><i class="nav-icon fas fa-history"></i><span class="nav-text">系统日志</span></a></div>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-navbar">
+                <div class="nav-left">
+                    <button class="mobile-sidebar-toggle"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title">角色管理</h1>
+                </div>
+                <div class="nav-right">
+                    <button class="nav-icon-btn" id="notification-btn"><i class="fas fa-bell"></i><span class="badge"></span></button>
+                    <div class="user-profile">
+                        <div class="user-avatar"><i class="fas fa-user"></i></div>
+                        <div class="user-info"><span class="user-name">管理员</span><span class="user-role">Admin</span></div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-wrapper">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">角色管理</h3>
+                        <div class="card-actions">
+                            <button class="btn btn-primary" onclick="showAddRoleModal()"><i class="fas fa-plus"></i> 添加角色</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="search-filter">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="form-label">搜索</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="roleSearch" placeholder="搜索角色名称/编码">
+                                            <button class="btn btn-primary" onclick="loadRoles(1)"><i class="fas fa-search"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label class="form-label">状态</label>
+                                        <select class="form-control" id="roleStatusFilter" onchange="loadRoles(1)">
+                                            <option value="">全部</option>
+                                            <option value="1">启用</option>
+                                            <option value="0">停用</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>角色名称</th>
+                                        <th>角色编码</th>
+                                        <th>描述</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="roleTableBody">
+                                    <tr><td colspan="5" class="text-center text-muted">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pagination-container">
+                            <ul class="pagination" id="rolePagination"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 添加角色模态框 -->
+    <div class="modal fade" id="addRoleModal" tabindex="-1">
+        <div class="modal-dialog"><div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">添加角色</h4>
+                <button type="button" class="close" onclick="closeModal('addRoleModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label>角色名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="roleName" placeholder="例如：系统管理员">
+                    </div>
+                    <div class="form-group">
+                        <label>角色编码 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="roleCode" placeholder="例如：admin">
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <textarea class="form-control" id="roleDesc" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>状态</label>
+                        <select class="form-control" id="roleStatus">
+                            <option value="1">启用</option>
+                            <option value="0">停用</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addRoleModal')">取消</button>
+                <button type="button" class="btn btn-primary" onclick="addRole()">保存</button>
+            </div>
+        </div></div>
+    </div>
+
+    <!-- 编辑角色模态框 -->
+    <div class="modal fade" id="editRoleModal" tabindex="-1">
+        <div class="modal-dialog"><div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">编辑角色</h4>
+                <button type="button" class="close" onclick="closeModal('editRoleModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label>角色名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editRoleName">
+                    </div>
+                    <div class="form-group">
+                        <label>角色编码</label>
+                        <input type="text" class="form-control" id="editRoleCode" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <textarea class="form-control" id="editRoleDesc" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>状态</label>
+                        <select class="form-control" id="editRoleStatus">
+                            <option value="1">启用</option>
+                            <option value="0">停用</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editRoleModal')">取消</button>
+                <button type="button" class="btn btn-primary" onclick="updateRole()">保存</button>
+            </div>
+        </div></div>
+    </div>
+
+    <script src="/js/app-api.js"></script>
+    <script src="/js/legacy-dynamic-pages.js"></script>
+</body>
+</html>

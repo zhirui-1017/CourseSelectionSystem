@@ -20,12 +20,28 @@
             body = JSON.stringify(body);
         }
 
+        // === JWT Token 自动携带 ===
+        const token = localStorage.getItem('token');
+        if (token) {
+            headers['Authorization'] = 'Bearer ' + token;
+        }
+
         const response = await fetch(path, {
             method,
             headers,
             body,
             credentials: 'same-origin'
         });
+
+        // 401 未授权 → 清除 Token 并跳转登录页
+        if (response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userInfo');
+            if (window.location.pathname.indexOf('/login') === -1) {
+                window.location.href = '/login.html';
+            }
+            throw new Error('未登录或登录已过期');
+        }
 
         const contentType = response.headers.get('content-type') || '';
         const payload = contentType.includes('application/json') ? await response.json() : await response.text();

@@ -105,6 +105,11 @@ public class StudentApiController {
         return Result.success(studentService.searchStudentsByName(name));
     }
 
+    @GetMapping("/count")
+    public Result<Long> count() {
+        return Result.success(studentService.count());
+    }
+
     @PutMapping("/{studentId}/reset-password")
     public Result<Boolean> resetPassword(@PathVariable Long studentId) {
         return Result.success(studentService.resetPassword(studentId));

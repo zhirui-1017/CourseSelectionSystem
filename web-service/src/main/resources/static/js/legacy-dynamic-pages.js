@@ -55,6 +55,14 @@
         if (path.endsWith('/admin/grade-management.html')) return initAdminGrades();
         if (path.endsWith('/admin/system-logs.html')) return initAdminLogs();
         if (path.endsWith('/admin/system-settings.html')) return initSystemSettings();
+        if (path.endsWith('/admin/college-management.html')) return initAdminColleges();
+        if (path.endsWith('/admin/department-management.html')) return initAdminDepts();
+        if (path.endsWith('/admin/major-management.html')) return initAdminMajors();
+        if (path.endsWith('/admin/role-management.html')) return initAdminRoles();
+        if (path.endsWith('/admin/permission-management.html')) return initAdminPerms();
+        if (path.endsWith('/admin/admin-management.html')) return initAdminAccounts();
+        if (path.endsWith('/admin/semester-management.html')) return initAdminSemesters();
+        if (path.endsWith('/admin/announcement-management.html')) return initAdminAnnouncements();
         if (path.endsWith('/student/grades.html')) return initStudentGrades();
         if (path.endsWith('/student/schedule.html')) return initStudentSchedule();
         if (path.endsWith('/student/messages.html')) return initStudentMessages();
@@ -2917,6 +2925,814 @@
         setText('averageScore', average);
         setText('passRate', scores.length ? `${Math.round(scores.filter((score) => score >= 60).length / scores.length * 100)}%` : '0%');
         setText('excellentRate', scores.length ? `${Math.round(scores.filter((score) => score >= 90).length / scores.length * 100)}%` : '0%');
+    }
+
+    // ========== 学院管理 ==========
+    async function initAdminColleges() {
+        window.loadColleges = (page) => loadColleges(page);
+        window.showAddCollegeModal = () => { clearForm('addCollegeForm'); openModal('addCollegeModal'); };
+        window.addCollege = addCollege;
+        window.showEditCollegeModal = showEditCollegeModal;
+        window.updateCollege = updateCollege;
+        window.showCollegeDetail = showCollegeDetail;
+        window.deleteCollege = deleteCollege;
+        window.toggleCollegeStatus = toggleCollegeStatus;
+        await loadColleges(1);
+    }
+
+    function collegeRow(item) {
+        return `<tr>
+            <td>${escape(item.code)}</td>
+            <td>${escape(item.name)}</td>
+            <td>${escape(item.code)}</td>
+            <td>${escape(item.description || '-')}</td>
+            <td>${statusBadge(item.status)}</td>
+            <td>
+                <button class="btn btn-sm btn-info" onclick="showCollegeDetail('${item.id}')"><i class="fas fa-eye"></i></button>
+                <button class="btn btn-sm btn-primary" onclick="showEditCollegeModal('${item.id}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-${Number(item.status) === 1 ? 'warning' : 'success'}" onclick="toggleCollegeStatus('${item.id}',${item.status})">${Number(item.status) === 1 ? '停用' : '启用'}</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteCollege('${item.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`;
+    }
+
+    async function loadColleges(page) {
+        const body = document.getElementById('collegeTableBody');
+        if (!body) return;
+        body.innerHTML = rowMessage(6, '正在加载学院数据...');
+        const data = await api.get('/api/v1/colleges/list', {
+            pageNum: Math.max(1, Number(page || 1)),
+            pageSize: 10,
+            name: value('collegeSearch'),
+            status: filterValue('collegeStatusFilter')
+        });
+        const rows = api.pageItems(data);
+        if (!rows.length) { body.innerHTML = rowMessage(6, '暂无学院数据'); renderPager('collegePagination', 1, 1, 'loadColleges'); return; }
+        body.innerHTML = rows.map(collegeRow).join('');
+        renderPager('collegePagination', page || 1, Math.ceil(api.pageTotal(data) / 10), 'loadColleges');
+    }
+
+    async function addCollege() {
+        await api.post('/api/v1/colleges', {
+            name: requiredValue('collegeName', '请填写学院名称'),
+            code: requiredValue('collegeCode', '请填写学院代码'),
+            description: value('collegeDesc'),
+            status: Number(value('collegeStatus')) || 1
+        });
+        closeModal('addCollegeModal'); notify('success', '添加成功', '学院已创建');
+        await loadColleges(1);
+    }
+
+    async function showEditCollegeModal(id) {
+        const item = await api.get(`/api/v1/colleges/${id}`);
+        setValue('editCollegeName', item.name);
+        setValue('editCollegeCode', item.code);
+        setValue('editCollegeDesc', item.description);
+        setValue('editCollegeStatus', item.status);
+        window._editCollegeId = id;
+        openModal('editCollegeModal');
+    }
+
+    async function updateCollege() {
+        const id = window._editCollegeId;
+        await api.request(`/api/v1/colleges/${id}`, {
+            method: 'PUT',
+            body: {
+                name: requiredValue('editCollegeName', '请填写学院名称'),
+                code: value('editCollegeCode'),
+                description: value('editCollegeDesc'),
+                status: Number(value('editCollegeStatus')) || 1
+            }
+        });
+        closeModal('editCollegeModal'); notify('success', '更新成功', '学院已更新');
+        await loadColleges(1);
+    }
+
+    async function showCollegeDetail(id) {
+        const item = await api.get(`/api/v1/colleges/${id}`);
+        setText('detailCollegeName', item.name);
+        setText('detailCollegeCode', item.code);
+        setText('detailCollegeDesc', item.description || '-');
+        setText('detailCollegeStatus', Number(item.status) === 1 ? '启用' : '停用');
+        openModal('collegeDetailModal');
+    }
+
+    async function deleteCollege(id) {
+        if (!confirm('确认删除该学院？')) return;
+        await api.del(`/api/v1/colleges/${id}`);
+        notify('success', '删除成功', '学院已删除');
+        await loadColleges(1);
+    }
+
+    async function toggleCollegeStatus(id, currentStatus) {
+        const endpoint = Number(currentStatus) === 1 ? `/api/v1/colleges/${id}/disable` : `/api/v1/colleges/${id}/enable`;
+        await api.request(endpoint, { method: 'PUT' });
+        notify('success', '操作成功', '学院状态已更新');
+        await loadColleges(1);
+    }
+
+    // ========== 系部管理 ==========
+    async function initAdminDepts() {
+        window.loadDepts = (page) => loadDepts(page);
+        window.showAddDeptModal = () => { populateDeptCollege('deptCollege'); clearForm('addDeptForm'); openModal('addDeptModal'); };
+        window.addDept = addDept;
+        window.showEditDeptModal = showEditDeptModal;
+        window.updateDept = updateDept;
+        window.deleteDept = deleteDept;
+        window.toggleDeptStatus = toggleDeptStatus;
+        window.goToDeptPage = (page) => loadDepts(page);
+        await loadDeptColleges();
+        await loadDepts(1);
+    }
+
+    function deptRow(item) {
+        return `<tr>
+            <td>${escape(item.departmentCode)}</td>
+            <td>${escape(item.departmentName)}</td>
+            <td>${escape(item.collegeName || '-')}</td>
+            <td>${escape(item.description || '-')}</td>
+            <td>${statusBadge(item.status)}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="showEditDeptModal('${item.departmentId || item.id}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-${Number(item.status) === 1 ? 'warning' : 'success'}" onclick="toggleDeptStatus('${item.departmentId || item.id}',${item.status})">${Number(item.status) === 1 ? '停用' : '启用'}</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteDept('${item.departmentId || item.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`;
+    }
+
+    async function loadDeptColleges() {
+        try {
+            const colleges = await api.get('/api/v1/colleges/all');
+            const opts = (Array.isArray(colleges) ? colleges : []).map((c) => `<option value="${c.id}">${escape(c.name)}</option>`).join('');
+            ['deptCollege', 'deptCollegeFilter', 'editDeptCollege'].forEach((id) => {
+                const sel = document.getElementById(id);
+                if (sel) {
+                    const current = sel.value;
+                    sel.innerHTML = id.includes('Filter') ? `<option value="">全部</option>${opts}` : `<option value="">请选择学院</option>${opts}`;
+                    if (current && [...sel.options].some((o) => o.value === current)) sel.value = current;
+                }
+            });
+        } catch (e) { /* ignore */ }
+    }
+
+    async function loadDepts(page) {
+        const body = document.getElementById('deptTableBody');
+        if (!body) return;
+        body.innerHTML = rowMessage(6, '正在加载系部数据...');
+        const data = await api.get('/api/v1/departments/list', {
+            pageNum: Math.max(1, Number(page || 1)),
+            pageSize: 10,
+            departmentName: value('deptSearch'),
+            collegeId: filterValue('deptCollegeFilter'),
+            status: filterValue('deptStatusFilter')
+        });
+        const rows = api.pageItems(data);
+        if (!rows.length) { body.innerHTML = rowMessage(6, '暂无系部数据'); renderPager('deptPagination', 1, 1, 'goToDeptPage'); return; }
+        body.innerHTML = rows.map(deptRow).join('');
+        renderPager('deptPagination', page || 1, Math.ceil(api.pageTotal(data) / 10), 'goToDeptPage');
+    }
+
+    async function addDept() {
+        await api.post('/api/v1/departments', {
+            departmentName: requiredValue('deptName', '请填写系部名称'),
+            departmentCode: requiredValue('deptCode', '请填写系部编号'),
+            collegeId: Number(requiredValue('deptCollege', '请选择所属学院')),
+            description: value('deptDesc'),
+            status: Number(value('deptStatus')) || 1
+        });
+        closeModal('addDeptModal'); notify('success', '添加成功', '系部已创建');
+        await loadDepts(1);
+    }
+
+    async function showEditDeptModal(id) {
+        const item = await api.get(`/api/v1/departments/${id}`);
+        setValue('editDeptName', item.departmentName);
+        setValue('editDeptCode', item.departmentCode);
+        setValue('editDeptDesc', item.description);
+        setValue('editDeptStatus', item.status);
+        const collegeSel = document.getElementById('editDeptCollege');
+        if (collegeSel && item.collegeId) collegeSel.value = item.collegeId;
+        window._editDeptId = id;
+        openModal('editDeptModal');
+    }
+
+    async function updateDept() {
+        const id = window._editDeptId;
+        await api.request(`/api/v1/departments/${id}`, {
+            method: 'PUT',
+            body: {
+                departmentName: requiredValue('editDeptName', '请填写系部名称'),
+                departmentCode: value('editDeptCode'),
+                collegeId: Number(requiredValue('editDeptCollege', '请选择所属学院')),
+                description: value('editDeptDesc'),
+                status: Number(value('editDeptStatus')) || 1
+            }
+        });
+        closeModal('editDeptModal'); notify('success', '更新成功', '系部已更新');
+        await loadDepts(1);
+    }
+
+    async function deleteDept(id) {
+        if (!confirm('确认删除该系部？')) return;
+        await api.del(`/api/v1/departments/${id}`);
+        notify('success', '删除成功');
+        await loadDepts(1);
+    }
+
+    async function toggleDeptStatus(id, currentStatus) {
+        await api.request(`/api/v1/departments/${id}/status?status=${Number(currentStatus) === 1 ? 0 : 1}`, { method: 'PUT' });
+        notify('success', '操作成功');
+        await loadDepts(1);
+    }
+
+    // ========== 专业管理 ==========
+    async function initAdminMajors() {
+        window.loadMajors = (page) => loadMajors(page);
+        window.showAddMajorModal = () => { populateMajorDept('majorDept'); clearForm('addMajorForm'); openModal('addMajorModal'); };
+        window.addMajor = addMajor;
+        window.showEditMajorModal = showEditMajorModal;
+        window.updateMajor = updateMajor;
+        window.deleteMajor = deleteMajor;
+        window.toggleMajorStatus = toggleMajorStatus;
+        window.goToMajorPage = (page) => loadMajors(page);
+        await loadMajorDepts();
+        await loadMajors(1);
+    }
+
+    function majorRow(item) {
+        return `<tr>
+            <td>${escape(item.majorCode)}</td>
+            <td>${escape(item.majorName)}</td>
+            <td>${escape(item.departmentName || '-')}</td>
+            <td>${escape(item.description || '-')}</td>
+            <td>${statusBadge(item.status)}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="showEditMajorModal('${item.majorId || item.id}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-${Number(item.status) === 1 ? 'warning' : 'success'}" onclick="toggleMajorStatus('${item.majorId || item.id}',${item.status})">${Number(item.status) === 1 ? '停用' : '启用'}</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteMajor('${item.majorId || item.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`;
+    }
+
+    async function loadMajorDepts() {
+        try {
+            const depts = await api.get('/api/v1/departments/active');
+            const opts = (Array.isArray(depts) ? depts : []).map((d) => `<option value="${d.departmentId || d.id}">${escape(d.departmentName)}</option>`).join('');
+            ['majorDept', 'majorDeptFilter', 'editMajorDept'].forEach((id) => {
+                const sel = document.getElementById(id);
+                if (sel) {
+                    sel.innerHTML = id.includes('Filter') ? `<option value="">全部</option>${opts}` : `<option value="">请选择系部</option>${opts}`;
+                }
+            });
+        } catch (e) { /* ignore */ }
+    }
+
+    async function loadMajors(page) {
+        const body = document.getElementById('majorTableBody');
+        if (!body) return;
+        body.innerHTML = rowMessage(6, '正在加载专业数据...');
+        const data = await api.get('/api/v1/majors/list', {
+            pageNum: Math.max(1, Number(page || 1)),
+            pageSize: 10,
+            majorName: value('majorSearch'),
+            departmentId: filterValue('majorDeptFilter'),
+            status: filterValue('majorStatusFilter')
+        });
+        const rows = api.pageItems(data);
+        if (!rows.length) { body.innerHTML = rowMessage(6, '暂无专业数据'); renderPager('majorPagination', 1, 1, 'goToMajorPage'); return; }
+        body.innerHTML = rows.map(majorRow).join('');
+        renderPager('majorPagination', page || 1, Math.ceil(api.pageTotal(data) / 10), 'goToMajorPage');
+    }
+
+    async function addMajor() {
+        await api.post('/api/v1/majors', {
+            majorName: requiredValue('majorName', '请填写专业名称'),
+            majorCode: requiredValue('majorCode', '请填写专业编号'),
+            departmentId: Number(requiredValue('majorDept', '请选择所属系部')),
+            description: value('majorDesc'),
+            status: Number(value('majorStatus')) || 1
+        });
+        closeModal('addMajorModal'); notify('success', '添加成功', '专业已创建');
+        await loadMajors(1);
+    }
+
+    async function showEditMajorModal(id) {
+        const item = await api.get(`/api/v1/majors/${id}`);
+        setValue('editMajorName', item.majorName);
+        setValue('editMajorCode', item.majorCode);
+        setValue('editMajorDesc', item.description);
+        setValue('editMajorStatus', item.status);
+        const deptSel = document.getElementById('editMajorDept');
+        if (deptSel && item.departmentId) deptSel.value = item.departmentId;
+        window._editMajorId = id;
+        openModal('editMajorModal');
+    }
+
+    async function updateMajor() {
+        const id = window._editMajorId;
+        await api.request(`/api/v1/majors/${id}`, {
+            method: 'PUT',
+            body: {
+                majorName: requiredValue('editMajorName', '请填写专业名称'),
+                majorCode: value('editMajorCode'),
+                departmentId: Number(requiredValue('editMajorDept', '请选择所属系部')),
+                description: value('editMajorDesc'),
+                status: Number(value('editMajorStatus')) || 1
+            }
+        });
+        closeModal('editMajorModal'); notify('success', '更新成功', '专业已更新');
+        await loadMajors(1);
+    }
+
+    async function deleteMajor(id) {
+        if (!confirm('确认删除该专业？')) return;
+        await api.del(`/api/v1/majors/${id}`);
+        notify('success', '删除成功');
+        await loadMajors(1);
+    }
+
+    async function toggleMajorStatus(id, currentStatus) {
+        await api.request(`/api/v1/majors/${id}/status?status=${Number(currentStatus) === 1 ? 0 : 1}`, { method: 'PUT' });
+        notify('success', '操作成功');
+        await loadMajors(1);
+    }
+
+    // ========== 角色管理 ==========
+    async function initAdminRoles() {
+        window.loadRoles = (page) => loadRoles(page);
+        window.showAddRoleModal = () => { clearForm('addRoleForm'); openModal('addRoleModal'); };
+        window.addRole = addRole;
+        window.showEditRoleModal = showEditRoleModal;
+        window.updateRole = updateRole;
+        window.deleteRole = deleteRole;
+        window.goToRolePage = (page) => loadRoles(page);
+        await loadRoles(1);
+    }
+
+    function roleRow(item) {
+        return `<tr>
+            <td>${escape(item.roleName)}</td>
+            <td>${escape(item.roleCode)}</td>
+            <td>${escape(item.description || '-')}</td>
+            <td>${statusBadge(item.status)}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="showEditRoleModal('${item.id}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-${Number(item.status) === 1 ? 'warning' : 'success'}" onclick="toggleRoleStatus('${item.id}',${item.status})">${Number(item.status) === 1 ? '停用' : '启用'}</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteRole('${item.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`;
+    }
+
+    async function loadRoles(page) {
+        const body = document.getElementById('roleTableBody');
+        if (!body) return;
+        body.innerHTML = rowMessage(5, '正在加载角色数据...');
+        const data = await api.get('/api/v1/roles/list', {
+            pageNum: Math.max(1, Number(page || 1)),
+            pageSize: 10,
+            name: value('roleSearch'),
+            status: filterValue('roleStatusFilter')
+        });
+        const rows = api.pageItems(data);
+        if (!rows.length) { body.innerHTML = rowMessage(5, '暂无角色数据'); renderPager('rolePagination', 1, 1, 'goToRolePage'); return; }
+        body.innerHTML = rows.map(roleRow).join('');
+        renderPager('rolePagination', page || 1, Math.ceil(api.pageTotal(data) / 10), 'goToRolePage');
+    }
+
+    async function addRole() {
+        await api.get('/api/v1/roles/create', {
+            name: requiredValue('roleName', '请填写角色名称'),
+            code: requiredValue('roleCode', '请填写角色编码'),
+            description: value('roleDesc'),
+            status: Number(value('roleStatus')) || 1
+        });
+        closeModal('addRoleModal'); notify('success', '添加成功', '角色已创建');
+        await loadRoles(1);
+    }
+
+    async function showEditRoleModal(id) {
+        const item = await api.get(`/api/v1/roles/${id}`);
+        setValue('editRoleName', item.roleName);
+        setValue('editRoleCode', item.roleCode);
+        setValue('editRoleDesc', item.description);
+        setValue('editRoleStatus', item.status);
+        window._editRoleId = id;
+        openModal('editRoleModal');
+    }
+
+    async function updateRole() {
+        const id = window._editRoleId;
+        await api.request(`/api/v1/roles/${id}`, {
+            method: 'PUT',
+            body: {
+                roleName: requiredValue('editRoleName', '请填写角色名称'),
+                roleCode: value('editRoleCode'),
+                description: value('editRoleDesc'),
+                status: Number(value('editRoleStatus')) || 1
+            }
+        });
+        closeModal('editRoleModal'); notify('success', '更新成功', '角色已更新');
+        await loadRoles(1);
+    }
+
+    async function deleteRole(id) {
+        if (!confirm('确认删除该角色？')) return;
+        await api.del(`/api/v1/roles/${id}`);
+        notify('success', '删除成功');
+        await loadRoles(1);
+    }
+
+    async function toggleRoleStatus(id, currentStatus) {
+        const endpoint = Number(currentStatus) === 1 ? `/api/v1/roles/${id}/disable` : `/api/v1/roles/${id}/enable`;
+        await api.request(endpoint, { method: 'PUT' });
+        notify('success', '操作成功');
+        await loadRoles(1);
+    }
+
+    // ========== 权限管理 ==========
+    async function initAdminPerms() {
+        window.loadPerms = (page) => loadPerms(page);
+        window.showAddPermModal = () => { clearForm('addPermForm'); openModal('addPermModal'); };
+        window.addPerm = addPerm;
+        window.showEditPermModal = showEditPermModal;
+        window.updatePerm = updatePerm;
+        window.deletePerm = deletePerm;
+        window.goToPermPage = (page) => loadPerms(page);
+        await loadPerms(1);
+    }
+
+    function permRow(item) {
+        const typeMap = { 1: '菜单', 2: '按钮', 3: 'API' };
+        return `<tr>
+            <td>${escape(item.permissionName)}</td>
+            <td>${escape(item.permissionCode)}</td>
+            <td>${escape(item.url || '-')}</td>
+            <td>${escape(item.method || '-')}</td>
+            <td>${typeMap[item.permissionType] || '-'}</td>
+            <td>${statusBadge(item.status)}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="showEditPermModal('${item.id}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-${Number(item.status) === 1 ? 'warning' : 'success'}" onclick="togglePermStatus('${item.id}',${item.status})">${Number(item.status) === 1 ? '停用' : '启用'}</button>
+                <button class="btn btn-sm btn-danger" onclick="deletePerm('${item.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`;
+    }
+
+    async function loadPerms(page) {
+        const body = document.getElementById('permTableBody');
+        if (!body) return;
+        body.innerHTML = rowMessage(7, '正在加载权限数据...');
+        const data = await api.get('/api/v1/permissions/page', {
+            pageNum: Math.max(1, Number(page || 1)),
+            pageSize: 10,
+            name: value('permSearch'),
+            status: filterValue('permStatusFilter')
+        });
+        const rows = api.pageItems(data);
+        if (!rows.length) { body.innerHTML = rowMessage(7, '暂无权限数据'); renderPager('permPagination', 1, 1, 'goToPermPage'); return; }
+        body.innerHTML = rows.map(permRow).join('');
+        renderPager('permPagination', page || 1, Math.ceil(api.pageTotal(data) / 10), 'goToPermPage');
+    }
+
+    async function addPerm() {
+        await api.post('/api/v1/permissions', {
+            permissionName: requiredValue('permName', '请填写权限名称'),
+            permissionCode: requiredValue('permCode', '请填写权限编码'),
+            url: value('permUrl'),
+            method: value('permMethod'),
+            permissionType: Number(value('permType')) || 3,
+            sort: Number(value('permSort')) || 0,
+            status: Number(value('permStatus')) || 1
+        });
+        closeModal('addPermModal'); notify('success', '添加成功', '权限已创建');
+        await loadPerms(1);
+    }
+
+    async function showEditPermModal(id) {
+        const item = await api.get(`/api/v1/permissions/${id}`);
+        setValue('editPermName', item.permissionName);
+        setValue('editPermCode', item.permissionCode);
+        setValue('editPermUrl', item.url);
+        setValue('editPermMethod', item.method);
+        setValue('editPermType', item.permissionType);
+        setValue('editPermSort', item.sort);
+        setValue('editPermStatus', item.status);
+        window._editPermId = id;
+        openModal('editPermModal');
+    }
+
+    async function updatePerm() {
+        const id = window._editPermId;
+        await api.request(`/api/v1/permissions/${id}`, {
+            method: 'PUT',
+            body: {
+                permissionName: requiredValue('editPermName', '请填写权限名称'),
+                permissionCode: requiredValue('editPermCode', '请填写权限编码'),
+                url: value('editPermUrl'),
+                method: value('editPermMethod'),
+                permissionType: Number(value('editPermType')) || 3,
+                sort: Number(value('editPermSort')) || 0,
+                status: Number(value('editPermStatus')) || 1
+            }
+        });
+        closeModal('editPermModal'); notify('success', '更新成功', '权限已更新');
+        await loadPerms(1);
+    }
+
+    async function deletePerm(id) {
+        if (!confirm('确认删除该权限？')) return;
+        await api.del(`/api/v1/permissions/${id}`);
+        notify('success', '删除成功');
+        await loadPerms(1);
+    }
+
+    async function togglePermStatus(id, currentStatus) {
+        await api.request(`/api/v1/permissions/${id}/status?status=${Number(currentStatus) === 1 ? 0 : 1}`, { method: 'PUT' });
+        notify('success', '操作成功');
+        await loadPerms(1);
+    }
+
+    // ========== 管理员账号管理 ==========
+    async function initAdminAccounts() {
+        window.loadAdmins = (page) => loadAdmins(page);
+        window.showAddAdminModal = () => { clearForm('addAdminForm'); openModal('addAdminModal'); };
+        window.addAdmin = addAdmin;
+        window.showEditAdminModal = showEditAdminModal;
+        window.updateAdmin = updateAdmin;
+        window.deleteAdmin = deleteAdmin;
+        window.resetAdminPassword = resetAdminPassword;
+        window.goToAdminPage = (page) => loadAdmins(page);
+        await loadAdmins(1);
+    }
+
+    function adminRow(item) {
+        return `<tr>
+            <td>${escape(item.username)}</td>
+            <td>${escape(item.realName || '-')}</td>
+            <td>${escape(item.email || '-')}</td>
+            <td>${escape(item.phone || '-')}</td>
+            <td>${statusBadge(item.status)}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="showEditAdminModal('${item.id}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-info" onclick="resetAdminPassword('${item.id}')"><i class="fas fa-key"></i></button>
+                <button class="btn btn-sm btn-danger" onclick="deleteAdmin('${item.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`;
+    }
+
+    async function loadAdmins(page) {
+        const body = document.getElementById('adminTableBody');
+        if (!body) return;
+        body.innerHTML = rowMessage(6, '正在加载管理员数据...');
+        const data = await api.get('/api/v1/users/list', {
+            userType: 3,
+            pageNum: Math.max(1, Number(page || 1)),
+            pageSize: 10,
+            keyword: value('adminSearch'),
+            status: filterValue('adminStatusFilter')
+        });
+        const rows = api.pageItems(data);
+        if (!rows.length) { body.innerHTML = rowMessage(6, '暂无管理员数据'); renderPager('adminPagination', 1, 1, 'goToAdminPage'); return; }
+        body.innerHTML = rows.map(adminRow).join('');
+        renderPager('adminPagination', page || 1, Math.ceil(api.pageTotal(data) / 10), 'goToAdminPage');
+    }
+
+    async function addAdmin() {
+        const username = requiredValue('adminUsername', '请填写用户名');
+        const password = requiredValue('adminPassword', '请填写密码');
+        if (password.length < 6) throw new Error('密码至少 6 位');
+        await api.post('/api/v1/users/register', {
+            username,
+            password,
+            realName: value('adminRealName'),
+            email: value('adminEmail'),
+            phone: value('adminPhone'),
+            userType: 3,
+            status: Number(value('adminStatus')) || 1
+        });
+        closeModal('addAdminModal'); notify('success', '添加成功', '管理员账号已创建');
+        await loadAdmins(1);
+    }
+
+    async function showEditAdminModal(id) {
+        const item = await api.get(`/api/v1/users/${id}`);
+        setValue('editAdminUsername', item.username);
+        setValue('editAdminRealName', item.realName);
+        setValue('editAdminEmail', item.email);
+        setValue('editAdminPhone', item.phone);
+        setValue('editAdminStatus', item.status);
+        window._editAdminId = id;
+        openModal('editAdminModal');
+    }
+
+    async function updateAdmin() {
+        const id = window._editAdminId;
+        await api.request(`/api/v1/users/${id}`, {
+            method: 'PUT',
+            body: {
+                realName: value('editAdminRealName'),
+                email: value('editAdminEmail'),
+                phone: value('editAdminPhone'),
+                status: Number(value('editAdminStatus')) || 1
+            }
+        });
+        closeModal('editAdminModal'); notify('success', '更新成功', '管理员已更新');
+        await loadAdmins(1);
+    }
+
+    async function deleteAdmin(id) {
+        if (!confirm('确认删除该管理员？')) return;
+        await api.del(`/api/v1/users/${id}`);
+        notify('success', '删除成功');
+        await loadAdmins(1);
+    }
+
+    async function resetAdminPassword(id) {
+        const newPwd = prompt('请输入新密码（至少 6 位）:');
+        if (!newPwd || newPwd.length < 6) { notify('error', '密码无效', '密码至少 6 位'); return; }
+        await api.request(`/api/v1/users/${id}/reset-password?password=${encodeURIComponent(newPwd)}`, { method: 'PUT' });
+        notify('success', '重置成功', '密码已重置');
+    }
+
+    // ========== 学期管理 ==========
+    async function initAdminSemesters() {
+        window.loadSemesters = (page) => loadSemesters(page);
+        window.showAddSemesterModal = () => { clearForm('addSemesterForm'); openModal('addSemesterModal'); };
+        window.addSemester = addSemester;
+        window.showEditSemesterModal = showEditSemesterModal;
+        window.updateSemester = updateSemester;
+        window.deleteSemester = deleteSemester;
+        window.setCurrentSemester = setCurrentSemester;
+        window.goToSemesterPage = (page) => loadSemesters(page);
+        await loadSemesters(1);
+    }
+
+    function semesterRow(item) {
+        return `<tr>
+            <td>${escape(item.semesterId)}</td>
+            <td>${escape(item.semesterName)}</td>
+            <td>${formatDate(item.startDate)}</td>
+            <td>${formatDate(item.endDate)}</td>
+            <td>${Number(item.isCurrent) ? '<span class="badge badge-success">当前</span>' : '-'}</td>
+            <td>${statusBadge(item.status)}</td>
+            <td>
+                ${!Number(item.isCurrent) ? `<button class="btn btn-sm btn-success" onclick="setCurrentSemester('${item.id}')"><i class="fas fa-check"></i> 设为当前</button>` : ''}
+                <button class="btn btn-sm btn-primary" onclick="showEditSemesterModal('${item.id}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-danger" onclick="deleteSemester('${item.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`;
+    }
+
+    async function loadSemesters(page) {
+        const body = document.getElementById('semesterTableBody');
+        if (!body) return;
+        body.innerHTML = rowMessage(7, '正在加载学期数据...');
+        const data = await api.get('/api/v1/semesters/list', {
+            pageNum: Math.max(1, Number(page || 1)),
+            pageSize: 10,
+            keyword: value('semesterSearch'),
+            status: filterValue('semesterStatusFilter')
+        });
+        const rows = api.pageItems(data);
+        if (!rows.length) { body.innerHTML = rowMessage(7, '暂无学期数据'); renderPager('semesterPagination', 1, 1, 'goToSemesterPage'); return; }
+        body.innerHTML = rows.map(semesterRow).join('');
+        renderPager('semesterPagination', page || 1, Math.ceil(api.pageTotal(data) / 10), 'goToSemesterPage');
+    }
+
+    async function addSemester() {
+        await api.post('/api/v1/semesters', {
+            semesterId: requiredValue('semesterId', '请填写学期标识'),
+            semesterName: requiredValue('semesterName', '请填写学期名称'),
+            startDate: requiredValue('semesterStart', '请选择开始日期'),
+            endDate: requiredValue('semesterEnd', '请选择结束日期'),
+            isCurrent: value('semesterIsCurrent') === 'true',
+            status: Number(value('semesterStatus')) || 1
+        });
+        closeModal('addSemesterModal'); notify('success', '添加成功', '学期已创建');
+        await loadSemesters(1);
+    }
+
+    async function showEditSemesterModal(id) {
+        const item = await api.get(`/api/v1/semesters/${id}`);
+        setValue('editSemesterId', item.semesterId);
+        setValue('editSemesterName', item.semesterName);
+        setValue('editSemesterStart', dateInput(item.startDate));
+        setValue('editSemesterEnd', dateInput(item.endDate));
+        setValue('editSemesterIsCurrent', String(Boolean(Number(item.isCurrent))));
+        setValue('editSemesterStatus', item.status);
+        window._editSemesterId = id;
+        openModal('editSemesterModal');
+    }
+
+    async function updateSemester() {
+        const id = window._editSemesterId;
+        await api.request(`/api/v1/semesters/${id}`, {
+            method: 'PUT',
+            body: {
+                semesterName: requiredValue('editSemesterName', '请填写学期名称'),
+                startDate: requiredValue('editSemesterStart', '请选择开始日期'),
+                endDate: requiredValue('editSemesterEnd', '请选择结束日期'),
+                isCurrent: value('editSemesterIsCurrent') === 'true',
+                status: Number(value('editSemesterStatus')) || 1
+            }
+        });
+        closeModal('editSemesterModal'); notify('success', '更新成功', '学期已更新');
+        await loadSemesters(1);
+    }
+
+    async function deleteSemester(id) {
+        if (!confirm('确认删除该学期？')) return;
+        await api.del(`/api/v1/semesters/${id}`);
+        notify('success', '删除成功');
+        await loadSemesters(1);
+    }
+
+    async function setCurrentSemester(id) {
+        await api.request(`/api/v1/semesters/${id}/current`, { method: 'PUT' });
+        notify('success', '设置成功', '已设为当前学期');
+        await loadSemesters(1);
+    }
+
+    // ========== 课程公告管理 ==========
+    async function initAdminAnnouncements() {
+        window.loadAnnouncements = (page) => loadAnnouncements(page);
+        window.showAddAnnouncementModal = () => { clearForm('addAnnouncementForm'); openModal('addAnnouncementModal'); };
+        window.addAnnouncement = addAnnouncement;
+        window.showAnnouncementDetail = showAnnouncementDetail;
+        window.deleteAnnouncement = deleteAnnouncement;
+        window.goToAnnouncementPage = (page) => loadAnnouncements(page);
+        await loadAnnouncementCourses();
+        await loadAnnouncements(1);
+    }
+
+    function announcementRow(item) {
+        return `<tr>
+            <td><a href="javascript:void(0)" onclick="showAnnouncementDetail('${item.id}')" style="font-weight:500;">${escape(item.title)}</a></td>
+            <td>${escape(item.courseName || '-')}</td>
+            <td>${escape(item.createdByName || '-')}</td>
+            <td>${formatDateTime(item.createTime)}</td>
+            <td>
+                <button class="btn btn-sm btn-info" onclick="showAnnouncementDetail('${item.id}')"><i class="fas fa-eye"></i></button>
+                <button class="btn btn-sm btn-danger" onclick="deleteAnnouncement('${item.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`;
+    }
+
+    async function loadAnnouncementCourses() {
+        try {
+            const courses = await api.get('/api/v1/courses/list', { pageNum: 1, pageSize: 999 });
+            const rows = api.pageItems(courses);
+            const opts = rows.map((c) => `<option value="${c.id}">${escape(c.courseName)}</option>`).join('');
+            ['announcementCourse', 'announcementCourseFilter'].forEach((id) => {
+                const sel = document.getElementById(id);
+                if (sel) {
+                    sel.innerHTML = id.includes('Filter') ? `<option value="">全部课程</option>${opts}` : `<option value="">请选择课程</option>${opts}`;
+                }
+            });
+        } catch (e) { /* ignore */ }
+    }
+
+    async function loadAnnouncements(page) {
+        const body = document.getElementById('announcementTableBody');
+        if (!body) return;
+        body.innerHTML = rowMessage(5, '正在加载公告数据...');
+        const data = await api.get('/api/v1/course-announcements/list', {
+            pageNum: Math.max(1, Number(page || 1)),
+            pageSize: 10,
+            keyword: value('announcementSearch'),
+            courseId: filterValue('announcementCourseFilter')
+        });
+        const rows = api.pageItems(data);
+        if (!rows.length) { body.innerHTML = rowMessage(5, '暂无公告数据'); renderPager('announcementPagination', 1, 1, 'goToAnnouncementPage'); return; }
+        body.innerHTML = rows.map(announcementRow).join('');
+        renderPager('announcementPagination', page || 1, Math.ceil(api.pageTotal(data) / 10), 'goToAnnouncementPage');
+    }
+
+    async function addAnnouncement() {
+        await api.post('/api/v1/course-announcements', {
+            title: requiredValue('announcementTitle', '请填写公告标题'),
+            courseId: Number(requiredValue('announcementCourse', '请选择关联课程')),
+            content: requiredValue('announcementContent', '请填写公告内容')
+        });
+        closeModal('addAnnouncementModal'); notify('success', '发布成功', '公告已发布');
+        await loadAnnouncements(1);
+    }
+
+    async function showAnnouncementDetail(id) {
+        const item = await api.get(`/api/v1/course-announcements/${id}`);
+        setText('detailAnnouncementTitle', item.title);
+        setText('detailAnnouncementCourse', item.courseName || '-');
+        setText('detailAnnouncementAuthor', item.createdByName || '-');
+        setText('detailAnnouncementTime', formatDateTime(item.createTime));
+        setText('detailAnnouncementContent', item.content || '');
+        openModal('announcementDetailModal');
+    }
+
+    async function deleteAnnouncement(id) {
+        if (!confirm('确认删除该公告？')) return;
+        await api.del(`/api/v1/course-announcements/${id}`);
+        notify('success', '删除成功');
+        await loadAnnouncements(1);
     }
 
     function renderPager(id, currentPage, totalPages, fnName) {

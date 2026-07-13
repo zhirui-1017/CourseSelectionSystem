@@ -15,25 +15,30 @@ class GatewayRoutesConfigurationTest {
     private final Properties properties = loadGatewayProperties();
 
     @Test
-    void apiDomainRoutesPointToOwnedServicesBeforeLegacyFallback() {
-        assertRoute(0, ServiceNames.COURSE_SERVICE,
+    void apiDomainRoutesPointToOwnedServicesBeforeWebCatchall() {
+        // Route 0: 用户/认证/角色/权限
+        assertRoute(0, ServiceNames.USER_SERVICE,
+                "/api/v1/auth/**,/api/v1/users/**,/api/v1/roles/**,/api/v1/permissions/**,/api/v1/messages/**,/api/v1/operation-logs/**,/api/v1/system-settings/**");
+        // Route 1: 学生 + 班级
+        assertRoute(1, ServiceNames.STUDENT_SERVICE, "/api/v1/students/**,/api/v1/classes/**");
+        // Route 2: 教师
+        assertRoute(2, ServiceNames.TEACHER_SERVICE, "/api/v1/teachers/**");
+        // Route 3: 课程/学院/系部/专业/学期/公告
+        assertRoute(3, ServiceNames.COURSE_SERVICE,
                 "/api/v1/courses/**,/api/v1/colleges/**,/api/v1/departments/**,/api/v1/majors/**,/api/v1/semesters/**,/api/v1/course-announcements/**");
-        assertRoute(1, ServiceNames.SELECTION_SERVICE,
+        // Route 4: 选课/评价/成绩
+        assertRoute(4, ServiceNames.SELECTION_SERVICE,
                 "/api/v1/selections/**,/api/v1/course-selections/**,/api/v1/evaluations/**,/api/v1/grades/**");
-        assertRoute(2, ServiceNames.USER_SERVICE,
-                "/api/v1/users/**,/api/v1/roles/**,/api/v1/permissions/**,/api/v1/messages/**,/api/v1/operation-logs/**,/api/v1/system-settings/**");
-        assertRoute(3, ServiceNames.STUDENT_SERVICE, "/api/v1/students/**,/api/v1/classes/**");
-        assertRoute(4, ServiceNames.TEACHER_SERVICE, "/api/v1/teachers/**");
     }
 
     @Test
-    void legacyWebRouteKeepsPageAndFallbackApiCompatibilityLast() {
+    void webServiceRouteIsCatchallLast() {
         assertThat(properties.getProperty("spring.cloud.gateway.routes[5].id"))
-                .isEqualTo("web-service-legacy");
+                .isEqualTo(ServiceNames.WEB_SERVICE);
         assertThat(properties.getProperty("spring.cloud.gateway.routes[5].uri"))
                 .isEqualTo("lb://" + ServiceNames.WEB_SERVICE);
         assertThat(properties.getProperty("spring.cloud.gateway.routes[5].predicates[0]"))
-                .isEqualTo("Path=/,/login.html,/login/**,/admin/**,/student/**,/teacher/**,/static/**,/css/**,/js/**,/images/**,/webjars/**,/api/v1/**");
+                .isEqualTo("Path=/**");
     }
 
     @Test

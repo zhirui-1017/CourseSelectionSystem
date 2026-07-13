@@ -203,4 +203,9 @@ public class CourseController {
         List<Course> courses = courseService.getPopularCourses(limit);
         return Result.success(courses);
     }
+
+    @GetMapping("/count")
+    public Result<Long> count() {
+        return Result.success(courseService.count());
+    }
 }

@@ -206,4 +206,10 @@ public interface TeacherService {
         teacher.setId(id);
         return updateTeacher(teacher);
     }
+
+    /**
+     * 获取教师总数
+     * @return 教师总数
+     */
+    long count();
 }

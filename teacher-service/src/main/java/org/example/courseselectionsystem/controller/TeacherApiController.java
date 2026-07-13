@@ -100,6 +100,11 @@ public class TeacherApiController {
         return Result.success(teacherService.searchTeachersByName(name));
     }
 
+    @GetMapping("/count")
+    public Result<Long> count() {
+        return Result.success(teacherService.count());
+    }
+
     @PutMapping("/{teacherId}/reset-password")
     public Result<Boolean> resetPassword(@PathVariable Long teacherId) {
         return Result.success(teacherService.resetPassword(teacherId));
