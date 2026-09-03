@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string[]]$Service,
     [switch]$All,
     [int]$TimeoutSeconds = 30

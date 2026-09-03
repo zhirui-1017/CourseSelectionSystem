@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.courseselectionsystem.mapper.ChatSessionMapper">
+
+    <resultMap id="ChatSessionResultMap" type="org.example.courseselectionsystem.entity.ChatSession">
+        <id property="id" column="id"/>
+        <result property="sessionUid" column="session_uid"/>
+        <result property="userId" column="user_id"/>
+        <result property="userRole" column="user_role"/>
+        <result property="title" column="title"/>
+        <result property="messageCount" column="message_count"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectByUserIdAndRole" resultMap="ChatSessionResultMap">
+        SELECT * FROM chat_session 
+        WHERE user_id = #{userId} AND user_role = #{userRole}
+        ORDER BY updated_at DESC
+    </select>
+
+    <select id="selectBySessionUid" resultMap="ChatSessionResultMap">
+        SELECT * FROM chat_session WHERE session_uid = #{sessionUid}
+    </select>
+
+    <update id="updateTitle">
+        UPDATE chat_session 
+        SET title = #{title}, message_count = #{messageCount}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

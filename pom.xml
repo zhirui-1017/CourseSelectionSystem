@@ -22,6 +22,7 @@
         <module>teacher-service</module>
         <module>course-service</module>
         <module>selection-service</module>
+        <module>assistant-service</module>
     </modules>
 
     <properties>

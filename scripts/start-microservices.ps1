@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$JavaHome = $env:JAVA_HOME,
     [switch]$SkipBuild,
     [int]$TimeoutSeconds = 180,
@@ -134,6 +134,7 @@ $services = @(
     [pscustomobject]@{ Name = "teacher-service"; Module = "teacher-service"; Port = 8103; HealthPath = "/actuator/health" },
     [pscustomobject]@{ Name = "course-service"; Module = "course-service"; Port = 8104; HealthPath = "/actuator/health" },
     [pscustomobject]@{ Name = "selection-service"; Module = "selection-service"; Port = 8105; HealthPath = "/actuator/health" },
+    [pscustomobject]@{ Name = "assistant-service"; Module = "assistant-service"; Port = 8106; HealthPath = "/actuator/health" },
     [pscustomobject]@{ Name = "gateway-server"; Module = "gateway-server"; Port = 9000; HealthPath = "/actuator/health" }
 )
 
