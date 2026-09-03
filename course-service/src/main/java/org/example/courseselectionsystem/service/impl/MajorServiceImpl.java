@@ -1,11 +1,15 @@
 package org.example.courseselectionsystem.service.impl;
 
 import org.example.courseselectionsystem.common.Result;
+import org.example.courseselectionsystem.entity.Department;
 import org.example.courseselectionsystem.entity.Major;
 import org.example.courseselectionsystem.exception.BusinessException;
+import org.example.courseselectionsystem.repository.DepartmentRepository;
 import org.example.courseselectionsystem.repository.MajorRepository;
 import org.example.courseselectionsystem.service.MajorService;
 import org.example.courseselectionsystem.vo.PageRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -15,6 +19,9 @@ import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 专业服务实现类
@@ -22,8 +29,13 @@ import java.util.List;
 @Service
 public class MajorServiceImpl implements MajorService {
 
+    private static final Logger logger = LoggerFactory.getLogger(MajorServiceImpl.class);
+
     @Autowired
     private MajorRepository majorRepository;
+
+    @Autowired
+    private DepartmentRepository departmentRepository;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -172,13 +184,39 @@ public class MajorServiceImpl implements MajorService {
         // 构建排序规则
         PageRequest request = pageRequestParam == null ? new PageRequest() : pageRequestParam;
         int pageNum = request.getPageNum() == null || request.getPageNum() < 1 ? 1 : request.getPageNum();
-        int pageSize = request.getPageSize() == null || request.getPageSize() < 1 ? 10 : Math.min(request.getPageSize(), 100);
+        int pageSize = request.getPageSize() == null || request.getPageSize() < 1 ? 10 : Math.min(request.getPageSize(), 1000);
 
         // 构建分页请求
         org.springframework.data.domain.PageRequest pageable =
                 org.springframework.data.domain.PageRequest.of(pageNum - 1, pageSize, majorSort(request));
 
-        return majorRepository.findMajors(blankToNull(majorName), blankToNull(majorCode), departmentId, status, pageable);
+        Page<Major> majorPage = majorRepository.findMajors(blankToNull(majorName), blankToNull(majorCode), departmentId, status, pageable);
+        return enrichDepartmentName(majorPage);
+    }
+
+    /**
+     * 为分页结果填充所属系部名称
+     */
+    private Page<Major> enrichDepartmentName(Page<Major> page) {
+        try {
+            List<Long> deptIds = page.getContent().stream()
+                    .map(Major::getDepartmentId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (!deptIds.isEmpty()) {
+                Map<Long, String> names = departmentRepository.findAllById(deptIds).stream()
+                        .collect(Collectors.toMap(Department::getId, Department::getDepartmentName, (a, b) -> a));
+                page.getContent().forEach(m -> {
+                    if (m.getDepartmentId() != null) {
+                        m.setDepartmentName(names.get(m.getDepartmentId()));
+                    }
+                });
+            }
+        } catch (Exception e) {
+            logger.warn("填充专业所属系部名称失败", e);
+        }
+        return page;
     }
 
     @Override

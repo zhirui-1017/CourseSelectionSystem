@@ -1,9 +1,10 @@
 package org.example.courseselectionsystem.repository;
 
 import org.example.courseselectionsystem.entity.Permission;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -77,6 +78,21 @@ public interface PermissionRepository extends JpaRepository<Permission, Long> {
      * @return 权限列表
      */
     List<Permission> findByStatus(Integer status);
+
+    /**
+     * 分页查询指定状态的权限
+     * @param status 状态：1-启用，0-停用
+     * @param pageable 分页参数
+     * @return 分页权限列表
+     */
+    Page<Permission> findByStatus(Integer status, Pageable pageable);
+
+    /**
+     * 统计指定状态的权限数量
+     * @param status 状态：1-启用，0-停用
+     * @return 数量
+     */
+    long countByStatus(Integer status);
 
     /**
      * 根据权限类型查询权限

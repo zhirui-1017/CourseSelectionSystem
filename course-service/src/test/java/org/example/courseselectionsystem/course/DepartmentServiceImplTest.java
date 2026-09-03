@@ -35,15 +35,15 @@ class DepartmentServiceImplTest {
         request.setPageSize(4);
         request.setOrderByColumn("name");
         request.setIsAsc("asc");
-        when(departmentRepository.findDepartments(eq("计算机"), eq("CS"), eq(1),
+        when(departmentRepository.findDepartments(eq("计算机"), eq("CS"), isNull(), eq(1),
                 any(org.springframework.data.domain.PageRequest.class)))
                 .thenReturn(new PageImpl<>(List.of(new Department()), org.springframework.data.domain.PageRequest.of(1, 4), 9));
 
-        service.getDepartmentList(request, "计算机", "CS", 1);
+        service.getDepartmentList(request, "计算机", "CS", null, 1);
 
         ArgumentCaptor<org.springframework.data.domain.PageRequest> captor =
                 ArgumentCaptor.forClass(org.springframework.data.domain.PageRequest.class);
-        verify(departmentRepository).findDepartments(eq("计算机"), eq("CS"), eq(1), captor.capture());
+        verify(departmentRepository).findDepartments(eq("计算机"), eq("CS"), isNull(), eq(1), captor.capture());
         assertThat(captor.getValue().getPageNumber()).isEqualTo(1);
         assertThat(captor.getValue().getPageSize()).isEqualTo(4);
         assertThat(captor.getValue().getSort().getOrderFor("departmentName")).isNotNull();
@@ -56,17 +56,17 @@ class DepartmentServiceImplTest {
         request.setPageNum(0);
         request.setPageSize(500);
         request.setOrderByColumn("unsafeField");
-        when(departmentRepository.findDepartments(isNull(), isNull(), isNull(),
+        when(departmentRepository.findDepartments(isNull(), isNull(), isNull(), isNull(),
                 any(org.springframework.data.domain.PageRequest.class)))
                 .thenReturn(new PageImpl<>(List.of(), org.springframework.data.domain.PageRequest.of(0, 100), 0));
 
-        service.getDepartmentList(request, " ", "", null);
+        service.getDepartmentList(request, " ", "", null, null);
 
         ArgumentCaptor<org.springframework.data.domain.PageRequest> captor =
                 ArgumentCaptor.forClass(org.springframework.data.domain.PageRequest.class);
-        verify(departmentRepository).findDepartments(isNull(), isNull(), isNull(), captor.capture());
+        verify(departmentRepository).findDepartments(isNull(), isNull(), isNull(), isNull(), captor.capture());
         assertThat(captor.getValue().getPageNumber()).isEqualTo(0);
-        assertThat(captor.getValue().getPageSize()).isEqualTo(100);
+        assertThat(captor.getValue().getPageSize()).isEqualTo(500);
         assertThat(captor.getValue().getSort().getOrderFor("id")).isNotNull();
     }
 

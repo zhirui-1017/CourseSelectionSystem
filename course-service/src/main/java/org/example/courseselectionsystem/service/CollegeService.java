@@ -48,9 +48,11 @@ public interface CollegeService {
     /**
      * 获取学院列表方法
      * @param pageRequest 分页请求参数
+     * @param name 学院名称（模糊搜索）
+     * @param status 状态
      * @return 学院列表
      */
-    PageResult<CollegeVO> getCollegeList(PageRequest pageRequest);
+    PageResult<CollegeVO> getCollegeList(PageRequest pageRequest, String name, String code, Integer status);
 
     /**
      * 根据名称查询学院方法

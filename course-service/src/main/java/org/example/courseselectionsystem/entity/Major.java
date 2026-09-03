@@ -82,13 +82,13 @@ public class Major {
     /**
      * 创建时间
      */
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "create_time", nullable = false, updatable = false)
     private Date createTime;
 
     /**
      * 更新时间
      */
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "update_time", nullable = false)
     private Date updateTime;
 
     /**

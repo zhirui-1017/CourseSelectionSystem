@@ -38,6 +38,12 @@ public class Department {
     private Long collegeId;
 
     /**
+     * 所属学院名称（关联查询填充）
+     */
+    @Transient
+    private String collegeName;
+
+    /**
      * 学院负责人ID
      */
     @Transient
@@ -76,13 +82,13 @@ public class Department {
     /**
      * 创建时间
      */
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "create_time", nullable = false, updatable = false)
     private Date createTime;
 
     /**
      * 更新时间
      */
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "update_time", nullable = false)
     private Date updateTime;
 
     /**

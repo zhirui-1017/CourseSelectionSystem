@@ -1,5 +1,6 @@
 package org.example.courseselectionsystem.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -59,23 +60,24 @@ public class Role {
     private Date updateTime;
 
     /**
-     * 乐观锁版本号
+     * 乐观锁版本号（cloud 库 sys_role 表无 version 列，标记为不持久化）
      */
-    @Version
-    @Column(name = "version", nullable = false, columnDefinition = "int default 0")
+    @Transient
     private Integer version;
 
     /**
-     * 用户与角色的多对多关系
+     * 用户与角色的多对多关系（仅作反向映射，不参与 JSON 序列化，避免懒加载异常）
      */
+    @JsonIgnore
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
     private List<User> users;
 
     /**
-     * 角色与权限的多对多关系
+     * 角色与权限的多对多关系（仅作映射，不参与 JSON 序列化，避免懒加载异常）
      */
+    @JsonIgnore
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @ManyToMany(fetch = FetchType.LAZY)

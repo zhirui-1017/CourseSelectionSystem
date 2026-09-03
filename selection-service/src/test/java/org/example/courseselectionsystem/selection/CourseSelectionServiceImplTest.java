@@ -70,7 +70,7 @@ class CourseSelectionServiceImplTest {
         verify(courseSelectionRepository).findByStudentId(eq(3L), pageableCaptor.capture());
         Pageable pageable = pageableCaptor.getValue();
         assertThat(pageable.getPageNumber()).isZero();
-        assertThat(pageable.getPageSize()).isEqualTo(100);
+        assertThat(pageable.getPageSize()).isEqualTo(500);
         assertThat(pageable.getSort().getOrderFor("selectionTime")).isNotNull();
     }
 

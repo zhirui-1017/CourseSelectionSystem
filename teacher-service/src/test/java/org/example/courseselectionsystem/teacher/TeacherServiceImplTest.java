@@ -78,10 +78,10 @@ class TeacherServiceImplTest {
         ArgumentCaptor<QueryWrapper> wrapperCaptor = ArgumentCaptor.forClass(QueryWrapper.class);
         verify(teacherMapper).selectPage(pageCaptor.capture(), wrapperCaptor.capture());
         assertThat(pageCaptor.getValue().getCurrent()).isEqualTo(1);
-        assertThat(pageCaptor.getValue().getSize()).isEqualTo(100);
+        assertThat(pageCaptor.getValue().getSize()).isEqualTo(500);
         assertThat(wrapperCaptor.getValue().getSqlSegment()).contains("ORDER BY id ASC");
         assertThat(result.getPageNum()).isEqualTo(1);
-        assertThat(result.getPageSize()).isEqualTo(100);
+        assertThat(result.getPageSize()).isEqualTo(500);
     }
 
     @Test

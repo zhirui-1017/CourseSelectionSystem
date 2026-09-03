@@ -99,6 +99,19 @@ function Wait-EurekaRegistration {
 $jdkRoot = Resolve-JavaHome $JavaHome
 $env:JAVA_HOME = $jdkRoot
 
+# 清理 WorkBuddy/CodeBuddy 运行时注入的 SERVER__PORT，避免覆盖各服务的 server.port
+[System.Environment]::SetEnvironmentVariable("SERVER__PORT", $null, [System.EnvironmentVariableTarget]::Process)
+[System.Environment]::SetEnvironmentVariable("SERVER_PORT", $null, [System.EnvironmentVariableTarget]::Process)
+
+# 修复 Windows 环境下 Path/PATH/path 大小写重复导致 Start-Process 抛异常的问题
+$envVars = [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Process)
+$pathKeys = $envVars.Keys | Where-Object { $_ -ieq "Path" }
+$pathValue = $env:Path
+foreach ($key in $pathKeys) {
+    [System.Environment]::SetEnvironmentVariable($key, $null, [System.EnvironmentVariableTarget]::Process)
+}
+[System.Environment]::SetEnvironmentVariable("Path", $pathValue, [System.EnvironmentVariableTarget]::Process)
+
 New-Item -ItemType Directory -Path $runtimeDir -Force | Out-Null
 
 if (-not $SkipBuild) {

@@ -8,7 +8,10 @@ import org.example.courseselectionsystem.vo.PageRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 学院控制器类
@@ -56,6 +59,18 @@ public class CollegeController {
     }
 
     /**
+     * 获取学院列表（供 Feign 跨服务调用，根路径）
+     */
+    @GetMapping
+    public Result<List<Map<String, Object>>> listColleges() {
+        List<CollegeVO> colleges = collegeService.getAllColleges();
+        List<Map<String, Object>> list = colleges.stream()
+                .map(this::collegeToMap)
+                .collect(Collectors.toList());
+        return Result.success(list);
+    }
+
+    /**
      * 根据ID获取学院接口
      * @param id 学院ID
      * @return 学院信息
@@ -79,11 +94,16 @@ public class CollegeController {
     /**
      * 获取学院列表接口
      * @param pageRequest 分页请求参数
+     * @param name 学院名称（模糊搜索）
+     * @param status 状态
      * @return 学院列表
      */
     @GetMapping("/list")
-    public Result<PageResult<CollegeVO>> getCollegeList(PageRequest pageRequest) {
-        org.example.courseselectionsystem.service.CollegeService.PageResult<CollegeVO> collegeList = collegeService.getCollegeList(pageRequest);
+    public Result<PageResult<CollegeVO>> getCollegeList(PageRequest pageRequest,
+                                                         @RequestParam(required = false) String name,
+                                                         @RequestParam(required = false) String code,
+                                                         @RequestParam(required = false) Integer status) {
+        org.example.courseselectionsystem.service.CollegeService.PageResult<CollegeVO> collegeList = collegeService.getCollegeList(pageRequest, name, code, status);
         return Result.success(new PageResult<>(collegeList.getItems(), collegeList.getTotal(), collegeList.getPageNum(), collegeList.getPageSize()));
     }
 
@@ -129,6 +149,18 @@ public class CollegeController {
     public Result<Boolean> disableCollege(@PathVariable Long id) {
         collegeService.disableCollege(id);
         return Result.success(true);
+    }
+
+    // ========== 内部辅助方法 ==========
+
+    private Map<String, Object> collegeToMap(CollegeVO college) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("id", college.getId());
+        map.put("name", college.getName());
+        map.put("code", college.getCode());
+        map.put("description", college.getDescription());
+        map.put("status", college.getStatus());
+        return map;
     }
 
     /**

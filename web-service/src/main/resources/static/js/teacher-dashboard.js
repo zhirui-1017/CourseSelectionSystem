@@ -52,9 +52,17 @@
     }
 
     async function loadCurrentTeacher() {
-        const current = await api.get('/login/current');
+        const current = await api.get('/api/v1/auth/current-user');
+        // 合并 localStorage 中的 userInfo 作为补充
+        try {
+            const stored = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (stored && Object.keys(stored).length) {
+                current.user = stored;
+                if (!current.username) current.username = stored.username || stored.studentNo || stored.teacherNo;
+            }
+        } catch (e) { /* ignore */ }
         if (!current || current.role !== 'teacher') {
-            window.location.href = '/login';
+            window.location.href = '/login.html';
             return;
         }
         state.teacher = current.user || {
@@ -251,6 +259,8 @@
                 <div class="teacher-actions">
                     <button class="btn btn-secondary btn-sm" type="button" data-action="students" data-course-id="${api.escapeHtml(course.id)}"><i class="fas fa-users"></i>学生</button>
                     <button class="btn btn-primary btn-sm" type="button" data-action="grades" data-course-id="${api.escapeHtml(course.id)}"><i class="fas fa-pen"></i>成绩</button>
+                    <button class="btn btn-info btn-sm" type="button" data-action="applyEdit" data-course-id="${api.escapeHtml(course.id)}"><i class="fas fa-edit"></i>编辑</button>
+                    <button class="btn btn-danger btn-sm" type="button" data-action="applyDelete" data-course-id="${api.escapeHtml(course.id)}"><i class="fas fa-trash"></i>删除</button>
                 </div>
             </article>
         `;
@@ -266,6 +276,12 @@
             button.addEventListener('click', () => {
                 window.location.href = `/teacher/grade-management.html?courseId=${encodeURIComponent(button.dataset.courseId)}`;
             });
+        });
+        root.querySelectorAll('[data-action="applyEdit"]').forEach((button) => {
+            button.addEventListener('click', () => showApplyEditCourseModal(button.dataset.courseId));
+        });
+        root.querySelectorAll('[data-action="applyDelete"]').forEach((button) => {
+            button.addEventListener('click', () => showApplyDeleteModal(button.dataset.courseId));
         });
     }
 
@@ -701,4 +717,143 @@
             timer = window.setTimeout(() => fn(...args), wait);
         };
     }
+
+    // ===== 课程申请（教师提交新增/编辑/删除，由管理员审批） =====
+    function currentApplicant() {
+        return {
+            id: currentTeacherId(),
+            name: state.teacher?.name || state.teacher?.teacherNo || state.teacher?.username || '教师'
+        };
+    }
+
+    function showApplyAddCourseModal() {
+        const form = document.getElementById('applyCourseForm');
+        if (form) form.reset();
+        document.getElementById('applyType').value = 'add';
+        document.getElementById('applyCourseId').value = '';
+        document.getElementById('applyCourseCode').value = '';
+        document.getElementById('applyCourseCode').disabled = false;
+        const hint = document.getElementById('applyModalHint');
+        if (hint) hint.textContent = '提交后需管理员审批，通过后课程才会开放可选。';
+        openModal(document.getElementById('applyCourseModal'));
+    }
+
+    function showApplyEditCourseModal(courseId) {
+        const course = state.courses.find((c) => Number(c.id) === Number(courseId));
+        if (!course) return;
+        document.getElementById('applyType').value = 'edit';
+        document.getElementById('applyCourseId').value = course.id;
+        document.getElementById('applyCourseCode').value = course.courseCode || '';
+        document.getElementById('applyCourseCode').disabled = true;
+        document.getElementById('applyCourseName').value = course.courseName || '';
+        document.getElementById('applyCourseCredits').value = course.credit ?? '';
+        document.getElementById('applyCourseCategory').value = course.courseType || '选修课';
+        document.getElementById('applyCourseTotal').value = course.availableSlots || 40;
+        document.getElementById('applyCourseSemester').value = course.semester || '2025-2026-1';
+        document.getElementById('applyCourseTime').value = course.schedule || '';
+        document.getElementById('applyCourseLocation').value = course.classroom || '';
+        document.getElementById('applyCourseStatus').value = course.status === 0 ? 'closed' : 'normal';
+        document.getElementById('applyCourseDescription').value = course.description || '';
+        const hint = document.getElementById('applyModalHint');
+        if (hint) hint.textContent = '修改课程内容不影响学生选课；只有改为"关闭"状态才影响选课。';
+        openModal(document.getElementById('applyCourseModal'));
+    }
+
+    function showApplyDeleteModal(courseId) {
+        document.getElementById('applyDeleteId').value = courseId;
+        const course = state.courses.find((c) => Number(c.id) === Number(courseId));
+        document.getElementById('applyDeleteName').textContent = course ? (course.courseName || course.courseCode || '') : '';
+        document.getElementById('applyDeleteReason').value = '';
+        openModal(document.getElementById('applyDeleteModal'));
+    }
+
+    async function submitCourseApplication() {
+        const type = document.getElementById('applyType').value;
+        const payload = {
+            courseCode: document.getElementById('applyCourseCode').value.trim(),
+            courseName: document.getElementById('applyCourseName').value.trim(),
+            courseType: document.getElementById('applyCourseCategory').value,
+            credit: parseFloat(document.getElementById('applyCourseCredits').value) || 0,
+            totalHours: (parseFloat(document.getElementById('applyCourseCredits').value) || 2) * 16,
+            teacherId: currentTeacherId(),
+            availableSlots: parseInt(document.getElementById('applyCourseTotal').value) || 40,
+            semester: document.getElementById('applyCourseSemester').value,
+            schedule: document.getElementById('applyCourseTime').value.trim(),
+            classroom: document.getElementById('applyCourseLocation').value.trim(),
+            description: document.getElementById('applyCourseDescription').value.trim(),
+            status: document.getElementById('applyCourseStatus').value === 'closed' ? 0 : 1
+        };
+        if (!payload.courseName) { api.notify('warning', '提示', '请填写课程名称'); return; }
+        if (type === 'add' && !payload.courseCode) { api.notify('warning', '提示', '请填写课程编号'); return; }
+        const body = {
+            applicantId: currentApplicant().id,
+            applicantName: currentApplicant().name,
+            type: type,
+            courseId: type === 'edit' ? document.getElementById('applyCourseId').value : null,
+            courseCode: payload.courseCode,
+            courseName: payload.courseName,
+            reason: type === 'add' ? '申请新增课程' : '申请修改课程信息',
+            payload: JSON.stringify(payload)
+        };
+        try {
+            await api.post('/api/v1/course-applications', body);
+            closeModal(document.getElementById('applyCourseModal'));
+            api.notify('success', '申请已提交', '请等待管理员审批');
+            loadMyApplications(1);
+        } catch (e) { api.notify('error', '提交失败', e.message); }
+    }
+
+    async function submitDeleteApplication() {
+        const id = document.getElementById('applyDeleteId').value;
+        const reason = document.getElementById('applyDeleteReason').value.trim();
+        if (!reason) { api.notify('warning', '提示', '请填写删除理由'); return; }
+        const body = {
+            applicantId: currentApplicant().id,
+            applicantName: currentApplicant().name,
+            type: 'delete',
+            courseId: Number(id),
+            reason: reason
+        };
+        try {
+            await api.post('/api/v1/course-applications', body);
+            closeModal(document.getElementById('applyDeleteModal'));
+            api.notify('success', '申请已提交', '请等待管理员审批');
+            loadMyApplications(1);
+        } catch (e) { api.notify('error', '提交失败', e.message); }
+    }
+
+    function showMyApplications() {
+        openModal(document.getElementById('myApplicationsModal'));
+        loadMyApplications(1);
+    }
+
+    async function loadMyApplications(page) {
+        const body = document.getElementById('myApplicationTableBody');
+        if (!body) return;
+        body.innerHTML = '<tr><td colspan="5" class="text-center text-secondary"><span class="loading"></span></td></tr>';
+        try {
+            const data = await api.get(`/api/v1/course-applications/teacher/${encodeURIComponent(currentTeacherId())}`, { pageNum: page || 1, pageSize: 10 });
+            const rows = api.pageItems(data);
+            if (!rows || !rows.length) { body.innerHTML = tableEmpty(5, '暂无申请记录'); return; }
+            const typeMap = { add: '新增课程', edit: '编辑课程', delete: '删除课程' };
+            const statusMap = { 0: '<span class="badge badge-warning">待审批</span>', 1: '<span class="badge badge-success">已通过</span>', 2: '<span class="badge badge-danger">已驳回</span>' };
+            body.innerHTML = rows.map((a) => `
+                <tr>
+                    <td>${api.escapeHtml(typeMap[a.type] || a.type)}</td>
+                    <td>${api.escapeHtml(a.courseName || a.courseCode || '-')}</td>
+                    <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${api.escapeHtml(a.reason || '-')}</td>
+                    <td>${statusMap[a.status] || api.escapeHtml(a.status)}</td>
+                    <td>${api.formatDate(a.createTime)}</td>
+                </tr>
+            `).join('');
+        } catch (e) { body.innerHTML = tableEmpty(5, '加载失败'); }
+    }
+
+    window.showApplyAddCourseModal = showApplyAddCourseModal;
+    window.showApplyEditCourseModal = showApplyEditCourseModal;
+    window.showApplyDeleteModal = showApplyDeleteModal;
+    window.submitCourseApplication = submitCourseApplication;
+    window.submitDeleteApplication = submitDeleteApplication;
+    window.showMyApplications = showMyApplications;
+    window.loadMyApplications = loadMyApplications;
 })();

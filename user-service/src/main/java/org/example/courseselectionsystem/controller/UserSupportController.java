@@ -28,7 +28,7 @@ public class UserSupportController {
     @GetMapping({"/messages", "/messages/list"})
     public Result<PageResult<Map<String, Object>>> messages(@RequestParam Map<String, String> params) {
         int pageNum = positiveInt(params.get("pageNum"), 1);
-        int pageSize = Math.min(positiveInt(params.get("pageSize"), 10), 100);
+        int pageSize = Math.min(positiveInt(params.get("pageSize"), 10), 1000);
         MapSqlParameterSource source = pageSource(pageNum, pageSize);
         String where = messageWhere(params, source);
         long total = jdbcTemplate.queryForObject("select count(*) from message_notification" + where, source, Long.class);
@@ -108,7 +108,7 @@ public class UserSupportController {
     @GetMapping({"/operation-logs", "/operation-logs/list"})
     public Result<PageResult<Map<String, Object>>> operationLogs(@RequestParam Map<String, String> params) {
         int pageNum = positiveInt(params.get("pageNum"), 1);
-        int pageSize = Math.min(positiveInt(params.get("pageSize"), 10), 100);
+        int pageSize = Math.min(positiveInt(params.get("pageSize"), 10), 1000);
         MapSqlParameterSource source = pageSource(pageNum, pageSize);
         String where = logWhere(params, source);
         long total = jdbcTemplate.queryForObject("select count(*) from operation_log" + where, source, Long.class);
@@ -381,7 +381,11 @@ public class UserSupportController {
         if (text == null || "all".equalsIgnoreCase(text)) {
             return defaultValue;
         }
-        return Integer.parseInt(text);
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 
     private Integer requiredInt(Object value, String message) {
@@ -397,7 +401,11 @@ public class UserSupportController {
         if (text == null || "all".equalsIgnoreCase(text)) {
             return null;
         }
-        return Long.parseLong(text);
+        try {
+            return Long.parseLong(text);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private Long requiredLong(Object value, String message) {

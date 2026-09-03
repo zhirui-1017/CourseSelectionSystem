@@ -36,7 +36,7 @@ public class Student implements Serializable {
     @Column(name = "email", length = 100)
     public String email;
 
-    @Column(name = "password", nullable = false, length = 100)
+    @Column(name = "password", nullable = false)
     public String password;
 
     @Column(name = "avatar", length = 200)
@@ -66,11 +66,11 @@ public class Student implements Serializable {
     @TableField(exist = false)
     public Integer deleted;
 
-    @Column(name = "created_at", updatable = false)
-    public Date createdAt;
+    @Column(name = "create_time", updatable = false)
+    public Date createTime;
 
-    @Column(name = "updated_at")
-    public Date updatedAt;
+    @Column(name = "update_time")
+    public Date updateTime;
 
     @Column(name = "class_id")
     public Long classId;

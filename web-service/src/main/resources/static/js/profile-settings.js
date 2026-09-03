@@ -37,9 +37,17 @@
 
     async function boot() {
         const config = currentConfig();
-        state.current = await api.get('/login/current');
+        state.current = await api.get('/api/v1/auth/current-user');
+        // 合并 localStorage 中的 userInfo 作为补充
+        try {
+            const stored = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (stored && Object.keys(stored).length) {
+                state.current.user = stored;
+                if (!state.current.username) state.current.username = stored.username || stored.studentNo || stored.teacherNo;
+            }
+        } catch (e) { /* ignore */ }
         if (!state.current || state.current.role !== state.role) {
-            window.location.href = '/login';
+            window.location.href = '/login.html';
             return;
         }
 

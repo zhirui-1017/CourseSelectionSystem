@@ -14,10 +14,14 @@ public interface PermissionService {
 
     List<Map<String, Object>> getAllPermissions();
 
-    Map<String, Object> getPermissionsByPage(Integer page, Integer size, String name, String code, Long parentId);
+    Map<String, Object> getPermissionsByPage(Integer page, Integer size, String name, String code, Integer status, Long parentId);
 
     default Map<String, Object> getPermissionsByPage(Integer page, Integer size, String name, String code) {
-        return getPermissionsByPage(page, size, name, code, null);
+        return getPermissionsByPage(page, size, name, code, null, null);
+    }
+
+    default Map<String, Object> getPermissionsByPage(Integer page, Integer size, String name, String code, Integer status) {
+        return getPermissionsByPage(page, size, name, code, status, null);
     }
 
     default List<Map<String, Object>> getPermissionTree() {

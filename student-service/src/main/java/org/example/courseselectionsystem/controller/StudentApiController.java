@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/students")
@@ -68,6 +70,23 @@ public class StudentApiController {
         return Result.success(studentService.getStudentByStudentNo(studentNo));
     }
 
+    /**
+     * 获取学生分页列表（供 Feign 跨服务调用，根路径）
+     */
+    @GetMapping
+    public Result<List<Map<String, Object>>> listStudents(
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+        PageRequest pageRequest = new PageRequest();
+        pageRequest.setPageNum(page);
+        pageRequest.setPageSize(size);
+        PageResult<Student> result = studentService.getStudentsByPage(pageRequest);
+        List<Map<String, Object>> list = result.getItems().stream()
+                .map(this::studentToMap)
+                .collect(Collectors.toList());
+        return Result.success(list);
+    }
+
     @GetMapping("/all")
     public Result<List<Student>> getAllStudents() {
         return Result.success(studentService.getAllStudents());
@@ -110,6 +129,11 @@ public class StudentApiController {
         return Result.success(studentService.count());
     }
 
+    @GetMapping("/count/recent")
+    public Result<Long> countRecent(@RequestParam(defaultValue = "30") int days) {
+        return Result.success(studentService.countRecent(days));
+    }
+
     @PutMapping("/{studentId}/reset-password")
     public Result<Boolean> resetPassword(@PathVariable Long studentId) {
         return Result.success(studentService.resetPassword(studentId));
@@ -120,5 +144,22 @@ public class StudentApiController {
                                           @RequestParam String oldPassword,
                                           @RequestParam String newPassword) {
         return Result.success(studentService.changePassword(studentId, oldPassword, newPassword));
+    }
+
+    // ========== 内部辅助方法 ==========
+
+    private Map<String, Object> studentToMap(Student student) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("id", student.getId());
+        map.put("studentNo", student.getStudentNo());
+        map.put("name", student.getName());
+        map.put("gender", student.getGender());
+        map.put("phone", student.getPhone());
+        map.put("email", student.getEmail());
+        map.put("majorId", student.getMajorId());
+        map.put("collegeId", student.getCollegeId());
+        map.put("className", student.getClassName());
+        map.put("status", student.getStatus());
+        return map;
     }
 }

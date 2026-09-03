@@ -28,7 +28,7 @@ class GatewayRoutesConfigurationTest {
                 "/api/v1/courses/**,/api/v1/colleges/**,/api/v1/departments/**,/api/v1/majors/**,/api/v1/semesters/**,/api/v1/course-announcements/**");
         // Route 4: 选课/评价/成绩
         assertRoute(4, ServiceNames.SELECTION_SERVICE,
-                "/api/v1/selections/**,/api/v1/course-selections/**,/api/v1/evaluations/**,/api/v1/grades/**");
+                "/api/v1/course-selections/**,/api/v1/evaluations/**,/api/v1/grades/**");
     }
 
     @Test

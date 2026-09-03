@@ -15,7 +15,7 @@
         <!-- 侧边栏 -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <a href="/admin" class="sidebar-brand">
+                <a href="/admin/index.html" class="sidebar-brand">
                     <div class="sidebar-brand-icon">
                         <i class="fas fa-cogs"></i>
                     </div>
@@ -27,7 +27,7 @@
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-item">
-                    <a href="/admin" class="nav-link">
+                    <a href="/admin/index.html" class="nav-link">
                         <i class="nav-icon fas fa-tachometer-alt"></i>
                         <span class="nav-text">控制台首页</span>
                     </a>
@@ -298,12 +298,17 @@
                                 <div class="form-group">
                                     <label class="form-label" for="teacherCollege">学院 *</label>
                                     <select class="form-control" id="teacherCollege" name="teacherCollege" required>
-                                        <option value="">请选择学院>
-                                        <option value="computer">计算机学院</option>
-                                        <option value="electronic">电子工程学院</option>
-                                        <option value="mechanical">机械工程学院</option>
-                                        <option value="civil">土木工程学院</option>
-                                        <option value="business">商学院</option>
+                                        <option value="">请选择学院</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="teacherDepartment">系部 *</label>
+                                    <select class="form-control" id="teacherDepartment" name="teacherDepartment" required>
+                                        <option value="">请先选择学院</option>
                                     </select>
                                 </div>
                             </div>
@@ -313,7 +318,7 @@
                                 <div class="form-group">
                                     <label class="form-label" for="teacherTitle">职称 *</label>
                                     <select class="form-control" id="teacherTitle" name="teacherTitle" required>
-                                        <option value="professor">教授>
+                                        <option value="professor">教授</option>
                                         <option value="associate_professor">副教授</option>
                                         <option value="lecturer">讲师</option>
                                         <option value="assistant">助教</option>
@@ -373,7 +378,7 @@
                                 <div class="form-group">
                                     <label class="form-label" for="editTeacherGender">性别 *</label>
                                     <select class="form-control" id="editTeacherGender" required>
-                                        <option value="male">男>
+                                        <option value="male">男</option>
                                         <option value="female">女</option>
                                     </select>
                                 </div>
@@ -384,11 +389,7 @@
                                 <div class="form-group">
                                     <label class="form-label" for="editTeacherCollege">学院 *</label>
                                     <select class="form-control" id="editTeacherCollege" required>
-                                        <option value="computer">计算机学院>
-                                        <option value="electronic">电子工程学院</option>
-                                        <option value="mechanical">机械工程学院</option>
-                                        <option value="civil">土木工程学院</option>
-                                        <option value="business">商学院</option>
+                                        <option value="">请选择学院</option>
                                     </select>
                                 </div>
                             </div>
@@ -396,10 +397,20 @@
                                 <div class="form-group">
                                     <label class="form-label" for="editTeacherTitle">职称 *</label>
                                     <select class="form-control" id="editTeacherTitle" required>
-                                        <option value="professor">教授>
+                                        <option value="professor">教授</option>
                                         <option value="associate_professor">副教授</option>
                                         <option value="lecturer">讲师</option>
                                         <option value="assistant">助教</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="editTeacherDepartment">系部 *</label>
+                                    <select class="form-control" id="editTeacherDepartment" required>
+                                        <option value="">请先选择学院</option>
                                     </select>
                                 </div>
                             </div>
@@ -468,6 +479,7 @@
                     <button class="close" data-dismiss="modal">
                         <i class="fas fa-times"></i>
                     </button>
+                </div>
                 <div class="modal-body">
                     <input type="hidden" id="deleteTeacherId">
                     <p class="text-danger">警告：删除操作不可撤销！</p>
@@ -491,19 +503,20 @@
                     <button class="close" data-dismiss="modal">
                         <i class="fas fa-times"></i>
                     </button>
+                </div>
                 <div class="modal-body">
                     <div class="form-group">
                         <label class="form-label">下载模板</label>
-                        <a href="#" class="btn btn-secondary">
+                        <a href="javascript:void(0)" onclick="downloadTeacherTemplate()" class="btn btn-secondary">
                             <i class="fas fa-download"></i>
-                            教师信息导入模板.xlsx
+                            教师信息导入模板.csv
                         </a>
                     </div>
                     <div class="form-group">
                         <label class="form-label">上传文件</label>
                         <div class="file-upload">
-                            <input type="file" class="form-control-file" id="importFile" accept=".xlsx,.xls">
-                            <p class="text-sm text-muted mt-2">请上传Excel格式的教师信息文件，支持.xlsx和.xls格式</p>
+                            <input type="file" class="form-control-file" id="importFile" accept=".csv,.xlsx,.xls">
+                            <p class="text-sm text-muted mt-2">请上传 CSV 格式文件（表头：工号,姓名,性别,学院,系部,职称,状态,邮箱,电话）。Excel 请另存为 CSV（UTF-8）后导入，暂不支持 .xlsx 二进制文件。</p>
                         </div>
                     </div>
                 </div>
@@ -520,26 +533,85 @@
     <script>
         var api = window.AppApi;
         var curPage = 1, pageSize = 10;
+        var teacherColleges = [];
+        var teacherDepartments = [];
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadTeacherDicts();
             loadTeachers(1);
             document.getElementById('searchTeacherBtn').addEventListener('click', function() { loadTeachers(1); });
             document.getElementById('teacherSearch').addEventListener('keydown', function(e) { if (e.key === 'Enter') loadTeachers(1); });
             document.getElementById('filterTeacherBtn').addEventListener('click', function() { loadTeachers(1); });
-            document.getElementById('exportTeachersBtn').addEventListener('click', function() { api.notify('info', '导出', '正在导出...'); });
+            document.getElementById('exportTeachersBtn').addEventListener('click', exportTeachers);
             document.getElementById('submitAddTeacher').addEventListener('click', addTeacher);
             document.getElementById('submitEditTeacher').addEventListener('click', updateTeacher);
             document.getElementById('confirmResetPassword').addEventListener('click', resetPassword);
             document.getElementById('confirmDeleteTeacher').addEventListener('click', deleteTeacher);
             document.getElementById('confirmImportTeachers').addEventListener('click', importTeachers);
+            // 学院切换联动系部
+            document.getElementById('teacherCollege').addEventListener('change', function() { populateTeacherDepartments('teacherDepartment', this.value); });
+            document.getElementById('editTeacherCollege').addEventListener('change', function() { populateTeacherDepartments('editTeacherDepartment', this.value); });
         });
+
+        // ---- 加载学院/系部字典 ----
+        async function loadTeacherDicts() {
+            try {
+                var c = await api.get('/api/v1/colleges');
+                teacherColleges = Array.isArray(c) ? c : (api.pageItems(c) || []);
+                var d = await api.get('/api/v1/departments/list', { pageSize: 999 });
+                teacherDepartments = api.pageItems(d) || [];
+            } catch (e) { console.error('加载学院/系部字典失败', e); }
+            populateTeacherColleges('teacherCollege', '请选择学院');
+            populateTeacherColleges('editTeacherCollege', '请选择学院');
+            populateTeacherColleges('teacherCollegeFilter', '所有学院');
+        }
+
+        function populateTeacherColleges(selectId, placeholder) {
+            var sel = document.getElementById(selectId);
+            if (!sel || !teacherColleges.length) return;
+            var curVal = sel.value;
+            sel.innerHTML = '<option value="">' + (placeholder || '所有学院') + '</option>';
+            teacherColleges.forEach(function(c) {
+                sel.innerHTML += '<option value="' + c.id + '">' + api.escapeHtml(c.name) + '</option>';
+            });
+            if (curVal) sel.value = curVal;
+        }
+
+        function populateTeacherDepartments(selectId, collegeId, selectedDeptId) {
+            var sel = document.getElementById(selectId);
+            if (!sel) return;
+            sel.innerHTML = '<option value="">请先选择学院</option>';
+            if (!collegeId) return;
+            var list = teacherDepartments.filter(function(d) { return String(d.collegeId) === String(collegeId); });
+            sel.innerHTML = '<option value="">请选择系部</option>';
+            list.forEach(function(d) {
+                var opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = d.departmentName;
+                if (selectedDeptId && String(d.id) === String(selectedDeptId)) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        }
+
+        function getCollegeName(id) {
+            if (!id) return '';
+            var found = teacherColleges.filter(function(c) { return String(c.id) === String(id); })[0];
+            return found ? found.name : '';
+        }
 
         async function loadTeachers(page) {
             curPage = page;
             var tb = document.getElementById('teacherTableBody');
             tb.innerHTML = '<tr><td colspan="9" class="text-center" style="padding:40px 0;"><i class="fas fa-spinner fa-spin"></i> 加载中...</td></tr>';
             try {
-                var data = await api.get('/api/v1/teachers/list', { pageNum: curPage, pageSize: pageSize, orderByColumn: 'id', isAsc: true });
+                var params = { pageNum: curPage, pageSize: pageSize, orderByColumn: 'id', isAsc: true };
+                var kw = document.getElementById('teacherSearch');
+                if (kw && kw.value.trim()) params.keyword = kw.value.trim();
+                var cf = document.getElementById('teacherCollegeFilter');
+                if (cf && cf.value) params.collegeId = cf.value;
+                var tf = document.getElementById('teacherTitleFilter');
+                if (tf && tf.value) params.title = tf.value;
+                var data = await api.get('/api/v1/teachers/list', params);
                 var items = api.pageItems(data), total = api.pageTotal(data);
                 if (!items || !items.length) {
                     tb.innerHTML = '<tr><td colspan="9" class="text-center" style="padding:40px 0;">暂无数据</td></tr>';
@@ -547,7 +619,7 @@
                     tb.innerHTML = items.map(function(t) {
                         var tm = { '教授': '<span class="badge badge-primary">教授</span>', '副教授': '<span class="badge badge-secondary">副教授</span>', '讲师': '<span class="badge badge-info">讲师</span>', '助教': '<span class="badge badge-secondary">助教</span>' };
                         var gm = { '男': '男', '女': '女', 'M': '男', 'F': '女' };
-                        return '<tr><td>' + api.escapeHtml(t.teacherNo || '-') + '</td><td>' + api.escapeHtml(t.name) + '</td><td>' + (gm[t.gender] || t.gender) + '</td><td>' + api.escapeHtml(t.collegeId || t.departmentId || '-') + '</td><td>' + (tm[t.title] || '<span class="badge badge-secondary">' + api.escapeHtml(t.title || '-') + '</span>') + '</td><td>' + api.escapeHtml(t.phone || '-') + '</td><td>' + api.escapeHtml(t.email || '-') + '</td><td>' + api.formatDate(t.createdAt) + '</td><td>' +
+                        return '<tr><td>' + api.escapeHtml(t.teacherNo || '-') + '</td><td>' + api.escapeHtml(t.name) + '</td><td>' + (gm[t.gender] || t.gender) + '</td><td>' + api.escapeHtml(getCollegeName(t.collegeId) || t.departmentId || '-') + '</td><td>' + (tm[t.title] || '<span class="badge badge-secondary">' + api.escapeHtml(t.title || '-') + '</span>') + '</td><td>' + api.escapeHtml(t.phone || '-') + '</td><td>' + api.escapeHtml(t.email || '-') + '</td><td>' + api.formatDate(t.createdAt) + '</td><td>' +
                             '<button class="btn btn-sm btn-primary js-edit" data-id="' + t.id + '" title="编辑"><i class="fas fa-edit"></i></button> ' +
                             '<button class="btn btn-sm btn-warning js-reset" data-id="' + t.id + '" title="重置密码"><i class="fas fa-key"></i></button> ' +
                             '<button class="btn btn-sm btn-danger js-delete" data-id="' + t.id + '" title="删除"><i class="fas fa-trash"></i></button></td></tr>';
@@ -576,8 +648,11 @@
 
         async function addTeacher() {
             var f = document.getElementById('addTeacherForm');
-            var d = { teacherNo: f.querySelector('#teacherId').value.trim(), name: f.querySelector('#teacherName').value.trim(), gender: f.querySelector('#teacherGender').value === 'male' ? '男' : '女', collegeId: Number(f.querySelector('#teacherCollege').value) || 1, title: f.querySelector('#teacherTitle').value || '讲师', status: 1, email: f.querySelector('#teacherEmail').value.trim(), phone: f.querySelector('#teacherPhone').value.trim() };
+            var collegeId = Number(f.querySelector('#teacherCollege').value) || null;
+            var departmentId = Number(f.querySelector('#teacherDepartment').value) || null;
+            var d = { teacherNo: f.querySelector('#teacherId').value.trim(), name: f.querySelector('#teacherName').value.trim(), gender: f.querySelector('#teacherGender').value === 'male' ? '男' : '女', collegeId: collegeId, departmentId: departmentId, title: codeToTitle(f.querySelector('#teacherTitle').value) || '讲师', status: 1, email: f.querySelector('#teacherEmail').value.trim(), phone: f.querySelector('#teacherPhone').value.trim() };
             if (!d.teacherNo || !d.name) { api.notify('warning', '提示', '请填写工号和姓名'); return; }
+            if (!departmentId) { api.notify('warning', '提示', '请选择系部'); return; }
             try { await api.post('/api/v1/teachers', d); closeModal(document.getElementById('addTeacherModal')); f.reset(); api.notify('success', '添加成功', '教师已添加'); loadTeachers(1); } catch (e) { api.notify('error', '添加失败', e.message); }
         }
 
@@ -587,16 +662,29 @@
                 document.getElementById('editTeacherId').value = t.id;
                 document.getElementById('editTeacherName').value = t.name;
                 document.getElementById('editTeacherGender').value = t.gender === '女' ? 'female' : 'male';
-                document.getElementById('editTeacherTitle').value = t.title || 'lecturer';
+                document.getElementById('editTeacherTitle').value = titleToCode(t.title) || 'lecturer';
                 document.getElementById('editTeacherEmail').value = t.email || '';
                 document.getElementById('editTeacherPhone').value = t.phone || '';
+                // 学院/系部：优先用教师所属学院，否则从系部反查学院
+                var collegeId = t.collegeId;
+                if (!collegeId) {
+                    var dept = teacherDepartments.filter(function(d) { return String(d.id) === String(t.departmentId); })[0];
+                    if (dept) collegeId = dept.collegeId;
+                }
+                if (collegeId) {
+                    document.getElementById('editTeacherCollege').value = String(collegeId);
+                    populateTeacherDepartments('editTeacherDepartment', collegeId, t.departmentId);
+                }
                 openModal(document.getElementById('editTeacherModal'));
             } catch (e) { api.notify('error', '加载失败', e.message); }
         }
 
         async function updateTeacher() {
             var id = document.getElementById('editTeacherId').value;
-            var d = { name: document.getElementById('editTeacherName').value.trim(), gender: document.getElementById('editTeacherGender').value === 'female' ? '女' : '男', title: document.getElementById('editTeacherTitle').value, email: document.getElementById('editTeacherEmail').value.trim(), phone: document.getElementById('editTeacherPhone').value.trim() };
+            var collegeId = Number(document.getElementById('editTeacherCollege').value) || null;
+            var departmentId = Number(document.getElementById('editTeacherDepartment').value) || null;
+            if (!departmentId) { api.notify('warning', '提示', '请选择系部'); return; }
+            var d = { name: document.getElementById('editTeacherName').value.trim(), gender: document.getElementById('editTeacherGender').value === 'female' ? '女' : '男', title: codeToTitle(document.getElementById('editTeacherTitle').value), collegeId: collegeId, departmentId: departmentId, email: document.getElementById('editTeacherEmail').value.trim(), phone: document.getElementById('editTeacherPhone').value.trim() };
             try { await api.request('/api/v1/teachers/' + id, { method: 'PUT', body: d }); closeModal(document.getElementById('editTeacherModal')); api.notify('success', '更新成功', '教师信息已更新'); loadTeachers(curPage); } catch (e) { api.notify('error', '更新失败', e.message); }
         }
 
@@ -612,10 +700,230 @@
             try { await api.del('/api/v1/teachers/' + id); closeModal(document.getElementById('deleteTeacherModal')); api.notify('success', '删除成功', '教师已删除'); loadTeachers(1); } catch (e) { api.notify('error', '删除失败', e.message); }
         }
 
-        function importTeachers() {
+        // ---- 导出教师（CSV）----
+        async function exportTeachers() {
+            try {
+                var data = await api.get('/api/v1/teachers/list', { pageNum: 1, pageSize: 1000, orderByColumn: 'id', isAsc: true });
+                var items = api.pageItems(data) || [];
+                var rows = [['工号', '姓名', '性别', '学院', '系部', '职称', '邮箱', '电话']];
+                items.forEach(function(t) {
+                    rows.push([t.teacherNo || '', t.name || '', t.gender || '', getCollegeName(t.collegeId), getDepartmentName(t.departmentId), t.title || '', t.email || '', t.phone || '']);
+                });
+                downloadCsv('teachers.csv', rows);
+                api.notify('success', '导出成功', '已导出 ' + items.length + ' 名教师');
+            } catch (e) { api.notify('error', '导出失败', e.message); }
+        }
+
+        function getDepartmentName(id) {
+            if (!id) return '';
+            var found = teacherDepartments.filter(function(d) { return String(d.id) === String(id); })[0];
+            return found ? found.departmentName : '';
+        }
+
+        // ---- 职称：表单用代码，数据库存中文 ----
+        var TITLE_MAP = { 'professor': '教授', 'associate_professor': '副教授', 'lecturer': '讲师', 'assistant': '助教' };
+        var TITLE_MAP_REV = { '教授': 'professor', '副教授': 'associate_professor', '讲师': 'lecturer', '助教': 'assistant' };
+        function titleToCode(title) { return TITLE_MAP_REV[title] || title; }
+        function codeToTitle(code) { return TITLE_MAP[code] || code; }
+
+        // ---- CSV 工具 ----
+        function downloadCsv(filename, rows) {
+            var csv = rows.map(function(row) {
+                return row.map(function(cell) { return '"' + String(cell == null ? '' : cell).replace(/"/g, '""') + '"'; }).join(',');
+            }).join('\r\n');
+            var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            URL.revokeObjectURL(link.href);
+            link.remove();
+        }
+
+        function parseCsv(text) {
+            var rows = [], row = [], field = '', inQuotes = false;
+            for (var i = 0; i < text.length; i++) {
+                var ch = text[i];
+                if (inQuotes) {
+                    if (ch === '"') {
+                        if (text[i + 1] === '"') { field += '"'; i++; }
+                        else { inQuotes = false; }
+                    } else { field += ch; }
+                } else {
+                    if (ch === '"') { inQuotes = true; }
+                    else if (ch === ',') { row.push(field); field = ''; }
+                    else if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+                    else if (ch !== '\r') { field += ch; }
+                }
+            }
+            if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+            return rows;
+        }
+
+        function indexOfAny(headers, names) {
+            for (var i = 0; i < names.length; i++) {
+                var idx = headers.indexOf(names[i]);
+                if (idx >= 0) return idx;
+            }
+            return -1;
+        }
+
+        function readFileAsText(file) {
+            return new Promise(function(resolve, reject) {
+                var reader = new FileReader();
+                reader.onload = function() {
+                    try {
+                        var buf = new Uint8Array(reader.result);
+                        if (buf.length > 0) {
+                            var isBinary = (buf[0] === 0x50 && buf[1] === 0x4B);
+                            if (!isBinary) {
+                                for (var i = 0; i < Math.min(buf.length, 2000); i++) {
+                                    if (buf[i] === 0) { isBinary = true; break; }
+                                }
+                            }
+                            if (isBinary) {
+                                reject(new Error('您选择的文件是 .xlsx/.xls 等二进制格式，暂不支持直接导入。请用 Excel 打开后“另存为”，选择“CSV UTF-8(逗号分隔)”或“CSV(逗号分隔)”格式，再导入该 CSV 文件。'));
+                                return;
+                            }
+                        }
+                        var text;
+                        var offset = (buf.length >= 3 && buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF) ? 3 : 0;
+                        var body = offset ? buf.subarray(offset) : buf;
+                        var utf8 = new TextDecoder('utf-8').decode(body);
+                        if (utf8.indexOf('\uFFFD') < 0) {
+                            text = utf8;
+                        } else {
+                            try { text = new TextDecoder('gbk').decode(body); }
+                            catch (e) { text = utf8; }
+                        }
+                        resolve(text);
+                    } catch (e) { reject(new Error('读取文件失败: ' + e.message)); }
+                };
+                reader.onerror = function() { reject(new Error('读取文件失败')); };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // 导入用的 名称->ID 映射
+        var collegeNameToId = {}, deptNameToId = {};
+        var teacherImportDictsLoaded = false;
+        async function ensureTeacherImportDicts() {
+            if (teacherImportDictsLoaded) return;
+            collegeNameToId = {}; deptNameToId = {};
+            try {
+                var colleges = await api.get('/api/v1/colleges');
+                if (!Array.isArray(colleges)) colleges = api.pageItems(colleges) || [];
+                colleges.forEach(function(c) { if (c.name) collegeNameToId[c.name] = c.id; });
+                var deptData = await api.get('/api/v1/departments/list', { pageSize: 999 });
+                api.pageItems(deptData).forEach(function(d) { if (d.departmentName) deptNameToId[d.departmentName] = d.id; });
+            } catch (e) { console.error('加载教师导入字典失败', e); }
+            teacherImportDictsLoaded = true;
+        }
+
+        function resolveImportId(value, nameToId) {
+            var v = String(value == null ? '' : value).trim();
+            if (!v) return null;
+            if (/^\d+$/.test(v)) return Number(v);
+            return nameToId[v] || null;
+        }
+
+        function normalizeImportGender(v) {
+            var s = String(v == null ? '' : v).trim();
+            if (s === '男' || s === 'M' || s === 'm' || s === 'male' || s === '1') return '男';
+            if (s === '女' || s === 'F' || s === 'f' || s === 'female' || s === '0') return '女';
+            return s || '男';
+        }
+
+        function normalizeImportStatus(v) {
+            var s = String(v == null ? '' : v).trim();
+            if (s === '停用' || s === '0') return 0;
+            if (s === '启用' || s === '1' || !s) return 1;
+            return 1;
+        }
+
+        function normalizeImportTitle(v) {
+            var s = String(v == null ? '' : v).trim();
+            if (!s) return '讲师';
+            var map = { '教授': '教授', 'professor': '教授', '正教授': '教授',
+                        '副教授': '副教授', 'associate_professor': '副教授',
+                        '讲师': '讲师', 'lecturer': '讲师',
+                        '助教': '助教', 'assistant': '助教' };
+            return map[s] || s;
+        }
+
+        // ---- 下载教师导入模板 ----
+        function downloadTeacherTemplate() {
+            var rows = [
+                ['工号', '姓名', '性别', '学院', '系部', '职称', '状态', '邮箱', '电话'],
+                ['T20990001', '张老师', '男', '计算机与信息技术学院', '计算机科学系', '讲师', '启用', 't1@example.com', '13900139001'],
+                ['T20990002', '李老师', '女', '数学与统计学院', '数学系', '副教授', '启用', 't2@example.com', '13900139002']
+            ];
+            downloadCsv('教师信息导入模板.csv', rows);
+            api.notify('success', '模板已下载', '请按模板填写后另存为 CSV（UTF-8）再导入');
+        }
+
+        // ---- 批量导入教师（CSV）----
+        async function importTeachers() {
             var f = document.getElementById('importFile');
             if (!f.files || !f.files[0]) { api.notify('warning', '提示', '请选择文件'); return; }
-            api.notify('info', '导入', '正在导入...');
-            setTimeout(function() { closeModal(document.getElementById('importTeachersModal')); api.notify('success', '导入成功'); loadTeachers(1); }, 1500);
+            var file = f.files[0];
+            api.notify('info', '导入', '正在解析文件...');
+            try {
+                var text;
+                try { text = await readFileAsText(file); }
+                catch (e) { api.notify('error', '导入失败', e.message); return; }
+                var rows = parseCsv(text);
+                if (rows.length < 2) { api.notify('warning', '提示', '文件中没有可导入的数据'); return; }
+                var headers = rows[0].map(function(h) { return String(h).trim(); });
+                var iNo = indexOfAny(headers, ['工号', 'teacherNo', 'teacher_no', 'teacherId', 'id']);
+                var iName = indexOfAny(headers, ['姓名', 'name', 'teacherName']);
+                var iGender = indexOfAny(headers, ['性别', 'gender']);
+                var iCollege = indexOfAny(headers, ['学院', 'college', 'collegeId', 'collegeName']);
+                var iDept = indexOfAny(headers, ['系部', 'department', 'departmentId', 'departmentName']);
+                var iTitle = indexOfAny(headers, ['职称', 'title']);
+                var iStatus = indexOfAny(headers, ['状态', 'status']);
+                var iEmail = indexOfAny(headers, ['邮箱', 'email', '电子邮箱']);
+                var iPhone = indexOfAny(headers, ['电话', 'phone', '手机', '手机号码']);
+                if (iNo < 0) { api.notify('error', '导入失败', 'CSV 缺少“工号”列'); return; }
+
+                await ensureTeacherImportDicts();
+
+                var success = 0, failed = 0, errors = [];
+                for (var r = 1; r < rows.length; r++) {
+                    var row = rows[r];
+                    var teacherNo = String(iNo >= 0 ? (row[iNo] || '') : '').trim();
+                    if (!teacherNo) continue; // 跳过空行
+                    var body = {
+                        teacherNo: teacherNo,
+                        name: String(iName >= 0 ? (row[iName] || '') : '').trim(),
+                        gender: normalizeImportGender(iGender >= 0 ? row[iGender] : ''),
+                        collegeId: resolveImportId(iCollege >= 0 ? row[iCollege] : '', collegeNameToId),
+                        departmentId: resolveImportId(iDept >= 0 ? row[iDept] : '', deptNameToId),
+                        title: normalizeImportTitle(iTitle >= 0 ? row[iTitle] : ''),
+                        status: normalizeImportStatus(iStatus >= 0 ? row[iStatus] : ''),
+                        email: String(iEmail >= 0 ? (row[iEmail] || '') : '').trim(),
+                        phone: String(iPhone >= 0 ? (row[iPhone] || '') : '').trim(),
+                        password: '123456'
+                    };
+                    try {
+                        await api.post('/api/v1/teachers', body);
+                        success++;
+                    } catch (e) {
+                        failed++;
+                        errors.push('第' + (r + 1) + '行(工号 ' + teacherNo + '): ' + e.message);
+                    }
+                }
+                closeModal(document.getElementById('importTeachersModal'));
+                f.value = '';
+                if (failed > 0) {
+                    api.notify('warning', '导入完成', '成功 ' + success + ' 条，失败 ' + failed + ' 条（' + errors[0] + '）');
+                } else {
+                    api.notify('success', '导入成功', '成功导入 ' + success + ' 名教师');
+                }
+                loadTeachers(1);
+            } catch (e) {
+                api.notify('error', '导入失败', e.message);
+            }
         }
     </script>

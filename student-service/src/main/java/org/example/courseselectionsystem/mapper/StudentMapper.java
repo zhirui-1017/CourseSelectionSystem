@@ -61,4 +61,19 @@ public interface StudentMapper extends BaseMapper<Student> {
     default List<Student> selectAll() {
         return selectList(null);
     }
+
+    /**
+     * 统计学生在 course_selection 表中的记录数
+     */
+    int countCourseSelectionByStudentId(@Param("studentId") Long studentId);
+
+    /**
+     * 统计学生在 course_evaluation 表中的记录数
+     */
+    int countCourseEvaluationByStudentId(@Param("studentId") Long studentId);
+
+    /**
+     * 统计学生在 class_info 表中作为班长的记录数
+     */
+    int countClassMonitorByStudentId(@Param("studentId") Long studentId);
 }

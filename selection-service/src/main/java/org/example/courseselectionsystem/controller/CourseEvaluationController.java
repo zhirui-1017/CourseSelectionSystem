@@ -37,7 +37,7 @@ public class CourseEvaluationController {
     @GetMapping({"", "/list"})
     public Result<PageResult<Map<String, Object>>> list(@RequestParam Map<String, String> params) {
         int pageNum = positiveInt(params.get("pageNum"), 1);
-        int pageSize = Math.min(positiveInt(params.get("pageSize"), 10), 100);
+        int pageSize = Math.min(positiveInt(params.get("pageSize"), 10), 1000);
         MapSqlParameterSource source = new MapSqlParameterSource()
                 .addValue("offset", (pageNum - 1) * pageSize)
                 .addValue("pageSize", pageSize);
@@ -252,7 +252,11 @@ public class CourseEvaluationController {
         if (text == null || "all".equalsIgnoreCase(text)) {
             return defaultValue;
         }
-        return Integer.parseInt(text);
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 
     private Long longValue(Object value) {
@@ -260,7 +264,11 @@ public class CourseEvaluationController {
         if (text == null || "all".equalsIgnoreCase(text)) {
             return null;
         }
-        return Long.parseLong(text);
+        try {
+            return Long.parseLong(text);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private Long requiredLong(Object value, String message) {

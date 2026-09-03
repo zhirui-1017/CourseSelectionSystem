@@ -30,6 +30,7 @@ public interface TeacherService {
         teacher.setPassword(stringValue(teacherInfo, "password", "123456"));
         teacher.setTitle(stringValue(teacherInfo, "title", "讲师"));
         teacher.setDepartmentId(longValue(teacherInfo, "departmentId", 1L));
+        teacher.setCollegeId(longValue(teacherInfo, "collegeId", null));
         teacher.setStatus(intValue(teacherInfo, "status", 1));
         return addTeacher(teacher);
     }
@@ -66,6 +67,9 @@ public interface TeacherService {
         }
         if (teacherInfo.containsKey("departmentId")) {
             teacher.setDepartmentId(longValue(teacherInfo, "departmentId", 1L));
+        }
+        if (teacherInfo.containsKey("collegeId")) {
+            teacher.setCollegeId(longValue(teacherInfo, "collegeId", null));
         }
         if (teacherInfo.containsKey("status")) {
             teacher.setStatus(intValue(teacherInfo, "status", 1));
@@ -212,4 +216,9 @@ public interface TeacherService {
      * @return 教师总数
      */
     long count();
+
+    /**
+     * 统计最近 days 天内新增的教师数量（用于仪表盘增长率）
+     */
+    long countRecent(int days);
 }

@@ -117,6 +117,11 @@ public class CollegeServiceImpl implements CollegeService {
             college.setDescription(request.getDescription());
         }
 
+        // 更新状态
+        if (request.getStatus() != null) {
+            college.setStatus(request.getStatus());
+        }
+
         // 保存更新
         collegeRepository.save(college);
         logger.info("更新学院成功，学院ID：{}", id);
@@ -168,18 +173,20 @@ public class CollegeServiceImpl implements CollegeService {
     /**
      * 获取学院列表方法实现
      * @param pageRequest 分页请求参数
+     * @param name 学院名称（模糊搜索）
+     * @param status 状态
      * @return 学院列表
      */
     @Override
-    public PageResult<CollegeVO> getCollegeList(PageRequest pageRequest) {
-        logger.info("获取学院列表，分页参数：{}", pageRequest);
+    public PageResult<CollegeVO> getCollegeList(PageRequest pageRequest, String name, String code, Integer status) {
+        logger.info("获取学院列表，分页参数：{}，name：{}，code：{}，status：{}", pageRequest, name, code, status);
         PageRequest request = pageRequest == null ? new PageRequest() : pageRequest;
         int pageNum = request.getPageNum() == null || request.getPageNum() < 1 ? 1 : request.getPageNum();
-        int pageSize = request.getPageSize() == null || request.getPageSize() < 1 ? 10 : Math.min(request.getPageSize(), 100);
+        int pageSize = request.getPageSize() == null || request.getPageSize() < 1 ? 10 : Math.min(request.getPageSize(), 1000);
         org.springframework.data.domain.PageRequest pageable =
                 org.springframework.data.domain.PageRequest.of(pageNum - 1, pageSize, collegeSort(request));
 
-        Page<College> collegePage = collegeRepository.findAll(pageable);
+        Page<College> collegePage = collegeRepository.findColleges(blankToNull(name), blankToNull(code), status, pageable);
         List<CollegeVO> collegeVOs = collegePage.getContent().stream()
                 .map(collegeMapper::toVO)
                 .collect(Collectors.toList());
@@ -275,6 +282,10 @@ public class CollegeServiceImpl implements CollegeService {
             return normalized;
         }
         return "id";
+    }
+
+    private String blankToNull(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
     }
 
     private static class SimplePageResult<T> implements PageResult<T> {

@@ -13,10 +13,15 @@ import org.example.courseselectionsystem.vo.PageResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -31,7 +36,7 @@ public class StudentServiceImpl implements StudentService {
 
     private static final Logger logger = LoggerFactory.getLogger(StudentServiceImpl.class);
     private static final int DEFAULT_PAGE_SIZE = 10;
-    private static final int MAX_PAGE_SIZE = 100;
+    private static final int MAX_PAGE_SIZE = 1000;
     private static final Map<String, String> SORT_COLUMNS = Map.ofEntries(
             Map.entry("id", "id"),
             Map.entry("studentNo", "student_no"),
@@ -47,7 +52,7 @@ public class StudentServiceImpl implements StudentService {
             Map.entry("major", "major_id"),
             Map.entry("collegeId", "college_id"),
             Map.entry("college", "college_id"),
-            Map.entry("className", "class_name"),
+            Map.entry("className", "class_id"),
             Map.entry("classId", "class_id"),
             Map.entry("status", "status"),
             Map.entry("createdAt", "created_at"),
@@ -59,11 +64,16 @@ public class StudentServiceImpl implements StudentService {
     @Autowired
     private StudentMapper studentMapper;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
     @Override
     @Transactional(readOnly = false)
     public boolean addStudent(Student student) {
         // 参数验证
-        validateStudentParams(student);
+        validateStudentParams(student, true);
         
         // 检查学号是否已存在
         checkStudentNoExist(student.getStudentNo(), null);
@@ -80,14 +90,16 @@ public class StudentServiceImpl implements StudentService {
     @Override
     @Transactional(readOnly = false)
     public boolean updateStudent(Student student) {
-        // 参数验证
-        validateStudentParams(student);
+        // 参数验证（更新时学号非必填，保持原学号不变）
+        validateStudentParams(student, false);
         
         // 检查学生是否存在
         checkStudentExist(student.getId());
         
-        // 检查学号是否已存在（排除自身）
-        checkStudentNoExist(student.getStudentNo(), student.getId());
+        // 检查学号是否已存在（排除自身），仅当携带学号时校验
+        if (StringUtils.hasText(student.getStudentNo())) {
+            checkStudentNoExist(student.getStudentNo(), student.getId());
+        }
         
         // 更新学生信息
         int result = studentMapper.updateById(student);
@@ -103,6 +115,13 @@ public class StudentServiceImpl implements StudentService {
     public boolean deleteStudent(Long id) {
         // 检查学生是否存在
         checkStudentExist(id);
+        
+        // 级联清理关联数据：删除该学生的选课记录与课程评价，解除班级班长关联
+        int courseSelDeleted = jdbcTemplate.update("delete from course_selection where student_id = ?", id);
+        int courseEvalDeleted = jdbcTemplate.update("delete from course_evaluation where student_id = ?", id);
+        int monitorCleared = jdbcTemplate.update("update class_info set monitor_id = null where monitor_id = ?", id);
+        logger.info("删除学生前清理关联数据，学生ID: {}，选课 {} 条、评价 {} 条、班长关联 {} 处",
+                id, courseSelDeleted, courseEvalDeleted, monitorCleared);
         
         // 删除学生
         int result = studentMapper.deleteById(id);
@@ -205,7 +224,8 @@ public class StudentServiceImpl implements StudentService {
                 queryWrapper.like("email", searchValue.trim());
                 break;
             case "className":
-                queryWrapper.like("class_name", searchValue.trim());
+                // cloud 库 student 表无 class_name 列，改由 class_id 关联 class_info 过滤
+                queryWrapper.apply("class_id IN (SELECT id FROM class_info WHERE class_name LIKE CONCAT('%', {0}, '%'))", searchValue.trim());
                 break;
             default:
                 break;
@@ -213,6 +233,13 @@ public class StudentServiceImpl implements StudentService {
     }
 
     private void applyFilters(QueryWrapper<Student> queryWrapper, PageRequest request) {
+        // 通用关键字：同时匹配学号与姓名（前端搜索框传入 keyword）
+        String keyword = textParam(request, "keyword", "searchKey", "q");
+        if (StringUtils.hasText(keyword)) {
+            String kw = keyword.trim();
+            queryWrapper.and(w -> w.like("student_no", kw).or().like("name", kw));
+        }
+
         String studentName = textParam(request, "studentName", "name");
         if (StringUtils.hasText(studentName)) {
             queryWrapper.like("name", studentName.trim());
@@ -245,7 +272,8 @@ public class StudentServiceImpl implements StudentService {
 
         String className = textParam(request, "className");
         if (StringUtils.hasText(className)) {
-            queryWrapper.like("class_name", className.trim());
+            // cloud 库 student 表无 class_name 列，改由 class_id 关联 class_info 过滤
+            queryWrapper.apply("class_id IN (SELECT id FROM class_info WHERE class_name LIKE CONCAT('%', {0}, '%'))", className.trim());
         }
 
         String gender = textParam(request, "gender");
@@ -328,7 +356,7 @@ public class StudentServiceImpl implements StudentService {
         String password = studentNo.length() > 6
                 ? studentNo.substring(studentNo.length() - 6)
                 : studentNo;
-        student.setPassword(password);
+        student.setPassword(passwordEncoder.encode(password));
         int result = studentMapper.updateById(student);
         if (result <= 0) {
             logger.error("重置学生密码失败，学生ID: {}", id);
@@ -344,10 +372,10 @@ public class StudentServiceImpl implements StudentService {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "新密码不能为空");
         }
         Student student = getStudentById(id);
-        if (!StringUtils.hasText(oldPassword) || !oldPassword.equals(student.getPassword())) {
+        if (!passwordMatches(oldPassword, student.getPassword())) {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "旧密码不正确");
         }
-        student.setPassword(newPassword);
+        student.setPassword(passwordEncoder.encode(newPassword));
         int result = studentMapper.updateById(student);
         if (result <= 0) {
             logger.error("修改学生密码失败，学生ID: {}", id);
@@ -357,21 +385,54 @@ public class StudentServiceImpl implements StudentService {
     }
 
     /**
+     * 校验原密码：兼容明文存储与 BCrypt 加密存储的账号
+     * 系统内注册用户密码为 BCrypt 加密，管理员添加/重置的用户密码可能为明文
+     * @param rawPassword 用户输入的原始密码
+     * @param storedPassword 数据库中存储的密码
+     * @return 是否匹配
+     */
+    private boolean passwordMatches(String rawPassword, String storedPassword) {
+        if (!StringUtils.hasText(rawPassword) || !StringUtils.hasText(storedPassword)) {
+            return false;
+        }
+        if (storedPassword.equals(rawPassword)) {
+            return true;
+        }
+        if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$")
+                || storedPassword.startsWith("$2y$")) {
+            try {
+                return passwordEncoder.matches(rawPassword, storedPassword);
+            } catch (IllegalArgumentException ex) {
+                logger.warn("Invalid BCrypt password format for student");
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
      * 验证学生参数
      * @param student 学生信息
+     * @param requireStudentNo 是否必须提供学号（新增必填，更新可选）
      */
-    private void validateStudentParams(Student student) {
+    private void validateStudentParams(Student student, boolean requireStudentNo) {
         if (student == null) {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "学生信息不能为空");
         }
         
-        if (!StringUtils.hasText(student.getStudentNo())) {
-            throw new BusinessException(Constants.PARAM_ERROR_CODE, "学号不能为空");
-        }
-        
-        // 验证学号格式
-        if (!Pattern.matches(Constants.STUDENT_NO_REGEX, student.getStudentNo())) {
-            throw new BusinessException(Constants.PARAM_ERROR_CODE, "学号格式不正确，应为8位数字");
+        if (requireStudentNo) {
+            if (!StringUtils.hasText(student.getStudentNo())) {
+                throw new BusinessException(Constants.PARAM_ERROR_CODE, "学号不能为空");
+            }
+            // 验证学号格式
+            if (!Pattern.matches(Constants.STUDENT_NO_REGEX, student.getStudentNo())) {
+                throw new BusinessException(Constants.PARAM_ERROR_CODE, "学号格式不正确，应为8位数字");
+            }
+        } else if (StringUtils.hasText(student.getStudentNo())) {
+            // 更新时若携带学号也校验格式
+            if (!Pattern.matches(Constants.STUDENT_NO_REGEX, student.getStudentNo())) {
+                throw new BusinessException(Constants.PARAM_ERROR_CODE, "学号格式不正确，应为8位数字");
+            }
         }
         
         if (!StringUtils.hasText(student.getName())) {
@@ -409,5 +470,12 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public long count() {
         return studentMapper.selectCount(null);
+    }
+
+    @Override
+    public long countRecent(int days) {
+        QueryWrapper<Student> wrapper = new QueryWrapper<>();
+        wrapper.ge("create_time", LocalDateTime.now().minusDays(Math.max(days, 1)));
+        return studentMapper.selectCount(wrapper);
     }
 }

@@ -36,7 +36,7 @@ public class CourseAnnouncementController {
     @GetMapping({"", "/list"})
     public Result<PageResult<Map<String, Object>>> list(@RequestParam Map<String, String> params) {
         int pageNum = positiveInt(params.get("pageNum"), 1);
-        int pageSize = Math.min(positiveInt(params.get("pageSize"), 10), 100);
+        int pageSize = Math.min(positiveInt(params.get("pageSize"), 10), 1000);
         MapSqlParameterSource source = new MapSqlParameterSource()
                 .addValue("offset", (pageNum - 1) * pageSize)
                 .addValue("pageSize", pageSize);
@@ -51,6 +51,7 @@ public class CourseAnnouncementController {
                        a.title,
                        a.content,
                        a.publish_time publishTime,
+                       a.publish_time createTime,
                        a.created_by createdBy,
                        t.name createdByName,
                        a.created_at createdAt,
@@ -109,6 +110,7 @@ public class CourseAnnouncementController {
                        a.title,
                        a.content,
                        a.publish_time publishTime,
+                       a.publish_time createTime,
                        a.created_by createdBy,
                        t.name createdByName,
                        a.created_at createdAt,
@@ -149,7 +151,7 @@ public class CourseAnnouncementController {
                 .addValue("courseId", requiredLong(body.get("courseId"), "课程不能为空"))
                 .addValue("title", requiredText(body.get("title"), "公告标题不能为空"))
                 .addValue("content", requiredText(body.get("content"), "公告内容不能为空"))
-                .addValue("createdBy", requiredLong(body.get("createdBy"), "发布教师不能为空"));
+                .addValue("createdBy", longValue(body.get("createdBy")));
     }
 
     private String orderBy(String field, String isAsc) {

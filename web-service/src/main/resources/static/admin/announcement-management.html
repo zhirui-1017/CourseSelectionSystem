@@ -11,14 +11,14 @@
     <div class="page-container">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <a href="/admin" class="sidebar-brand">
+                <a href="/admin/index.html" class="sidebar-brand">
                     <div class="sidebar-brand-icon"><i class="fas fa-cogs"></i></div>
                     <span class="sidebar-brand-text">管理员控制台</span>
                 </a>
                 <button class="sidebar-toggle"><i class="fas fa-chevron-left"></i></button>
             </div>
             <nav class="sidebar-nav">
-                <div class="nav-item"><a href="/admin" class="nav-link"><i class="nav-icon fas fa-tachometer-alt"></i><span class="nav-text">控制台首页</span></a></div>
+                <div class="nav-item"><a href="/admin/index.html" class="nav-link"><i class="nav-icon fas fa-tachometer-alt"></i><span class="nav-text">控制台首页</span></a></div>
                 <div class="nav-item"><a href="/admin/student-management.html" class="nav-link"><i class="nav-icon fas fa-user-graduate"></i><span class="nav-text">学生管理</span></a></div>
                 <div class="nav-item"><a href="/admin/teacher-management.html" class="nav-link"><i class="nav-icon fas fa-chalkboard-teacher"></i><span class="nav-text">教师管理</span></a></div>
                 <div class="nav-item"><a href="/admin/course-management.html" class="nav-link"><i class="nav-icon fas fa-book"></i><span class="nav-text">课程管理</span></a></div>
@@ -167,6 +167,41 @@
         </div></div>
     </div>
 
+    <!-- 编辑公告模态框 -->
+    <div class="modal fade" id="editAnnouncementModal" tabindex="-1">
+        <div class="modal-dialog"><div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">编辑公告</h4>
+                <button type="button" class="close" onclick="closeModal('editAnnouncementModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editAnnouncementForm">
+                    <input type="hidden" id="editAnnouncementId">
+                    <input type="hidden" id="editAnnouncementCreatedBy">
+                    <div class="form-group">
+                        <label>公告标题 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editAnnouncementTitle" placeholder="公告标题">
+                    </div>
+                    <div class="form-group">
+                        <label>关联课程 <span class="text-danger">*</span></label>
+                        <select class="form-control" id="editAnnouncementCourse">
+                            <option value="">请选择课程</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>公告内容 <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="editAnnouncementContent" rows="6" placeholder="请输入公告内容..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editAnnouncementModal')">取消</button>
+                <button type="button" class="btn btn-primary" onclick="updateAnnouncement()">保存</button>
+            </div>
+        </div></div>
+    </div>
+
+    <script src="/js/common.js"></script>
     <script src="/js/app-api.js"></script>
     <script src="/js/legacy-dynamic-pages.js"></script>
 </body>

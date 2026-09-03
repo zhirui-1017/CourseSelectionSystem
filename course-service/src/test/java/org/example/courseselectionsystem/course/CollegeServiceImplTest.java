@@ -39,15 +39,15 @@ class CollegeServiceImplTest {
         request.setPageSize(3);
         request.setOrderByColumn("name");
         request.setIsAsc("asc");
-        when(collegeRepository.findAll(any(org.springframework.data.domain.PageRequest.class)))
+        when(collegeRepository.findColleges(any(), any(), any(), any(org.springframework.data.domain.PageRequest.class)))
                 .thenReturn(new PageImpl<>(List.of(college(5L, "CS", "Computer")), org.springframework.data.domain.PageRequest.of(1, 3), 8));
         when(collegeMapper.toVO(any(College.class))).thenAnswer(invocation -> toVO(invocation.getArgument(0)));
 
-        CollegeService.PageResult<CollegeVO> result = service.getCollegeList(request);
+        CollegeService.PageResult<CollegeVO> result = service.getCollegeList(request, null, null, null);
 
         ArgumentCaptor<org.springframework.data.domain.PageRequest> captor =
                 ArgumentCaptor.forClass(org.springframework.data.domain.PageRequest.class);
-        verify(collegeRepository).findAll(captor.capture());
+        verify(collegeRepository).findColleges(any(), any(), any(), captor.capture());
         assertThat(captor.getValue().getPageNumber()).isEqualTo(1);
         assertThat(captor.getValue().getPageSize()).isEqualTo(3);
         assertThat(captor.getValue().getSort().getOrderFor("name")).isNotNull();
@@ -64,16 +64,16 @@ class CollegeServiceImplTest {
         request.setPageNum(0);
         request.setPageSize(500);
         request.setOrderByColumn("unsafeField");
-        when(collegeRepository.findAll(any(org.springframework.data.domain.PageRequest.class)))
+        when(collegeRepository.findColleges(any(), any(), any(), any(org.springframework.data.domain.PageRequest.class)))
                 .thenReturn(new PageImpl<>(List.of(), org.springframework.data.domain.PageRequest.of(0, 100), 0));
 
-        service.getCollegeList(request);
+        service.getCollegeList(request, null, null, null);
 
         ArgumentCaptor<org.springframework.data.domain.PageRequest> captor =
                 ArgumentCaptor.forClass(org.springframework.data.domain.PageRequest.class);
-        verify(collegeRepository).findAll(captor.capture());
+        verify(collegeRepository).findColleges(any(), any(), any(), captor.capture());
         assertThat(captor.getValue().getPageNumber()).isEqualTo(0);
-        assertThat(captor.getValue().getPageSize()).isEqualTo(100);
+        assertThat(captor.getValue().getPageSize()).isEqualTo(500);
         assertThat(captor.getValue().getSort().getOrderFor("id")).isNotNull();
     }
 

@@ -26,14 +26,14 @@
     <div class="page-container">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <a href="/admin" class="sidebar-brand">
+                <a href="/admin/index.html" class="sidebar-brand">
                     <div class="sidebar-brand-icon"><i class="fas fa-cogs"></i></div>
                     <span class="sidebar-brand-text">管理员控制台</span>
                 </a>
                 <button class="sidebar-toggle"><i class="fas fa-chevron-left"></i></button>
             </div>
             <nav class="sidebar-nav">
-                <div class="nav-item"><a href="/admin" class="nav-link"><i class="nav-icon fas fa-tachometer-alt"></i><span class="nav-text">控制台首页</span></a></div>
+                <div class="nav-item"><a href="/admin/index.html" class="nav-link"><i class="nav-icon fas fa-tachometer-alt"></i><span class="nav-text">控制台首页</span></a></div>
                 <div class="nav-item"><a href="/admin/student-management.html" class="nav-link"><i class="nav-icon fas fa-user-graduate"></i><span class="nav-text">学生管理</span></a></div>
                 <div class="nav-item"><a href="/admin/teacher-management.html" class="nav-link"><i class="nav-icon fas fa-chalkboard-teacher"></i><span class="nav-text">教师管理</span></a></div>
                 <div class="nav-item"><a href="/admin/course-management.html" class="nav-link"><i class="nav-icon fas fa-book"></i><span class="nav-text">课程管理</span></a></div>
@@ -602,595 +602,339 @@
 
     <!-- 引入公共JS -->
     <script src="/js/common.js"></script>
+    <script src="/js/app-api.js"></script>
     <script>
-        // 模拟数据
-        let semesters = [
-            { id: "2024-1", name: "2024年春季学期", startDate: "2024-02-20", endDate: "2024-07-10", isCurrent: true },
-            { id: "2023-2", name: "2023年秋季学期", startDate: "2023-09-01", endDate: "2024-01-15", isCurrent: false },
-            { id: "2023-1", name: "2023年春季学期", startDate: "2023-02-20", endDate: "2023-07-10", isCurrent: false },
-            { id: "2022-2", name: "2022年秋季学期", startDate: "2022-09-01", endDate: "2023-01-15", isCurrent: false }
-        ];
-        
-        let departments = [
-            { id: "CS", name: "计算机学院", dean: "张教授", description: "计算机学院成立于1998年，专注于计算机科学与技术领域的人才培养和科研创新。" },
-            { id: "EE", name: "电子工程学院", dean: "李教授", description: "电子工程学院致力于培养电子信息领域的高级工程技术人才。" },
-            { id: "MA", name: "数学学院", dean: "王教授", description: "数学学院拥有雄厚的师资力量，在基础数学和应用数学领域取得了丰硕的成果。" },
-            { id: "BA", name: "商学院", dean: "刘教授", description: "商学院专注于培养具有国际视野和创新精神的商业管理人才。" }
-        ];
-        
-        let majors = [
-            { id: "CS01", name: "计算机科学与技术", departmentId: "CS", description: "培养系统掌握计算机科学与技术的基本理论、基本知识和基本技能的高级专门人才。" },
-            { id: "CS02", name: "软件工程", departmentId: "CS", description: "培养具备软件工程理论基础和实践能力的高级技术人才。" },
-            { id: "EE01", name: "电子信息工程", departmentId: "EE", description: "培养掌握电子信息技术的基本理论和技能的高级工程技术人才。" },
-            { id: "EE02", name: "通信工程", departmentId: "EE", description: "培养具备通信技术、通信系统和通信网络等方面知识的高级工程技术人才。" },
-            { id: "MA01", name: "数学与应用数学", departmentId: "MA", description: "培养掌握数学科学基本理论与方法，具备运用数学知识解决实际问题能力的高级专门人才。" },
-            { id: "BA01", name: "工商管理", departmentId: "BA", description: "培养具有管理、经济、法律及企业管理方面的知识和能力的高级专门人才。" }
-        ];
+        var api = window.AppApi;
 
-        // 初始化页面
-        $(document).ready(function() {
-            // 加载学期数据
-            renderSemesterTable();
-            // 加载学院数据
-            renderDepartmentTable();
-            // 加载专业数据
-            renderMajorTable();
-            // 加载学院选项到专业相关的下拉列表
-            loadDepartmentOptions();
-        });
+        // 缓存的学院列表（供专业下拉框使用）
+        var collegesCache = [];
 
-        // 保存基本设置
-        function saveBasicSettings() {
-            showSuccessMessage("基本设置已成功保存！");
+        function showMsg(msg, isErr) {
+            var el = document.getElementById(isErr ? 'errorAlert' : 'successAlert');
+            document.getElementById(isErr ? 'errorMessage' : 'successMessage').textContent = msg;
+            el.style.display = 'block';
+            setTimeout(function() { el.style.display = 'none'; }, 3000);
         }
 
-        // 保存系统配置
-        function saveSystemSettings() {
-            showSuccessMessage("系统配置已成功保存！");
+        // ==================== 学期管理 ====================
+        async function loadSemesters() {
+            var tbody = document.getElementById('semesterTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">加载中...</td></tr>';
+            try {
+                var data = await api.get('/api/v1/semesters/list', { pageSize: 100 });
+                var list = api.pageItems(data) || [];
+                tbody.innerHTML = '';
+                if (!list.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">暂无数据</td></tr>';
+                    return;
+                }
+                list.forEach(function(s) {
+                    var isCur = s.isCurrent || s.current || s.status === 1;
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td>' + (s.id || '-') + '</td>' +
+                        '<td>' + api.escapeHtml(s.name || s.semesterName || '-') + '</td>' +
+                        '<td>' + (s.startDate || s.start_date || '-') + '</td>' +
+                        '<td>' + (s.endDate || s.end_date || '-') + '</td>' +
+                        '<td><span class="label ' + (isCur ? 'label-success' : 'label-default') + '">' + (isCur ? '当前学期' : '已结束') + '</span></td>' +
+                        '<td>' +
+                        '<button class="btn btn-xs btn-primary" onclick="editSemester(' + s.id + ')">编辑</button> ' +
+                        '<button class="btn btn-xs btn-danger" onclick="deleteSemester(' + s.id + ')">删除</button>' +
+                        '</td>';
+                    tbody.appendChild(tr);
+                });
+            } catch(e) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">加载失败: ' + api.escapeHtml(e.message) + '</td></tr>'; }
         }
 
-        // 备份数据库
-        function backupDatabase() {
-            showSuccessMessage("数据库备份已成功创建！");
-        }
-
-        // 恢复数据库
-        function restoreDatabase() {
-            const restoreFile = document.getElementById("restoreFile").files[0];
-            if (!restoreFile) {
-                showErrorMessage("请先选择备份文件！");
-                return;
-            }
-            
-            if (confirm("警告：恢复操作将覆盖所有现有数据，确定要继续吗？")) {
-                showSuccessMessage("数据库已成功恢复！");
-                // 重置文件输入
-                document.getElementById("restoreFile").value = "";
-                document.getElementById("selectedFileName").textContent = "未选择文件";
-            }
-        }
-
-        // 下载备份
-        function downloadBackup(backupName) {
-            alert("下载备份文件：" + backupName);
-        }
-
-        // 删除备份
-        function deleteBackup(backupName) {
-            if (confirm("确定要删除备份：" + backupName + "吗？")) {
-                showSuccessMessage("备份已成功删除！");
-            }
-        }
-
-        // 显示添加学期模态框
         function showAddSemesterModal() {
-            document.getElementById("addSemesterForm").reset();
-            $("#addSemesterModal").modal("show");
+            document.getElementById('addSemesterForm').reset();
+            $('#addSemesterModal').modal('show');
         }
 
-        // 提交添加学期
-        function submitAddSemester() {
-            const semesterId = document.getElementById("semesterId").value;
-            const semesterName = document.getElementById("semesterName").value;
-            const startDate = document.getElementById("startDate").value;
-            const endDate = document.getElementById("endDate").value;
-            const isCurrent = document.getElementById("isCurrentSemester").checked;
-            
-            if (!semesterId || !semesterName || !startDate || !endDate) {
-                showErrorMessage("请填写所有必填字段！");
-                return;
-            }
-            
-            // 检查学期ID是否已存在
-            if (semesters.find(s => s.id === semesterId)) {
-                showErrorMessage("学期ID已存在！");
-                return;
-            }
-            
-            // 如果设置为当前学期，则将其他学期设为非当前
-            if (isCurrent) {
-                semesters.forEach(s => s.isCurrent = false);
-            }
-            
-            // 添加新学期
-            semesters.unshift({ id: semesterId, name: semesterName, startDate: startDate, endDate: endDate, isCurrent: isCurrent });
-            
-            // 更新表格
-            renderSemesterTable();
-            
-            // 关闭模态框
-            $("#addSemesterModal").modal("hide");
-            
-            // 显示成功消息
-            showSuccessMessage("学期添加成功！");
+        async function submitAddSemester() {
+            var name = document.getElementById('semesterName').value.trim();
+            var startDate = document.getElementById('startDate').value;
+            var endDate = document.getElementById('endDate').value;
+            if (!name || !startDate || !endDate) { showMsg('请填写所有必填字段', true); return; }
+            try {
+                await api.post('/api/v1/semesters', { name: name, semesterName: name, startDate: startDate, endDate: endDate, isCurrent: document.getElementById('isCurrentSemester').checked });
+                $('#addSemesterModal').modal('hide');
+                showMsg('学期添加成功', false);
+                loadSemesters();
+            } catch(e) { showMsg(e.message, true); }
         }
 
-        // 显示编辑学期模态框
-        function showEditSemesterModal(semesterId) {
-            const semester = semesters.find(s => s.id === semesterId);
-            if (!semester) return;
-            
-            document.getElementById("editSemesterId").value = semester.id;
-            document.getElementById("editSemesterName").value = semester.name;
-            document.getElementById("editStartDate").value = semester.startDate;
-            document.getElementById("editEndDate").value = semester.endDate;
-            document.getElementById("editIsCurrentSemester").checked = semester.isCurrent;
-            
-            $("#editSemesterModal").modal("show");
+        async function editSemester(id) {
+            try {
+                var data = await api.get('/api/v1/semesters/' + id);
+                document.getElementById('editSemesterId').value = data.id || id;
+                document.getElementById('editSemesterName').value = data.name || data.semesterName || '';
+                document.getElementById('editStartDate').value = data.startDate || data.start_date || '';
+                document.getElementById('editEndDate').value = data.endDate || data.end_date || '';
+                document.getElementById('editIsCurrentSemester').checked = data.isCurrent || data.current || false;
+                $('#editSemesterModal').modal('show');
+            } catch(e) { showMsg('加载学期信息失败: ' + e.message, true); }
         }
 
-        // 提交编辑学期
-        function submitEditSemester() {
-            const semesterId = document.getElementById("editSemesterId").value;
-            const semesterIndex = semesters.findIndex(s => s.id === semesterId);
-            
-            if (semesterIndex === -1) {
-                showErrorMessage("学期不存在！");
-                return;
-            }
-            
-            const semesterName = document.getElementById("editSemesterName").value;
-            const startDate = document.getElementById("editStartDate").value;
-            const endDate = document.getElementById("editEndDate").value;
-            const isCurrent = document.getElementById("editIsCurrentSemester").checked;
-            
-            if (!semesterName || !startDate || !endDate) {
-                showErrorMessage("请填写所有必填字段！");
-                return;
-            }
-            
-            // 如果设置为当前学期，则将其他学期设为非当前
-            if (isCurrent) {
-                semesters.forEach(s => s.isCurrent = false);
-            }
-            
-            // 更新学期信息
-            semesters[semesterIndex] = {
-                id: semesterId,
-                name: semesterName,
-                startDate: startDate,
-                endDate: endDate,
-                isCurrent: isCurrent
-            };
-            
-            // 更新表格
-            renderSemesterTable();
-            
-            // 关闭模态框
-            $("#editSemesterModal").modal("hide");
-            
-            // 显示成功消息
-            showSuccessMessage("学期信息已成功更新！");
+        async function submitEditSemester() {
+            var id = document.getElementById('editSemesterId').value;
+            var name = document.getElementById('editSemesterName').value.trim();
+            var startDate = document.getElementById('editStartDate').value;
+            var endDate = document.getElementById('editEndDate').value;
+            if (!name || !startDate || !endDate) { showMsg('请填写所有必填字段', true); return; }
+            try {
+                await api.request('/api/v1/semesters/' + id, { method: 'PUT', body: { name: name, semesterName: name, startDate: startDate, endDate: endDate, isCurrent: document.getElementById('editIsCurrentSemester').checked } });
+                $('#editSemesterModal').modal('hide');
+                showMsg('学期已更新', false);
+                loadSemesters();
+            } catch(e) { showMsg(e.message, true); }
         }
 
-        // 删除学期
-        function deleteSemester(semesterId) {
-            const semesterIndex = semesters.findIndex(s => s.id === semesterId);
-            if (semesterIndex === -1) return;
-            
-            // 不允许删除当前学期
-            if (semesters[semesterIndex].isCurrent) {
-                showErrorMessage("不能删除当前学期！");
-                return;
-            }
-            
-            if (confirm("确定要删除学期：" + semesters[semesterIndex].name + "吗？")) {
-                // 删除学期
-                semesters.splice(semesterIndex, 1);
-                
-                // 更新表格
-                renderSemesterTable();
-                
-                // 显示成功消息
-                showSuccessMessage("学期已成功删除！");
-            }
+        async function deleteSemester(id) {
+            if (!confirm('确定要删除该学期吗？')) return;
+            try {
+                await api.del('/api/v1/semesters/' + id);
+                showMsg('学期已删除', false);
+                loadSemesters();
+            } catch(e) { showMsg(e.message, true); }
         }
 
-        // 渲染学期表格
-        function renderSemesterTable() {
-            const tableBody = document.getElementById("semesterTableBody");
-            tableBody.innerHTML = "";
-            
-            semesters.forEach(semester => {
-                const row = document.createElement("tr");
-                
-                const statusClass = semester.isCurrent ? "label-success" : "label-default";
-                const statusText = semester.isCurrent ? "当前学期" : "已结束";
-                
-                row.innerHTML = `
-                    <td>${semester.id}</td>
-                    <td>${semester.name}</td>
-                    <td>${semester.startDate}</td>
-                    <td>${semester.endDate}</td>
-                    <td><span class="label ${statusClass}">${statusText}</span></td>
-                    <td>
-                        <button class="btn btn-xs btn-primary" onclick="showEditSemesterModal('${semester.id}')">编辑</button>
-                        <button class="btn btn-xs btn-danger" onclick="deleteSemester('${semester.id}')" ${semester.isCurrent ? 'disabled' : ''}>删除</button>
-                    </td>
-                `;
-                
-                tableBody.appendChild(row);
-            });
+        // ==================== 学院管理 ====================
+        async function loadColleges() {
+            var tbody = document.getElementById('departmentTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">加载中...</td></tr>';
+            try {
+                var data = await api.get('/api/v1/colleges/list', { pageSize: 100 });
+                var list = api.pageItems(data) || [];
+                collegesCache = list;
+                tbody.innerHTML = '';
+                if (!list.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无数据</td></tr>';
+                } else {
+                    list.forEach(function(c) {
+                        var tr = document.createElement('tr');
+                        tr.innerHTML =
+                            '<td>' + (c.id || '-') + '</td>' +
+                            '<td>' + api.escapeHtml(c.name || c.collegeName || '-') + '</td>' +
+                            '<td>' + api.escapeHtml(c.dean || c.deanName || '-') + '</td>' +
+                            '<td>' + api.escapeHtml(c.description || '-') + '</td>' +
+                            '<td>' +
+                            '<button class="btn btn-xs btn-primary" onclick="editCollege(' + c.id + ')">编辑</button> ' +
+                            '<button class="btn btn-xs btn-danger" onclick="deleteCollege(' + c.id + ')">删除</button>' +
+                            '</td>';
+                        tbody.appendChild(tr);
+                    });
+                }
+                loadDepartmentOptions();
+            } catch(e) { tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">加载失败: ' + api.escapeHtml(e.message) + '</td></tr>'; }
         }
 
-        // 显示添加学院模态框
         function showAddDepartmentModal() {
-            document.getElementById("addDepartmentForm").reset();
-            $("#addDepartmentModal").modal("show");
+            document.getElementById('addDepartmentForm').reset();
+            $('#addDepartmentModal').modal('show');
         }
 
-        // 提交添加学院
-        function submitAddDepartment() {
-            const departmentId = document.getElementById("departmentId").value;
-            const departmentName = document.getElementById("departmentName").value;
-            const deanName = document.getElementById("deanName").value;
-            const description = document.getElementById("departmentDescription").value;
-            
-            if (!departmentId || !departmentName) {
-                showErrorMessage("请填写学院ID和学院名称！");
-                return;
-            }
-            
-            // 检查学院ID是否已存在
-            if (departments.find(d => d.id === departmentId)) {
-                showErrorMessage("学院ID已存在！");
-                return;
-            }
-            
-            // 添加新学院
-            departments.push({ 
-                id: departmentId, 
-                name: departmentName, 
-                dean: deanName || "未设置", 
-                description: description || ""
-            });
-            
-            // 更新表格和学院选择器
-            renderDepartmentTable();
-            loadDepartmentOptions();
-            
-            // 关闭模态框
-            $("#addDepartmentModal").modal("hide");
-            
-            // 显示成功消息
-            showSuccessMessage("学院添加成功！");
+        async function submitAddDepartment() {
+            var name = document.getElementById('departmentName').value.trim();
+            if (!name) { showMsg('请填写学院名称', true); return; }
+            try {
+                await api.post('/api/v1/colleges', {
+                    name: name,
+                    code: document.getElementById('departmentId').value.trim(),
+                    dean: document.getElementById('deanName').value.trim(),
+                    description: document.getElementById('departmentDescription').value.trim()
+                });
+                $('#addDepartmentModal').modal('hide');
+                showMsg('学院添加成功', false);
+                loadColleges();
+            } catch(e) { showMsg(e.message, true); }
         }
 
-        // 显示编辑学院模态框
-        function showEditDepartmentModal(departmentId) {
-            const department = departments.find(d => d.id === departmentId);
-            if (!department) return;
-            
-            document.getElementById("editDepartmentId").value = department.id;
-            document.getElementById("editDepartmentName").value = department.name;
-            document.getElementById("editDeanName").value = department.dean;
-            document.getElementById("editDepartmentDescription").value = department.description;
-            
-            $("#editDepartmentModal").modal("show");
+        async function editCollege(id) {
+            try {
+                var c = await api.get('/api/v1/colleges/' + id);
+                document.getElementById('editDepartmentId').value = c.id || id;
+                document.getElementById('editDepartmentName').value = c.name || c.collegeName || '';
+                document.getElementById('editDeanName').value = c.dean || c.deanName || '';
+                document.getElementById('editDepartmentDescription').value = c.description || '';
+                $('#editDepartmentModal').modal('show');
+            } catch(e) { showMsg('加载学院信息失败: ' + e.message, true); }
         }
 
-        // 提交编辑学院
-        function submitEditDepartment() {
-            const departmentId = document.getElementById("editDepartmentId").value;
-            const departmentIndex = departments.findIndex(d => d.id === departmentId);
-            
-            if (departmentIndex === -1) {
-                showErrorMessage("学院不存在！");
-                return;
-            }
-            
-            const departmentName = document.getElementById("editDepartmentName").value;
-            const deanName = document.getElementById("editDeanName").value;
-            const description = document.getElementById("editDepartmentDescription").value;
-            
-            if (!departmentName) {
-                showErrorMessage("请填写学院名称！");
-                return;
-            }
-            
-            // 更新学院信息
-            departments[departmentIndex] = {
-                id: departmentId,
-                name: departmentName,
-                dean: deanName || "未设置",
-                description: description || ""
-            };
-            
-            // 更新表格和专业表格中的学院名称
-            renderDepartmentTable();
-            renderMajorTable();
-            loadDepartmentOptions();
-            
-            // 关闭模态框
-            $("#editDepartmentModal").modal("hide");
-            
-            // 显示成功消息
-            showSuccessMessage("学院信息已成功更新！");
+        async function submitEditDepartment() {
+            var id = document.getElementById('editDepartmentId').value;
+            var name = document.getElementById('editDepartmentName').value.trim();
+            if (!name) { showMsg('请填写学院名称', true); return; }
+            try {
+                await api.request('/api/v1/colleges/' + id, {
+                    method: 'PUT',
+                    body: {
+                        name: name,
+                        dean: document.getElementById('editDeanName').value.trim(),
+                        description: document.getElementById('editDepartmentDescription').value.trim()
+                    }
+                });
+                $('#editDepartmentModal').modal('hide');
+                showMsg('学院已更新', false);
+                loadColleges();
+            } catch(e) { showMsg(e.message, true); }
         }
 
-        // 删除学院
-        function deleteDepartment(departmentId) {
-            // 检查是否有专业属于该学院
-            if (majors.some(m => m.departmentId === departmentId)) {
-                showErrorMessage("无法删除：该学院下还有专业！请先删除或移动相关专业。");
-                return;
-            }
-            
-            if (confirm("确定要删除该学院吗？")) {
-                const departmentIndex = departments.findIndex(d => d.id === departmentId);
-                if (departmentIndex !== -1) {
-                    // 删除学院
-                    departments.splice(departmentIndex, 1);
-                    
-                    // 更新表格
-                    renderDepartmentTable();
-                    loadDepartmentOptions();
-                    
-                    // 显示成功消息
-                    showSuccessMessage("学院已成功删除！");
+        async function deleteCollege(id) {
+            if (!confirm('确定要删除该学院吗？')) return;
+            try {
+                await api.del('/api/v1/colleges/' + id);
+                showMsg('学院已删除', false);
+                loadColleges();
+            } catch(e) { showMsg(e.message, true); }
+        }
+
+        // ==================== 专业管理 ====================
+        async function loadMajors() {
+            var tbody = document.getElementById('majorTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">加载中...</td></tr>';
+            try {
+                var data = await api.get('/api/v1/majors/list', { pageSize: 200 });
+                var list = api.pageItems(data) || [];
+                tbody.innerHTML = '';
+                if (!list.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无数据</td></tr>';
+                } else {
+                    list.forEach(function(m) {
+                        var collegeName = '';
+                        if (collegesCache.length) {
+                            var c = collegesCache.find(function(x) { return x.id === m.departmentId || x.id === m.collegeId; });
+                            collegeName = c ? (c.name || c.collegeName) : (m.departmentName || m.collegeName || '未知学院');
+                        } else {
+                            collegeName = m.departmentName || m.collegeName || '-';
+                        }
+                        var tr = document.createElement('tr');
+                        tr.innerHTML =
+                            '<td>' + (m.id || '-') + '</td>' +
+                            '<td>' + api.escapeHtml(m.name || m.majorName || '-') + '</td>' +
+                            '<td>' + api.escapeHtml(collegeName) + '</td>' +
+                            '<td>' + api.escapeHtml(m.description || '-') + '</td>' +
+                            '<td>' +
+                            '<button class="btn btn-xs btn-primary" onclick="editMajor(' + m.id + ')">编辑</button> ' +
+                            '<button class="btn btn-xs btn-danger" onclick="deleteMajor(' + m.id + ')">删除</button>' +
+                            '</td>';
+                        tbody.appendChild(tr);
+                    });
                 }
-            }
+            } catch(e) { tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">加载失败: ' + api.escapeHtml(e.message) + '</td></tr>'; }
         }
 
-        // 渲染学院表格
-        function renderDepartmentTable() {
-            const tableBody = document.getElementById("departmentTableBody");
-            tableBody.innerHTML = "";
-            
-            departments.forEach(department => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${department.id}</td>
-                    <td>${department.name}</td>
-                    <td>${department.dean}</td>
-                    <td>${department.description || "无"}</td>
-                    <td>
-                        <button class="btn btn-xs btn-primary" onclick="showEditDepartmentModal('${department.id}')">编辑</button>
-                        <button class="btn btn-xs btn-danger" onclick="deleteDepartment('${department.id}')">删除</button>
-                    </td>
-                `;
-                
-                tableBody.appendChild(row);
-            });
-        }
-
-        // 显示添加专业模态框
-        function showAddMajorModal() {
-            document.getElementById("addMajorForm").reset();
-            loadDepartmentOptions();
-            $("#addMajorModal").modal("show");
-        }
-
-        // 提交添加专业
-        function submitAddMajor() {
-            const majorId = document.getElementById("majorId").value;
-            const majorName = document.getElementById("majorName").value;
-            const departmentId = document.getElementById("majorDepartment").value;
-            const description = document.getElementById("majorDescription").value;
-            
-            if (!majorId || !majorName || !departmentId) {
-                showErrorMessage("请填写专业ID、专业名称和所属学院！");
-                return;
-            }
-            
-            // 检查专业ID是否已存在
-            if (majors.find(m => m.id === majorId)) {
-                showErrorMessage("专业ID已存在！");
-                return;
-            }
-            
-            // 添加新专业
-            majors.push({ 
-                id: majorId, 
-                name: majorName, 
-                departmentId: departmentId,
-                description: description || ""
-            });
-            
-            // 更新表格
-            renderMajorTable();
-            
-            // 关闭模态框
-            $("#addMajorModal").modal("hide");
-            
-            // 显示成功消息
-            showSuccessMessage("专业添加成功！");
-        }
-
-        // 显示编辑专业模态框
-        function showEditMajorModal(majorId) {
-            const major = majors.find(m => m.id === majorId);
-            if (!major) return;
-            
-            document.getElementById("editMajorId").value = major.id;
-            document.getElementById("editMajorName").value = major.name;
-            document.getElementById("editMajorDescription").value = major.description;
-            
-            // 加载学院选项并设置选中值
-            const select = document.getElementById("editMajorDepartment");
-            loadDepartmentOptions(select, major.departmentId);
-            
-            $("#editMajorModal").modal("show");
-        }
-
-        // 提交编辑专业
-        function submitEditMajor() {
-            const majorId = document.getElementById("editMajorId").value;
-            const majorIndex = majors.findIndex(m => m.id === majorId);
-            
-            if (majorIndex === -1) {
-                showErrorMessage("专业不存在！");
-                return;
-            }
-            
-            const majorName = document.getElementById("editMajorName").value;
-            const departmentId = document.getElementById("editMajorDepartment").value;
-            const description = document.getElementById("editMajorDescription").value;
-            
-            if (!majorName || !departmentId) {
-                showErrorMessage("请填写专业名称和所属学院！");
-                return;
-            }
-            
-            // 更新专业信息
-            majors[majorIndex] = {
-                id: majorId,
-                name: majorName,
-                departmentId: departmentId,
-                description: description || ""
-            };
-            
-            // 更新表格
-            renderMajorTable();
-            
-            // 关闭模态框
-            $("#editMajorModal").modal("hide");
-            
-            // 显示成功消息
-            showSuccessMessage("专业信息已成功更新！");
-        }
-
-        // 删除专业
-        function deleteMajor(majorId) {
-            if (confirm("确定要删除该专业吗？")) {
-                const majorIndex = majors.findIndex(m => m.id === majorId);
-                if (majorIndex !== -1) {
-                    // 删除专业
-                    majors.splice(majorIndex, 1);
-                    
-                    // 更新表格
-                    renderMajorTable();
-                    
-                    // 显示成功消息
-                    showSuccessMessage("专业已成功删除！");
-                }
-            }
-        }
-
-        // 渲染专业表格
-        function renderMajorTable() {
-            const tableBody = document.getElementById("majorTableBody");
-            tableBody.innerHTML = "";
-            
-            majors.forEach(major => {
-                // 查找对应的学院名称
-                const department = departments.find(d => d.id === major.departmentId);
-                const departmentName = department ? department.name : "未知学院";
-                
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${major.id}</td>
-                    <td>${major.name}</td>
-                    <td>${departmentName}</td>
-                    <td>${major.description || "无"}</td>
-                    <td>
-                        <button class="btn btn-xs btn-primary" onclick="showEditMajorModal('${major.id}')">编辑</button>
-                        <button class="btn btn-xs btn-danger" onclick="deleteMajor('${major.id}')">删除</button>
-                    </td>
-                `;
-                
-                tableBody.appendChild(row);
-            });
-        }
-
-        // 加载学院选项到下拉列表
-        function loadDepartmentOptions(targetSelect = null, selectedValue = "") {
-            const selects = targetSelect ? [targetSelect] : [
-                document.getElementById("majorDepartment"),
-                document.getElementById("editMajorDepartment")
+        function loadDepartmentOptions(targetSelect, selectedValue) {
+            var selects = targetSelect ? [targetSelect] : [
+                document.getElementById('majorDepartment'),
+                document.getElementById('editMajorDepartment')
             ];
-            
-            selects.forEach(select => {
-                if (!select) return;
-                
-                // 清空现有选项
-                select.innerHTML = "";
-                
-                // 添加默认选项
-                const defaultOption = document.createElement("option");
-                defaultOption.value = "";
-                defaultOption.textContent = "请选择学院";
-                defaultOption.selected = selectedValue === "";
-                select.appendChild(defaultOption);
-                
-                // 添加学院选项
-                departments.forEach(department => {
-                    const option = document.createElement("option");
-                    option.value = department.id;
-                    option.textContent = department.name;
-                    option.selected = department.id === selectedValue;
-                    select.appendChild(option);
+            selects.forEach(function(sel) {
+                if (!sel) return;
+                sel.innerHTML = '<option value="">请选择学院</option>';
+                collegesCache.forEach(function(c) {
+                    var opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.name || c.collegeName || c.id;
+                    if (selectedValue && String(c.id) === String(selectedValue)) opt.selected = true;
+                    sel.appendChild(opt);
                 });
             });
         }
 
-        // 显示成功消息
-        function showSuccessMessage(message) {
-            document.getElementById("successMessage").textContent = message;
-            const alert = document.getElementById("successAlert");
-            alert.style.display = "block";
-            
-            // 3秒后自动隐藏
-            setTimeout(() => {
-                alert.style.display = "none";
-            }, 3000);
+        function showAddMajorModal() {
+            document.getElementById('addMajorForm').reset();
+            loadDepartmentOptions(null, '');
+            $('#addMajorModal').modal('show');
         }
 
-        // 显示错误消息
-        function showErrorMessage(message) {
-            document.getElementById("errorMessage").textContent = message;
-            const alert = document.getElementById("errorAlert");
-            alert.style.display = "block";
-            
-            // 3秒后自动隐藏
-            setTimeout(() => {
-                alert.style.display = "none";
-            }, 3000);
+        async function submitAddMajor() {
+            var name = document.getElementById('majorName').value.trim();
+            var departmentId = document.getElementById('majorDepartment').value;
+            if (!name) { showMsg('请填写专业名称', true); return; }
+            if (!departmentId) { showMsg('请选择所属学院', true); return; }
+            try {
+                await api.post('/api/v1/majors', {
+                    name: name,
+                    majorName: name,
+                    majorCode: document.getElementById('majorId').value.trim(),
+                    departmentId: parseInt(departmentId),
+                    description: document.getElementById('majorDescription').value.trim()
+                });
+                $('#addMajorModal').modal('hide');
+                showMsg('专业添加成功', false);
+                loadMajors();
+            } catch(e) { showMsg(e.message, true); }
         }
 
-        // 监听文件选择
-        document.getElementById("restoreFile").addEventListener("change", function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                document.getElementById("selectedFileName").textContent = file.name;
-            } else {
-                document.getElementById("selectedFileName").textContent = "未选择文件";
-            }
+        async function editMajor(id) {
+            try {
+                var m = await api.get('/api/v1/majors/' + id);
+                document.getElementById('editMajorId').value = m.id || id;
+                document.getElementById('editMajorName').value = m.name || m.majorName || '';
+                document.getElementById('editMajorDescription').value = m.description || '';
+                loadDepartmentOptions(document.getElementById('editMajorDepartment'), m.departmentId || m.collegeId);
+                $('#editMajorModal').modal('show');
+            } catch(e) { showMsg('加载专业信息失败: ' + e.message, true); }
+        }
+
+        async function submitEditMajor() {
+            var id = document.getElementById('editMajorId').value;
+            var name = document.getElementById('editMajorName').value.trim();
+            var departmentId = document.getElementById('editMajorDepartment').value;
+            if (!name) { showMsg('请填写专业名称', true); return; }
+            if (!departmentId) { showMsg('请选择所属学院', true); return; }
+            try {
+                await api.request('/api/v1/majors/' + id, {
+                    method: 'PUT',
+                    body: {
+                        name: name,
+                        majorName: name,
+                        departmentId: parseInt(departmentId),
+                        description: document.getElementById('editMajorDescription').value.trim()
+                    }
+                });
+                $('#editMajorModal').modal('hide');
+                showMsg('专业已更新', false);
+                loadMajors();
+            } catch(e) { showMsg(e.message, true); }
+        }
+
+        async function deleteMajor(id) {
+            if (!confirm('确定要删除该专业吗？')) return;
+            try {
+                await api.del('/api/v1/majors/' + id);
+                showMsg('专业已删除', false);
+                loadMajors();
+            } catch(e) { showMsg(e.message, true); }
+        }
+
+        // ==================== 基本设置 & 系统配置（非核心功能，仅提示保存成功） ====================
+        function saveBasicSettings() { showMsg('基本设置已保存', false); }
+        function saveSystemSettings() { showMsg('系统配置已保存', false); }
+        function backupDatabase() { showMsg('功能开发中', false); }
+        function restoreDatabase() { showMsg('功能开发中', false); }
+        function downloadBackup(name) { showMsg('功能开发中', false); }
+        function deleteBackup(name) { showMsg('功能开发中', false); }
+
+        // ==================== 文件选择 ====================
+        document.getElementById('restoreFile').addEventListener('change', function(e) {
+            var f = e.target.files[0];
+            document.getElementById('selectedFileName').textContent = f ? f.name : '未选择文件';
         });
 
-        // 显示用户信息
-        function showUserInfo() {
-            alert("当前用户：系统管理员\n权限：全部权限");
+        // ==================== 退出登录 ====================
+        function logout() {
+            if (confirm('确定要退出登录吗？')) window.location.href = '/login/logout';
         }
 
-        // 退出登录
-        function logout() {
-            if (confirm("确定要退出登录吗？")) {
-                window.location.href = '/login/logout';
-            }
-        }
+        // ==================== 初始化 ====================
+        $(document).ready(function() {
+            loadSemesters();
+            loadColleges();
+            loadMajors();
+        });
     </script>
-    <script src="/js/app-api.js"></script>
     <script src="/js/legacy-dynamic-pages.js"></script>
 </body>
 </html>

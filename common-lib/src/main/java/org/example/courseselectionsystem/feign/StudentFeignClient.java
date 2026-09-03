@@ -27,4 +27,7 @@ public interface StudentFeignClient {
 
     @GetMapping("/students/count")
     Result<Long> count();
+
+    @GetMapping("/students/count/recent")
+    Result<Long> countRecent(@RequestParam(value = "days", defaultValue = "30") int days);
 }

@@ -72,7 +72,15 @@
 
     async function currentUser() {
         if (!state.current) {
-            state.current = await api.get('/login/current');
+            state.current = await api.get('/api/v1/auth/current-user');
+            // 合并 localStorage 中的 userInfo 作为补充
+            try {
+                const stored = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                if (stored && Object.keys(stored).length) {
+                    state.current.user = stored;
+                    if (!state.current.username) state.current.username = stored.username || stored.studentNo || stored.teacherNo;
+                }
+            } catch (e) { /* ignore */ }
         }
         return state.current;
     }
@@ -1587,14 +1595,14 @@
 
     async function initStudentGrades() {
         const current = await currentUser();
+        updateStudentTopChrome(current);
         const data = await api.get(`/api/v1/course-selections/student/${current.userId}`, {
             pageNum: 1,
             pageSize: 1000,
-            status: 1,
             orderByColumn: 'selectionTime',
             isAsc: false
         });
-        state.studentGrades = api.pageItems(data);
+        state.studentGrades = api.pageItems(data).filter((item) => item.status !== 0);
         ensureStudentGradesLayout();
         bindStudentGradeControls();
         renderStudentGradeStats();
@@ -1726,17 +1734,18 @@
         const rows = filteredStudentGrades();
         body.innerHTML = rows.length ? rows.map((g) => {
             const level = scoreLevel(g.score);
+            const letter = letterGrade(g.score);
             return `
                 <tr class="grade-row">
                     <td>${escape(g.courseCode || g.courseId)}</td>
                     <td>${escape(g.courseName || '-')}</td>
                     <td>${escape(g.courseType || '-')}</td>
                     <td>${escape(g.credit || 0)}</td>
-                    <td><span class="grade-badge ${escape(letterGrade(g.score))}">${escape(level)}</span></td>
+                    <td><span class="grade-badge ${escape(letter)}">${letter ? `${escape(letter)} ${escape(level)}` : escape(level)}</span></td>
                     <td>${escape(g.score ?? '-')}</td>
                     <td>${escape(gpaValue(g.score))}</td>
                     <td>${escape(g.semester || '-')}</td>
-                    <td><button class="btn btn-sm btn-outline-primary" type="button" data-student-grade-detail="${escape(g.selectionId || g.id)}">Details</button></td>
+                    <td><button class="btn btn-sm btn-outline-primary" type="button" data-student-grade-detail="${escape(g.selectionId || g.id)}">\u8be6\u60c5</button></td>
                 </tr>
             `;
         }).join('') : rowMessage(9, 'No grade data.');
@@ -1835,14 +1844,14 @@
             return;
         }
         const title = modal.querySelector('.grade-details-title');
-        if (title) title.textContent = `${item.courseName || '-'} grade detail`;
-        const values = modal.querySelectorAll('.grade-detail-value');
-        const details = [
+        if (title) title.textContent = `${item.courseName || '-'} \u6210\u7ee9\u8be6\u60c5`;
+        const labels = ['\u8bfe\u7a0b\u4ee3\u7801', '\u8bfe\u7a0b\u540d\u79f0', '\u8bfe\u7a0b\u7c7b\u578b', '\u5b66\u5206', '\u6700\u7ec8\u6210\u7ee9', '\u5b66\u5206\u7ee9\u70b9', '\u6388\u8bfe\u6559\u5e08', '\u5b66\u671f', '\u5e73\u65f6\u6210\u7ee9', '\u5b9e\u9a8c\u6210\u7ee9', '\u8003\u8bd5\u6210\u7ee9', '\u66f4\u65b0\u65f6\u95f4', '\u5907\u6ce8'];
+        const values = [
             item.courseCode || item.courseId,
             item.courseName || '-',
             item.courseType || '-',
-            item.credit || 0,
-            `${item.score ?? '-'} (${scoreLevel(item.score)})`,
+            item.credit ?? 0,
+            item.score == null ? '\u672a\u51fa\u5206' : `${item.score} \u5206\uff08${letterGrade(item.score)} ${scoreLevel(item.score)}\uff09`,
             gpaValue(item.score),
             item.teacherName || '-',
             item.semester || '-',
@@ -1852,9 +1861,19 @@
             formatDateTime(item.updatedAt || item.updateTime || item.selectionTime),
             item.remark || '-'
         ];
-        values.forEach((element, index) => {
-            element.textContent = details[index] == null ? '-' : String(details[index]);
-        });
+        const grid = modal.querySelector('.grade-details-grid');
+        if (grid) {
+            grid.innerHTML = labels.map((label, index) => `
+                <div class="grade-detail-item">
+                    <div class="grade-detail-label">${label}</div>
+                    <div class="grade-detail-value">${escape(values[index] == null ? '-' : String(values[index]))}</div>
+                </div>`).join('');
+        } else {
+            const existing = modal.querySelectorAll('.grade-detail-value');
+            existing.forEach((element, index) => {
+                element.textContent = values[index] == null ? '-' : String(values[index]);
+            });
+        }
         modal.style.display = 'flex';
     }
 
@@ -1890,6 +1909,7 @@
     }
 
     function letterGrade(score) {
+        if (score == null || score === '') return '';
         const valueText = Number(score);
         if (Number.isNaN(valueText)) return '';
         if (valueText >= 90) return 'A';
@@ -1912,6 +1932,7 @@
 
     async function renderStudentSchedule() {
         const current = await currentUser();
+        updateStudentTopChrome(current);
         const data = await api.get(`/api/v1/course-selections/student/${current.userId}`, {
             pageNum: 1,
             pageSize: 1000,
@@ -1919,31 +1940,89 @@
             orderByColumn: 'selectionTime',
             isAsc: false
         });
-        const rows = api.pageItems(data);
+        const selections = api.pageItems(data);
         updateScheduleWeekLabel();
+        // 标准周课表（#weekly-schedule）：横=星期，纵=节次
+        const table = document.querySelector('#weekly-schedule');
+        if (table) {
+            const cells = Array.from(table.querySelectorAll('tbody td[data-day]'));
+            cells.forEach((cell) => { cell.innerHTML = ''; cell.classList.remove('empty-slot'); });
+            if (selections.length) {
+                selections.forEach((course) => {
+                    parseScheduleParts(course.schedule).forEach((part) => {
+                        const cell = findScheduleCell(table, part.day, part.start, part.end);
+                        if (cell) cell.appendChild(scheduleBlockEl(course));
+                    });
+                });
+                cells.forEach((cell) => { if (!cell.children.length) cell.classList.add('empty-slot'); });
+            }
+            return;
+        }
+        // 兼容旧版简单表格
         const body = document.querySelector('.schedule-table tbody');
         if (!body) return;
-        body.innerHTML = rows.length ? rows.map((course) => `
+        body.innerHTML = selections.length ? selections.map((course) => `
             <tr>
-                <td class="time-column">${escape(course.schedule || 'TBD')}</td>
-                <td colspan="5" class="time-slot">
-                    <div class="course-block ${escape(scheduleCourseTypeClass(course.courseType))}" data-schedule-course="${escape(course.courseId)}">
-                        <div class="course-block-title">${escape(course.courseName || '-')}</div>
-                        <div class="course-block-location">${escape(course.classroom || '-')}</div>
-                        <div class="course-block-info">${escape(course.courseCode || course.courseId)} | ${escape(course.credit || 0)} credits | ${escape(course.teacherName || '-')}</div>
-                    </div>
-                </td>
+                <td class="time-column">${escape(course.schedule || '待安排')}</td>
+                <td class="time-slot">${escape(course.courseName || '-')} · ${escape(course.classroom || '-')}</td>
             </tr>
-        `).join('') : '<tr><td colspan="6" class="text-center">No schedule data.</td></tr>';
-        body.querySelectorAll('.course-block').forEach((block) => {
-            block.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                const title = block.querySelector('.course-block-title')?.textContent || '-';
-                const info = block.querySelector('.course-block-info')?.textContent || '';
-                alert(`${title}\n${info}`);
-            }, true);
+        `).join('') : '<tr><td colspan="2" class="text-center">暂无课表数据</td></tr>';
+    }
+
+    // 解析课表时间，如 "周一 3-4节" / "周三1-2节,周五5-6节"
+    function parseScheduleParts(schedule) {
+        const parts = [];
+        String(schedule || '').split(/[,，;；、]/).forEach((raw) => {
+            const text = (raw || '').trim();
+            if (!text) return;
+            const dayMatch = text.match(/周([一二三四五六日天])/);
+            if (!dayMatch) return;
+            const day = dayMatch[1] === '天' ? '周日' : '周' + dayMatch[1];
+            const range = text.match(/(\d{1,2})\s*[-~—至到]\s*(\d{1,2})\s*节/);
+            let start = null;
+            let end = null;
+            if (range) {
+                start = Number(range[1]);
+                end = Number(range[2]);
+            } else {
+                const single = text.match(/(\d{1,2})\s*节/);
+                if (single) {
+                    start = Number(single[1]);
+                    end = start;
+                } else {
+                    const n = text.match(/\d{1,2}/);
+                    if (n) {
+                        start = Number(n[0]);
+                        end = start;
+                    }
+                }
+            }
+            if (start == null) return;
+            parts.push({ day, start, end });
         });
+        return parts;
+    }
+
+    function findScheduleCell(table, day, start, end) {
+        const rows = Array.from(table.querySelectorAll('tbody tr[data-start]'));
+        const row = rows.find((r) => Number(r.dataset.start) <= start && start <= Number(r.dataset.end))
+            || rows.find((r) => Number(r.dataset.start) <= end && end <= Number(r.dataset.end))
+            || rows.find((r) => Number(r.dataset.start) === start);
+        if (!row) return null;
+        return row.querySelector(`td[data-day="${day}"]`);
+    }
+
+    function scheduleBlockEl(course) {
+        const div = document.createElement('div');
+        div.className = 'course-block ' + scheduleCourseTypeClass(course.courseType);
+        div.innerHTML =
+            `<div class="course-block-title">${escape(course.courseName || '-')}</div>`
+            + `<div class="course-block-location"><i class="fas fa-map-marker-alt"></i> ${escape(course.classroom || '-')}</div>`
+            + `<div class="course-block-info">${escape(course.courseCode || course.courseId)} · ${escape(course.credit || 0)}学分 · ${escape(course.teacherName || '-')}</div>`;
+        div.addEventListener('click', () => {
+            alert(`${escape(course.courseName || '-')}\n${escape(course.courseCode || course.courseId)} · ${escape(course.schedule || '')} · ${escape(course.classroom || '-')}\n教师：${escape(course.teacherName || '-')}`);
+        });
+        return div;
     }
 
     function bindStudentScheduleControls() {
@@ -2010,6 +2089,7 @@
 
     async function initStudentMessages(pageNum) {
         const current = await currentUser();
+        updateStudentTopChrome(current);
         state.messagePage = Math.max(1, Number(pageNum || state.messagePage || 1));
         bindStudentMessageControls();
         const list = document.querySelector('.messages-list');
@@ -2395,6 +2475,7 @@
 
     async function initStudentEvaluations() {
         const current = await currentUser();
+        updateStudentTopChrome(current);
         const data = await api.get(`/api/v1/evaluations/student/${current.userId}/courses`);
         state.evaluations = Array.isArray(data) ? data : [];
         bindEvaluationControls();
@@ -2593,8 +2674,10 @@
     async function submitEvaluation(event) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        const current = await currentUser();
+        // 注意：必须在任何 await 之前读取表单引用，否则 event.currentTarget 会变为 null
         const form = event.currentTarget;
+        const courseId = Number(form?.dataset?.courseId);
+        const current = await currentUser();
         const score = Number(value('overall-rating'));
         if (!score) {
             alert('\u8bf7\u81f3\u5c11\u9009\u62e9\u603b\u4f53\u8bc4\u5206');
@@ -2602,7 +2685,7 @@
         }
         await api.post('/api/v1/evaluations', {
             studentId: current.userId,
-            courseId: Number(form.dataset.courseId),
+            courseId,
             score,
             content: document.querySelector('textarea[name="evaluation-content"]')?.value || '',
             isAnonymous: document.getElementById('anonymous-evaluation')?.checked,
@@ -3300,7 +3383,7 @@
     }
 
     async function addRole() {
-        await api.get('/api/v1/roles/create', {
+        await api.post('/api/v1/roles', {
             name: requiredValue('roleName', '请填写角色名称'),
             code: requiredValue('roleCode', '请填写角色编码'),
             description: value('roleDesc'),
@@ -3660,6 +3743,8 @@
         window.addAnnouncement = addAnnouncement;
         window.showAnnouncementDetail = showAnnouncementDetail;
         window.deleteAnnouncement = deleteAnnouncement;
+        window.showEditAnnouncementModal = showEditAnnouncementModal;
+        window.updateAnnouncement = updateAnnouncement;
         window.goToAnnouncementPage = (page) => loadAnnouncements(page);
         await loadAnnouncementCourses();
         await loadAnnouncements(1);
@@ -3672,8 +3757,9 @@
             <td>${escape(item.createdByName || '-')}</td>
             <td>${formatDateTime(item.createTime)}</td>
             <td>
-                <button class="btn btn-sm btn-info" onclick="showAnnouncementDetail('${item.id}')"><i class="fas fa-eye"></i></button>
-                <button class="btn btn-sm btn-danger" onclick="deleteAnnouncement('${item.id}')"><i class="fas fa-trash"></i></button>
+                <button class="btn btn-sm btn-info" onclick="showAnnouncementDetail('${item.id}')" title="查看"><i class="fas fa-eye"></i></button>
+                <button class="btn btn-sm btn-warning" onclick="showEditAnnouncementModal('${item.id}')" title="编辑"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-danger" onclick="deleteAnnouncement('${item.id}')" title="删除"><i class="fas fa-trash"></i></button>
             </td>
         </tr>`;
     }
@@ -3683,7 +3769,7 @@
             const courses = await api.get('/api/v1/courses/list', { pageNum: 1, pageSize: 999 });
             const rows = api.pageItems(courses);
             const opts = rows.map((c) => `<option value="${c.id}">${escape(c.courseName)}</option>`).join('');
-            ['announcementCourse', 'announcementCourseFilter'].forEach((id) => {
+            ['announcementCourse', 'announcementCourseFilter', 'editAnnouncementCourse'].forEach((id) => {
                 const sel = document.getElementById(id);
                 if (sel) {
                     sel.innerHTML = id.includes('Filter') ? `<option value="">全部课程</option>${opts}` : `<option value="">请选择课程</option>${opts}`;
@@ -3732,6 +3818,39 @@
         if (!confirm('确认删除该公告？')) return;
         await api.del(`/api/v1/course-announcements/${id}`);
         notify('success', '删除成功');
+        await loadAnnouncements(1);
+    }
+
+    async function showEditAnnouncementModal(id) {
+        try {
+            const item = await api.get(`/api/v1/course-announcements/${id}`);
+            document.getElementById('editAnnouncementId').value = item.id;
+            document.getElementById('editAnnouncementTitle').value = item.title || '';
+            document.getElementById('editAnnouncementContent').value = item.content || '';
+            document.getElementById('editAnnouncementCreatedBy').value = item.createdBy || '';
+            const courseSel = document.getElementById('editAnnouncementCourse');
+            if (courseSel && item.courseId) {
+                courseSel.value = String(item.courseId);
+            }
+            openModal('editAnnouncementModal');
+        } catch (e) {
+            notify('error', '加载公告信息失败', e.message || '');
+        }
+    }
+
+    async function updateAnnouncement() {
+        const id = document.getElementById('editAnnouncementId').value;
+        if (!id) { notify('error', '错误', '公告ID缺失'); return; }
+        const body = {
+            title: requiredValue('editAnnouncementTitle', '请填写公告标题'),
+            courseId: Number(requiredValue('editAnnouncementCourse', '请选择关联课程')),
+            content: requiredValue('editAnnouncementContent', '请填写公告内容')
+        };
+        const createdBy = document.getElementById('editAnnouncementCreatedBy').value;
+        if (createdBy) { body.createdBy = Number(createdBy); }
+        await api.put(`/api/v1/course-announcements/${id}`, body);
+        closeModal('editAnnouncementModal');
+        notify('success', '更新成功', '公告已更新');
         await loadAnnouncements(1);
     }
 
@@ -3805,9 +3924,18 @@
         return '';
     }
 
+    function updateStudentTopChrome(current) {
+        const profile = current?.user || {};
+        const name = profile.realName || profile.name || current?.username || profile.username || '学生';
+        const major = profile.majorName || profile.major || profile.className || '';
+        document.querySelectorAll('.user-name').forEach((el) => { el.textContent = name; });
+        document.querySelectorAll('.user-role').forEach((el) => { el.textContent = major || '学生'; });
+    }
+
     function scoreLevel(score) {
+        if (score == null || score === '') return '未出分';
         const value = Number(score);
-        if (Number.isNaN(value)) return '未录入';
+        if (Number.isNaN(value)) return '未出分';
         if (value >= 90) return '优秀';
         if (value >= 80) return '良好';
         if (value >= 70) return '中等';

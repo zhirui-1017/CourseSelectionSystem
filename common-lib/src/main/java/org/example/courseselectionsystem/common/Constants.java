@@ -27,7 +27,7 @@ public final class Constants {
 
     public static final int DEFAULT_PAGE_NUM = 1;
     public static final int DEFAULT_PAGE_SIZE = 10;
-    public static final int MAX_PAGE_SIZE = 100;
+    public static final int MAX_PAGE_SIZE = 1000;
 
     public static final int COURSE_STATUS_NOT_STARTED = 0;
     public static final int COURSE_STATUS_IN_PROGRESS = 1;

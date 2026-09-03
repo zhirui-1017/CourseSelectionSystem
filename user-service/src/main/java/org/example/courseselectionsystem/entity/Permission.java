@@ -89,10 +89,9 @@ public class Permission {
     private Date updateTime;
 
     /**
-     * 乐观锁版本号
+     * 乐观锁版本号（cloud 库 sys_permission 表无 version 列，标记为不持久化）
      */
-    @Version
-    @Column(name = "version", nullable = false, columnDefinition = "int default 0")
+    @Transient
     private Integer version;
 
     /**

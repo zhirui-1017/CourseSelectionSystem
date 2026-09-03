@@ -13,10 +13,13 @@ import org.example.courseselectionsystem.vo.PageResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -31,7 +34,7 @@ public class TeacherServiceImpl implements TeacherService {
 
     private static final Logger logger = LoggerFactory.getLogger(TeacherServiceImpl.class);
     private static final int DEFAULT_PAGE_SIZE = 10;
-    private static final int MAX_PAGE_SIZE = 100;
+    private static final int MAX_PAGE_SIZE = 1000;
     private static final Map<String, String> SORT_COLUMNS = Map.ofEntries(
             Map.entry("id", "id"),
             Map.entry("teacherNo", "teacher_no"),
@@ -56,11 +59,13 @@ public class TeacherServiceImpl implements TeacherService {
     @Autowired
     private TeacherMapper teacherMapper;
 
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
     @Override
     @Transactional(readOnly = false)
     public boolean addTeacher(Teacher teacher) {
         // 参数验证
-        validateTeacherParams(teacher);
+        validateTeacherParams(teacher, true);
         
         // 检查工号是否已存在
         checkTeacherNoExist(teacher.getTeacherNo(), null);
@@ -83,14 +88,16 @@ public class TeacherServiceImpl implements TeacherService {
     @Override
     @Transactional(readOnly = false)
     public boolean updateTeacher(Teacher teacher) {
-        // 参数验证
-        validateTeacherParams(teacher);
+        // 参数验证（更新时工号非必填，保持原工号不变）
+        validateTeacherParams(teacher, false);
         
         // 检查教师是否存在
         checkTeacherExist(teacher.getId());
         
-        // 检查工号是否已存在（排除自身）
-        checkTeacherNoExist(teacher.getTeacherNo(), teacher.getId());
+        // 检查工号是否已存在（排除自身），仅当携带工号时校验
+        if (StringUtils.hasText(teacher.getTeacherNo())) {
+            checkTeacherNoExist(teacher.getTeacherNo(), teacher.getId());
+        }
         
         // 更新教师信息
         int result = teacherMapper.updateById(teacher);
@@ -211,6 +218,13 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     private void applyFilters(QueryWrapper<Teacher> queryWrapper, PageRequest request) {
+        // 通用关键字：同时匹配工号与姓名（前端搜索框传入 keyword）
+        String keyword = textParam(request, "keyword", "searchKey", "q");
+        if (StringUtils.hasText(keyword)) {
+            String kw = keyword.trim();
+            queryWrapper.and(w -> w.like("teacher_no", kw).or().like("name", kw));
+        }
+
         String teacherName = textParam(request, "teacherName", "name");
         if (StringUtils.hasText(teacherName)) {
             queryWrapper.like("name", teacherName.trim());
@@ -224,6 +238,12 @@ public class TeacherServiceImpl implements TeacherService {
         Long departmentId = longParam(request, "departmentId");
         if (departmentId != null) {
             queryWrapper.eq("department_id", departmentId);
+        }
+
+        // 按学院筛选：通过系部归属学院关联
+        Long collegeId = longParam(request, "collegeId");
+        if (collegeId != null) {
+            queryWrapper.apply("department_id IN (SELECT id FROM department WHERE college_id = {0})", collegeId);
         }
 
         String title = textParam(request, "title");
@@ -311,7 +331,7 @@ public class TeacherServiceImpl implements TeacherService {
         String password = teacherNo.length() > 6
                 ? teacherNo.substring(teacherNo.length() - 6)
                 : teacherNo;
-        teacher.setPassword(password);
+        teacher.setPassword(passwordEncoder.encode(password));
         int result = teacherMapper.updateById(teacher);
         if (result <= 0) {
             logger.error("重置教师密码失败，教师ID: {}", id);
@@ -327,10 +347,10 @@ public class TeacherServiceImpl implements TeacherService {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "新密码不能为空");
         }
         Teacher teacher = getTeacherById(id);
-        if (!StringUtils.hasText(oldPassword) || !oldPassword.equals(teacher.getPassword())) {
+        if (!passwordMatches(oldPassword, teacher.getPassword())) {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "旧密码不正确");
         }
-        teacher.setPassword(newPassword);
+        teacher.setPassword(passwordEncoder.encode(newPassword));
         int result = teacherMapper.updateById(teacher);
         if (result <= 0) {
             logger.error("修改教师密码失败，教师ID: {}", id);
@@ -340,21 +360,55 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     /**
+     * 校验原密码：兼容明文存储与 BCrypt 加密存储的账号
+     * 系统内注册用户密码为 BCrypt 加密，管理员添加/重置的用户密码可能为明文
+     * @param rawPassword 用户输入的原始密码
+     * @param storedPassword 数据库中存储的密码
+     * @return 是否匹配
+     */
+    private boolean passwordMatches(String rawPassword, String storedPassword) {
+        if (!StringUtils.hasText(rawPassword) || !StringUtils.hasText(storedPassword)) {
+            return false;
+        }
+        if (storedPassword.equals(rawPassword)) {
+            return true;
+        }
+        if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$")
+                || storedPassword.startsWith("$2y$")) {
+            try {
+                return passwordEncoder.matches(rawPassword, storedPassword);
+            } catch (IllegalArgumentException ex) {
+                logger.warn("Invalid BCrypt password format for teacher");
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
      * 验证教师参数
      * @param teacher 教师信息
+     * @param requireTeacherNo 是否必须提供工号（新增必填，更新可选）
      */
-    private void validateTeacherParams(Teacher teacher) {
+    private void validateTeacherParams(Teacher teacher, boolean requireTeacherNo) {
         if (teacher == null) {
             throw new BusinessException(Constants.PARAM_ERROR_CODE, "教师信息不能为空");
         }
         
-        if (!StringUtils.hasText(teacher.getTeacherNo())) {
-            throw new BusinessException(Constants.PARAM_ERROR_CODE, "工号不能为空");
-        }
-        
-        // 验证工号格式
-        if (!Pattern.matches(Constants.TEACHER_NO_REGEX, teacher.getTeacherNo())) {
-            throw new BusinessException(Constants.PARAM_ERROR_CODE, "工号格式不正确，应为6位数字");
+        if (requireTeacherNo) {
+            if (!StringUtils.hasText(teacher.getTeacherNo())) {
+                throw new BusinessException(Constants.PARAM_ERROR_CODE, "工号不能为空");
+            }
+            
+            // 验证工号格式
+            if (!Pattern.matches(Constants.TEACHER_NO_REGEX, teacher.getTeacherNo())) {
+                throw new BusinessException(Constants.PARAM_ERROR_CODE, "工号格式不正确，应为6位数字");
+            }
+        } else if (StringUtils.hasText(teacher.getTeacherNo())) {
+            // 更新时若携带工号也校验格式
+            if (!Pattern.matches(Constants.TEACHER_NO_REGEX, teacher.getTeacherNo())) {
+                throw new BusinessException(Constants.PARAM_ERROR_CODE, "工号格式不正确，应为6位数字");
+            }
         }
         
         if (!StringUtils.hasText(teacher.getName())) {
@@ -392,5 +446,12 @@ public class TeacherServiceImpl implements TeacherService {
     @Override
     public long count() {
         return teacherMapper.selectCount(null);
+    }
+
+    @Override
+    public long countRecent(int days) {
+        QueryWrapper<Teacher> wrapper = new QueryWrapper<>();
+        wrapper.ge("create_time", LocalDateTime.now().minusDays(Math.max(days, 1)));
+        return teacherMapper.selectCount(wrapper);
     }
 }

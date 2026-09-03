@@ -991,7 +991,15 @@ function initBreadcrumb() {
     if (!breadcrumb) return;
     
     // 创建面包屑HTML
-    let breadcrumbHTML = '<a href="../../student/index.html" class="breadcrumb-item">首页</a>';
+    // 根据当前页面路径动态确定首页链接
+    const path = window.location.pathname;
+    let homeUrl = '/student/index.html';
+    if (path.startsWith('/admin/')) {
+        homeUrl = '/admin/index.html';
+    } else if (path.startsWith('/teacher/')) {
+        homeUrl = '/teacher/index.html';
+    }
+    let breadcrumbHTML = '<a href="' + homeUrl + '" class="breadcrumb-item">首页</a>';
     
     // 如果有父级页面，添加父级页面链接
     if (currentPage.parent) {

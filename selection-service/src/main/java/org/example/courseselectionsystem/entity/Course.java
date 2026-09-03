@@ -37,7 +37,7 @@ public class Course {
     @Transient
     private Long departmentId;
 
-    @Transient
+    @Column(name = "semester")
     private String semester;
 
     @Column(name = "schedule", length = 200, nullable = false)
@@ -58,13 +58,13 @@ public class Course {
     @Column(name = "description", columnDefinition = "text")
     private String description;
 
-    @Column(name = "score")
+    @Transient
     private Double score;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "create_time", updatable = false)
     private Date createTime;
 
-    @Column(name = "updated_at")
+    @Column(name = "update_time")
     private Date updateTime;
 
     @PrePersist

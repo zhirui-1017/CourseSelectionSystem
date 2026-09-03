@@ -7,15 +7,24 @@ import org.example.courseselectionsystem.repository.CourseRepository;
 import org.example.courseselectionsystem.service.CourseService;
 import org.example.courseselectionsystem.vo.PageRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CourseServiceImpl implements CourseService {
@@ -23,6 +32,10 @@ public class CourseServiceImpl implements CourseService {
     @Autowired
     private CourseRepository courseRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @CacheEvict(value = {"course:active", "course:detail"}, allEntries = true)
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Course addCourse(Course course) {
@@ -60,6 +73,7 @@ public class CourseServiceImpl implements CourseService {
         return courseRepository.save(course);
     }
 
+    @CacheEvict(value = {"course:active", "course:detail"}, allEntries = true)
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Course updateCourse(Course course) {
@@ -105,32 +119,165 @@ public class CourseServiceImpl implements CourseService {
         return courseRepository.save(existingCourse);
     }
 
+    @Cacheable(value = "course:detail", key = "#courseId")
     @Override
     public Course getCourseById(Long courseId) {
-        return courseRepository.findById(courseId)
+        Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(Result.NOT_FOUND, "课程不存在"));
+        enrichCourses(List.of(course));
+        return course;
     }
 
     @Override
     public Course getCourseByCode(String courseCode) {
-        return courseRepository.findByCourseCode(courseCode)
+        Course course = courseRepository.findByCourseCode(courseCode)
                 .orElseThrow(() -> new BusinessException(Result.NOT_FOUND, "课程不存在"));
+        enrichCourses(List.of(course));
+        return course;
     }
 
+    /**
+     * 用 course_selection 表中 status=1（已选）的真实记录数覆盖课程表硬编码的 selectedCount。
+     * 统计失败（如 JDBC 不可用、表缺失）时优雅降级，保留原值，不阻断课程列表。
+     */
+    private void applyRealSelectedCount(List<Course> courses) {
+        if (jdbcTemplate == null || courses == null || courses.isEmpty()) {
+            return;
+        }
+        try {
+            List<Long> ids = courses.stream()
+                    .map(Course::getId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (ids.isEmpty()) {
+                return;
+            }
+            String placeholders = ids.stream().map(i -> "?").collect(Collectors.joining(","));
+            Map<Long, Long> counts = new HashMap<>();
+            jdbcTemplate.query(
+                    "SELECT course_id, COUNT(*) FROM course_selection WHERE status = 1 AND course_id IN (" + placeholders + ") GROUP BY course_id",
+                    rs -> {
+                        while (rs.next()) {
+                            counts.put(rs.getLong("course_id"), rs.getLong(2));
+                        }
+                        return null;
+                    },
+                    ids.toArray());
+            courses.forEach(c -> {
+                if (c.getId() != null) {
+                    c.setSelectedCount(counts.getOrDefault(c.getId(), 0L).intValue());
+                }
+            });
+        } catch (Exception ignored) {
+            // 统计失败时保留 course 表原有 selectedCount
+        }
+    }
+
+    /**
+     * 批量填充课程教师姓名（teacherName 为 @Transient，需查询 teacher 表）。
+     * 填充失败时优雅降级，保留 teacherId。
+     */
+    private void applyTeacherName(List<Course> courses) {
+        if (jdbcTemplate == null || courses == null || courses.isEmpty()) {
+            return;
+        }
+        try {
+            List<Long> teacherIds = courses.stream()
+                    .map(Course::getTeacherId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (teacherIds.isEmpty()) {
+                return;
+            }
+            String placeholders = teacherIds.stream().map(i -> "?").collect(Collectors.joining(","));
+            Map<Long, String> names = new HashMap<>();
+            jdbcTemplate.query(
+                    "SELECT id, name FROM teacher WHERE id IN (" + placeholders + ")",
+                    rs -> {
+                        while (rs.next()) {
+                            names.put(rs.getLong("id"), rs.getString("name"));
+                        }
+                        return null;
+                    },
+                    teacherIds.toArray());
+            courses.forEach(c -> {
+                if (c.getTeacherId() != null) {
+                    c.setTeacherName(names.get(c.getTeacherId()));
+                }
+            });
+        } catch (Exception ignored) {
+            // 填充失败时保留 teacherId
+        }
+    }
+
+    /** 统一丰富课程展示字段：真实选课人数 + 教师姓名 */
+    private void enrichCourses(List<Course> courses) {
+        applyRealSelectedCount(courses);
+        applyTeacherName(courses);
+    }
+
+    @CacheEvict(value = {"course:active", "course:detail"}, allEntries = true)
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteCourse(Long courseId) {
-        if (!courseRepository.existsById(courseId)) {
-            throw new BusinessException(Result.NOT_FOUND, "课程不存在");
-        }
-        courseRepository.deleteById(courseId);
+        return deleteCourse(courseId, null, null, "系统");
+    }
+
+    @CacheEvict(value = {"course:active", "course:detail"}, allEntries = true)
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deleteCourse(Long courseId, String reason, Long operatorId, String operatorName) {
+        deleteCourseWithNotice(courseId, reason, operatorId, operatorName);
         return true;
     }
 
+    /**
+     * 删除课程并处理选课：若课程已有学生选课，发布停开通知并清理选课记录，让学生重新选课。
+     * 通知/清理失败不阻断删除。
+     */
+    private void deleteCourseWithNotice(Long courseId, String reason, Long operatorId, String operatorName) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new BusinessException(Result.NOT_FOUND, "课程不存在"));
+        if (jdbcTemplate != null) {
+            try {
+                Long selected = jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM course_selection WHERE course_id = ? AND status = 1", Long.class, courseId);
+                Long any = jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM course_selection WHERE course_id = ?", Long.class, courseId);
+                boolean hasSelection = (selected != null && selected > 0) || (any != null && any > 0);
+                if (hasSelection) {
+                    String reasonText = StringUtils.hasText(reason) ? reason : "未填写";
+                    jdbcTemplate.update(
+                            "INSERT INTO course_notice (title, content, course_id, course_name, publisher_id, publisher_name) VALUES (?,?,?,?,?,?)",
+                            "课程停开通知",
+                            "课程【" + course.getCourseName() + "】（"
+                                    + (course.getCourseCode() == null ? "" : course.getCourseCode())
+                                    + "）已停开并删除，删除原因：" + reasonText + "。请相关学生及时重新选课。",
+                            courseId, course.getCourseName(), operatorId, operatorName);
+                    jdbcTemplate.update("DELETE FROM course_selection WHERE course_id = ?", courseId);
+                    jdbcTemplate.update("DELETE FROM course_evaluation WHERE course_id = ?", courseId);
+                }
+            } catch (Exception ignored) {
+                // 通知/清理失败不阻断删除
+            }
+        }
+        courseRepository.deleteById(courseId);
+    }
+
+    @CacheEvict(value = {"course:active", "course:detail"}, allEntries = true)
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean batchDeleteCourses(List<Long> courseIds) {
-        courseRepository.deleteAllById(courseIds);
+        if (courseIds == null || courseIds.isEmpty()) {
+            return true;
+        }
+        for (Long courseId : courseIds) {
+            if (courseId != null && courseRepository.existsById(courseId)) {
+                deleteCourseWithNotice(courseId, "批量删除", null, "管理员");
+            }
+        }
         return true;
     }
 
@@ -139,28 +286,61 @@ public class CourseServiceImpl implements CourseService {
                                       Long teacherId, Long departmentId, String courseType, Integer status) {
         PageRequest request = pageRequestParam == null ? new PageRequest() : pageRequestParam;
         int pageNum = request.getPageNum() == null || request.getPageNum() < 1 ? 1 : request.getPageNum();
-        int pageSize = request.getPageSize() == null || request.getPageSize() < 1 ? 10 : Math.min(request.getPageSize(), 100);
+        int pageSize = request.getPageSize() == null || request.getPageSize() < 1 ? 10 : Math.min(request.getPageSize(), 1000);
         org.springframework.data.domain.PageRequest pageRequest =
                 org.springframework.data.domain.PageRequest.of(pageNum - 1, pageSize, courseSort(request));
-        return courseRepository.findCourses(blankToNull(courseName), blankToNull(courseCode), teacherId,
+        Page<Course> coursePage = courseRepository.findCourses(blankToNull(courseName), blankToNull(courseCode), teacherId,
                 normalizeCourseType(courseType), status, pageRequest);
+        enrichCourses(coursePage.getContent());
+        return coursePage;
+    }
+
+    @Cacheable(value = "course:active", key = "'list'")
+    @Override
+    public List<Course> getActiveCourses() {
+        List<Course> courses = courseRepository.findByStatus(1);
+        enrichCourses(courses);
+        return courses;
+    }
+
+    @Cacheable(value = "course:active", key = "#semester == null || #semester.isBlank() ? 'list' : #semester")
+    @Override
+    public List<Course> getActiveCoursesBySemester(String semester) {
+        if (semester == null || semester.isBlank()) {
+            return getActiveCourses();
+        }
+        return getActiveCourses().stream()
+                .filter(course -> semester.equals(course.getSemester()))
+                .toList();
     }
 
     @Override
-    public List<Course> getActiveCourses() {
-        return courseRepository.findByStatus(1);
+    public List<Course> getPopularCourses(Integer limit) {
+        int n = limit == null || limit < 1 ? 10 : limit;
+        return getActiveCourses().stream()
+                .sorted(Comparator.comparingInt((Course c) -> c.getSelectedCount() == null ? 0 : c.getSelectedCount()).reversed())
+                .limit(n)
+                .toList();
     }
 
     @Override
     public List<Course> getCoursesByDepartment(Long departmentId) {
-        return getActiveCourses();
+        if (departmentId == null) {
+            return getActiveCourses();
+        }
+        List<Course> courses = courseRepository.findByDepartmentIdAndStatus(departmentId, 1);
+        enrichCourses(courses);
+        return courses;
     }
 
     @Override
     public List<Course> getCoursesByTeacher(Long teacherId) {
-        return courseRepository.findByTeacherId(teacherId);
+        List<Course> courses = courseRepository.findByTeacherId(teacherId);
+        enrichCourses(courses);
+        return courses;
     }
 
+    @CacheEvict(value = {"course:active", "course:detail"}, allEntries = true)
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean changeCourseStatus(Long courseId, Integer status) {
@@ -176,7 +356,9 @@ public class CourseServiceImpl implements CourseService {
     public List<Course> searchCourses(String keyword, Long departmentId, Integer courseType, Integer credit) {
         String type = normalizeCourseType(courseType);
         Double creditValue = credit == null ? null : credit.doubleValue();
-        return courseRepository.searchCourses(blankToNull(keyword), type, creditValue, 1);
+        List<Course> courses = courseRepository.searchCourses(blankToNull(keyword), departmentId, type, creditValue, 1);
+        enrichCourses(courses);
+        return courses;
     }
 
     private String normalizeCourseType(Integer courseType) {
@@ -269,5 +451,10 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public long count() {
         return courseRepository.count();
+    }
+
+    @Override
+    public long countRecent(int days) {
+        return courseRepository.countByCreateTimeGreaterThanEqual(LocalDateTime.now().minusDays(Math.max(days, 1)));
     }
 }

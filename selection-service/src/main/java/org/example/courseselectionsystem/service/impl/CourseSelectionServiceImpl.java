@@ -13,6 +13,7 @@ import org.example.courseselectionsystem.vo.PageRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -23,7 +24,7 @@ import java.util.*;
 public class CourseSelectionServiceImpl implements CourseSelectionService {
 
     private static final int DEFAULT_PAGE_SIZE = 10;
-    private static final int MAX_PAGE_SIZE = 100;
+    private static final int MAX_PAGE_SIZE = 1000;
     private static final Map<String, String> SORT_COLUMNS = Map.ofEntries(
             Map.entry("id", "id"),
             Map.entry("studentId", "studentId"),
@@ -53,6 +54,9 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
     @Autowired
     private StudentRepository studentRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> selectCourse(Long studentId, Long courseId) {
@@ -73,13 +77,16 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
             if (Objects.equals(selection.getStatus(), 1) || Objects.equals(selection.getStatus(), 3)) {
                 throw new BusinessException(Result.PARAM_ERROR, "您已选择该课程");
             }
-            selection.setStatus(1);
+            // 已退选(status=2)的学生重新选课时，仍需检查课程容量，避免课程超员
+            long selectedCount = courseSelectionRepository.countByCourseIdAndStatus(courseId, 1);
+            int newStatus = selectedCount >= safeCapacity(course) ? 3 : 1;
+            selection.setStatus(newStatus);
             selection.setDropTime(null);
             selection.setSelectionTime(new Date());
             selection.setUpdateTime(new Date());
             courseSelectionRepository.save(selection);
             refreshSelectedCount(course);
-            return result("选课成功", 1);
+            return result(newStatus == 3 ? "课程已满，已进入候补队列" : "选课成功", newStatus);
         }
 
         long selectedCount = courseSelectionRepository.countByCourseIdAndStatus(courseId, 1);
@@ -162,6 +169,7 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
         return courseSelectionRepository.findByStudentIdAndStatus(studentId, 1)
                 .stream()
                 .map(this::enrich)
+                .filter(selection -> matchesSemester(selection, semester))
                 .mapToDouble(selection -> selection.getCredit() == null ? 0D : selection.getCredit())
                 .sum();
     }
@@ -216,7 +224,16 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
     public List<CourseSelection> getStudentCurrentCourses(Long studentId, String semester) {
         List<CourseSelection> selections = courseSelectionRepository.findByStudentIdAndStatus(studentId, 1);
         selections.forEach(this::enrich);
-        return selections;
+        if (semester == null || semester.isBlank()) {
+            return selections;
+        }
+        List<CourseSelection> result = new ArrayList<>();
+        for (CourseSelection selection : selections) {
+            if (semester.equals(selection.getSemester())) {
+                result.add(selection);
+            }
+        }
+        return result;
     }
 
     @Override
@@ -297,6 +314,11 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
             rows.add(toStudentRow(selection, course));
         }
         return rows;
+    }
+
+    @Override
+    public long countAll() {
+        return courseSelectionRepository.count();
     }
 
     @Override
@@ -401,8 +423,35 @@ public class CourseSelectionServiceImpl implements CourseSelectionService {
             selection.setCourseType(course.getCourseType());
             selection.setSchedule(course.getSchedule());
             selection.setClassroom(course.getClassroom());
+            selection.setSemester(course.getSemester());
         });
+        // 填充学生信息（学号、姓名），便于选课学生列表展示
+        if (selection.getStudentId() != null && studentRepository != null) {
+            studentRepository.findById(selection.getStudentId()).ifPresent(student -> {
+                selection.setStudentName(student.getName());
+                selection.setStudentCode(student.getStudentNo());
+                // 填充班级名
+                if (student.getClassId() != null && jdbcTemplate != null) {
+                    try {
+                        String className = jdbcTemplate.queryForObject(
+                                "select class_name from class_info where id = ?", String.class, student.getClassId());
+                        selection.setClassName(className);
+                    } catch (Exception ignored) {
+                    }
+                }
+            });
+        }
         return selection;
+    }
+
+    /**
+     * 判断选课记录是否属于指定学期（semester 为空时不限制）
+     */
+    private boolean matchesSemester(CourseSelection selection, String semester) {
+        if (semester == null || semester.isBlank()) {
+            return true;
+        }
+        return semester.equals(selection.getSemester());
     }
 
     private Course requireOwnedCourse(Long courseId, Long teacherId) {

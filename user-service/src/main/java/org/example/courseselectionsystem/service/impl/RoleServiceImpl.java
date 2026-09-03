@@ -160,7 +160,7 @@ public class RoleServiceImpl implements RoleService {
     public Page<Role> getRoleList(PageRequest pageRequestParam, String name, String code, Integer status) {
         PageRequest request = pageRequestParam == null ? new PageRequest() : pageRequestParam;
         int pageNum = request.getPageNum() == null || request.getPageNum() < 1 ? 1 : request.getPageNum();
-        int pageSize = request.getPageSize() == null || request.getPageSize() < 1 ? 10 : Math.min(request.getPageSize(), 100);
+        int pageSize = request.getPageSize() == null || request.getPageSize() < 1 ? 10 : Math.min(request.getPageSize(), 1000);
 
         Sort sort;
         if (!isBlank(request.getSortField())) {

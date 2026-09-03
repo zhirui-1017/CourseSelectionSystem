@@ -27,7 +27,7 @@ public class GradeController {
             "courseName", "c.course_name",
             "score", "cs.score",
             "selectionTime", "cs.selection_time",
-            "updatedAt", "cs.updated_at"
+            "updatedAt", "cs.update_time"
     );
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -39,7 +39,7 @@ public class GradeController {
     @GetMapping({"", "/list"})
     public Result<PageResult<Map<String, Object>>> list(@RequestParam Map<String, String> params) {
         int pageNum = positiveInt(params.get("pageNum"), 1);
-        int pageSize = Math.min(positiveInt(params.get("pageSize"), 10), 100);
+        int pageSize = Math.min(positiveInt(params.get("pageSize"), 10), 1000);
         MapSqlParameterSource source = new MapSqlParameterSource()
                 .addValue("offset", (pageNum - 1) * pageSize)
                 .addValue("pageSize", pageSize);
@@ -51,6 +51,7 @@ public class GradeController {
                   join student s on s.id = cs.student_id
                   join course c on c.id = cs.course_id
                   left join teacher t on t.id = c.teacher_id
+                  left join class_info ci on ci.id = s.class_id
                 """ + where, source, Long.class);
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(gradeSelectSql() + where
                 + " order by " + orderBy + " limit :pageSize offset :offset", source);
@@ -83,7 +84,7 @@ public class GradeController {
                        exam_grade = :examGrade,
                        score = :score,
                        remark = :remark,
-                       updated_at = current_timestamp
+                       update_time = current_timestamp
                  where id = :selectionId
                 """, source);
         return Result.success("成绩保存成功", requireGrade(selectionId));
@@ -99,7 +100,7 @@ public class GradeController {
                        exam_grade = null,
                        score = null,
                        remark = null,
-                       updated_at = current_timestamp
+                       update_time = current_timestamp
                  where id = :selectionId
                 """, new MapSqlParameterSource("selectionId", selectionId));
         return Result.success("成绩已清空", requireGrade(selectionId));
@@ -137,7 +138,7 @@ public class GradeController {
                        cs.student_id studentId,
                        s.student_no studentNo,
                        s.name studentName,
-                       s.class_name className,
+                       ci.class_name className,
                        cs.course_id courseId,
                        c.course_code courseCode,
                        c.course_name courseName,
@@ -151,11 +152,12 @@ public class GradeController {
                        cs.remark,
                        cs.status,
                        cs.selection_time selectionTime,
-                       cs.updated_at updatedAt
+                       cs.update_time updatedAt
                   from course_selection cs
                   join student s on s.id = cs.student_id
                   join course c on c.id = cs.course_id
                   left join teacher t on t.id = c.teacher_id
+                  left join class_info ci on ci.id = s.class_id
                 """;
     }
 
@@ -166,7 +168,7 @@ public class GradeController {
         addIntFilter(filters, source, "status", "cs.status", params.get("status"));
         String className = text(params.get("className"));
         if (className != null && !"all".equalsIgnoreCase(className)) {
-            filters.add("s.class_name = :className");
+            filters.add("ci.class_name = :className");
             source.addValue("className", className);
         }
         String graded = text(params.get("graded"));
@@ -229,7 +231,12 @@ public class GradeController {
         if (text == null) {
             return null;
         }
-        double number = Double.parseDouble(text);
+        double number;
+        try {
+            number = Double.parseDouble(text);
+        } catch (NumberFormatException e) {
+            throw new BusinessException(Result.PARAM_ERROR, "成绩必须是数字");
+        }
         if (number < 0D || number > 100D) {
             throw new BusinessException(Result.PARAM_ERROR, "成绩必须在0到100之间");
         }
@@ -246,7 +253,11 @@ public class GradeController {
         if (text == null || "all".equalsIgnoreCase(text)) {
             return defaultValue;
         }
-        return Integer.parseInt(text);
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 
     private Long longValue(Object value) {
@@ -254,7 +265,11 @@ public class GradeController {
         if (text == null || "all".equalsIgnoreCase(text)) {
             return null;
         }
-        return Long.parseLong(text);
+        try {
+            return Long.parseLong(text);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private Long requiredLong(Object value, String message) {

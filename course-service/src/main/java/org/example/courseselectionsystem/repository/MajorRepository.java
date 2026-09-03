@@ -53,8 +53,9 @@ public interface MajorRepository extends JpaRepository<Major, Long> {
     List<Major> findByStatusOrderByIdAsc(Integer status);
 
     @Query("SELECT m FROM Major m WHERE 1=1 " +
-            "AND (:majorName IS NULL OR m.majorName LIKE CONCAT('%', :majorName, '%')) " +
-            "AND (:majorCode IS NULL OR m.majorCode LIKE CONCAT('%', :majorCode, '%')) " +
+            "AND ((:majorName IS NULL AND :majorCode IS NULL) " +
+            "     OR m.majorName LIKE CONCAT('%', :majorName, '%') " +
+            "     OR m.majorCode LIKE CONCAT('%', :majorCode, '%')) " +
             "AND (:departmentId IS NULL OR m.departmentId = :departmentId) " +
             "AND (:status IS NULL OR m.status = :status)")
     Page<Major> findMajors(@Param("majorName") String majorName,

@@ -30,4 +30,7 @@ public interface CourseFeignClient {
 
     @GetMapping("/courses/count")
     Result<Long> count();
+
+    @GetMapping("/courses/count/recent")
+    Result<Long> countRecent(@RequestParam(value = "days", defaultValue = "30") int days);
 }

@@ -4,7 +4,15 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
         try {
-            currentUser = await api.get('/login/current');
+            currentUser = await api.get('/api/v1/auth/current-user');
+            // 合并 localStorage 中的 userInfo 作为补充
+            try {
+                const stored = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                if (stored && Object.keys(stored).length) {
+                    currentUser.user = stored;
+                    if (!currentUser.username) currentUser.username = stored.username || stored.studentNo || stored.teacherNo;
+                }
+            } catch (e) { /* ignore */ }
         } catch (error) {
             api.notify('error', '未登录', '请先登录学生账号');
             return;
@@ -24,6 +32,7 @@
     });
 
     async function initCourseSelectionPage() {
+        await loadNotices();
         const list = ensureCourseList();
         list.innerHTML = messageCard('正在加载可选课程...');
         await loadSelectableCourses();
@@ -36,6 +45,38 @@
         });
     }
 
+    // 加载系统通知（课程停开等），顶部单行轮播展示
+    async function loadNotices() {
+        const banner = document.getElementById('systemNoticeBanner');
+        if (!banner) return;
+        try {
+            const data = await api.get('/api/v1/notices/recent', { limit: 6 });
+            const notices = Array.isArray(data) ? data : ((data && data.data) || []);
+            if (!notices || !notices.length) { banner.style.display = 'none'; return; }
+            banner.style.display = '';
+            banner.className = 'notice-ticker';
+            banner.innerHTML = `
+                <div class="notice-ticker-icon"><i class="fas fa-bullhorn"></i></div>
+                <div class="notice-ticker-label">通知公告</div>
+                <div class="notice-ticker-body"><div class="notice-ticker-slide"></div></div>`;
+            const slide = banner.querySelector('.notice-ticker-slide');
+            let index = 0;
+            const show = () => {
+                const n = notices[index % notices.length];
+                slide.style.opacity = 0;
+                setTimeout(() => {
+                    slide.innerHTML = `<span class="notice-ticker-title">${api.escapeHtml(n.title)}</span><span class="notice-ticker-meta">${api.formatDate(n.publishTime)}</span>`;
+                    slide.title = `${n.title}\n${n.content || ''}`;
+                    slide.style.opacity = 1;
+                }, 180);
+            };
+            show();
+            if (notices.length > 1) {
+                setInterval(() => { index += 1; show(); }, 4000);
+            }
+        } catch (e) { banner.style.display = 'none'; }
+    }
+
     async function initMyCoursesPage() {
         const list = ensureCourseList();
         list.innerHTML = messageCard('正在加载我的课程...');
@@ -44,27 +85,94 @@
         document.querySelector('.search-btn')?.addEventListener('click', loadMyCourses);
     }
 
-    async function loadSelectableCourses() {
+    // 可选课程分页参数
+    const CATALOG_PAGE_SIZE = 12;
+    let catalogAll = [];
+    let catalogPage = 1;
+    let catalogSelected = new Set();
+
+    async function loadSelectableCourses(keepPage) {
         const list = ensureCourseList();
         const keyword = document.getElementById('course-search')?.value?.trim();
         list.innerHTML = messageCard('正在加载可选课程...');
+        const pager = document.getElementById('catalogPager');
         try {
             const data = keyword
-                ? await api.get('/api/v1/courses/search', { keyword })
-                : await api.get('/api/v1/courses/active');
-            const courses = api.pageItems(data);
-            const selectedIds = await selectedCourseIds();
-            if (!courses.length) {
-                list.innerHTML = messageCard('暂无可选课程');
-                return;
-            }
-            list.innerHTML = courses.map((course) => renderCourseCard(course, selectedIds.has(Number(course.id)))).join('');
+                ? await api.get('/api/v1/courses/search', { keyword, pageNum: 1, pageSize: 1000 })
+                : await api.get('/api/v1/courses/active', { pageNum: 1, pageSize: 1000 });
+            catalogAll = api.pageItems(data) || [];
+            if (!keepPage) catalogPage = 1;
+            catalogSelected = await selectedCourseIds();
+            renderCatalogPage();
+        } catch (error) {
+            list.innerHTML = messageCard(error.message);
+            if (pager) pager.innerHTML = '';
+        }
+    }
+
+    function renderCatalogPage() {
+        const list = ensureCourseList();
+        const pager = document.getElementById('catalogPager');
+        const maxPage = Math.max(1, Math.ceil(catalogAll.length / CATALOG_PAGE_SIZE));
+        if (catalogPage > maxPage) catalogPage = maxPage;
+        const start = (catalogPage - 1) * CATALOG_PAGE_SIZE;
+        const pageCourses = catalogAll.slice(start, start + CATALOG_PAGE_SIZE);
+        if (!pageCourses.length) {
+            list.innerHTML = messageCard('暂无可选课程');
+        } else {
+            list.innerHTML = pageCourses.map((course) => renderCourseCard(course, catalogSelected.has(Number(course.id)))).join('');
             list.querySelectorAll('.js-select-course').forEach((button) => {
                 button.addEventListener('click', () => selectCourse(button.dataset.courseId));
             });
-        } catch (error) {
-            list.innerHTML = messageCard(error.message);
         }
+        renderCatalogPager(maxPage);
+    }
+
+    function renderCatalogPager(maxPage) {
+        const pager = document.getElementById('catalogPager');
+        if (!pager) return;
+        if (catalogAll.length <= CATALOG_PAGE_SIZE) { pager.innerHTML = ''; return; }
+        const pages = buildCatalogPageList(catalogPage, maxPage);
+        const html = [
+            `<button type="button" class="page-btn" data-page="${catalogPage - 1}" ${catalogPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`
+        ];
+        pages.forEach((p) => {
+            if (p === '...') {
+                html.push('<span class="page-ellipsis">…</span>');
+            } else {
+                html.push(`<button type="button" class="page-btn ${p === catalogPage ? 'active' : ''}" data-page="${p}">${p}</button>`);
+            }
+        });
+        html.push(`<button type="button" class="page-btn" data-page="${catalogPage + 1}" ${catalogPage === maxPage ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`);
+        html.push(`<span class="page-info">共 ${catalogAll.length} 门 · ${catalogPage}/${maxPage} 页</span>`);
+        pager.innerHTML = html.join('');
+        pager.querySelectorAll('.page-btn').forEach((btn) => {
+            if (btn.disabled) return;
+            btn.addEventListener('click', () => {
+                catalogPage = Number(btn.dataset.page);
+                if (catalogPage < 1) catalogPage = 1;
+                if (catalogPage > maxPage) catalogPage = maxPage;
+                renderCatalogPage();
+            });
+        });
+    }
+
+    function buildCatalogPageList(current, max) {
+        if (max <= 7) {
+            const arr = [];
+            for (let i = 1; i <= max; i += 1) arr.push(i);
+            return arr;
+        }
+        const set = new Set([1, max, current - 1, current, current + 1]);
+        const list = Array.from(set).filter((p) => p >= 1 && p <= max).sort((a, b) => a - b);
+        const out = [];
+        let prev = 0;
+        list.forEach((p) => {
+            if (prev && p - prev > 1) out.push('...');
+            out.push(p);
+            prev = p;
+        });
+        return out;
     }
 
     async function loadMyCourses() {
@@ -119,7 +227,7 @@
                 courseId
             });
             api.notify('success', '选课成功', '课程已加入我的课程');
-            await loadSelectableCourses();
+            await loadSelectableCourses(true);
         } catch (error) {
             api.notify('error', '选课失败', error.message);
         }
@@ -225,7 +333,7 @@
 
     function updateUserChrome(user) {
         document.querySelectorAll('.user-name').forEach((element) => {
-            element.textContent = user?.user?.name || user?.username || '学生';
+            element.textContent = user?.user?.realName || user?.user?.name || user?.username || '学生';
         });
         document.querySelectorAll('.user-role').forEach((element) => {
             const profile = user?.user || {};
@@ -298,7 +406,7 @@
     }
 
     function updateDashboardWelcome() {
-        const name = currentUser?.user?.name || currentUser?.username || '同学';
+        const name = currentUser?.user?.realName || currentUser?.user?.name || currentUser?.username || '同学';
         const title = document.querySelector('.welcome-section h2');
         const subtitle = document.querySelector('.welcome-section p');
         if (title) title.textContent = `欢迎回来，${name}`;
@@ -307,7 +415,10 @@
 
     function updateDashboardStats(selections, messages, evaluations) {
         const cards = document.querySelectorAll('#dashboard .stats-grid .stat-card');
-        const scores = selections.map((item) => Number(item.score)).filter((score) => !Number.isNaN(score));
+        const scores = selections
+            .filter((item) => item.score !== null && item.score !== undefined && item.score !== '')
+            .map((item) => Number(item.score))
+            .filter((score) => !Number.isNaN(score));
         const averageScore = scores.length ? (scores.reduce((sum, score) => sum + score, 0) / scores.length).toFixed(1) : '-';
         const weeklySlots = selections.reduce((sum, item) => sum + Math.max(1, parseSchedule(item.schedule).length), 0);
         const pendingEvaluations = evaluations.filter((item) => !item.evaluated).length;
@@ -328,9 +439,6 @@
             if (title) title.textContent = stat.title;
         });
 
-        const badges = document.querySelectorAll('.nav-badge');
-        if (badges[0]) badges[0].textContent = selections.length;
-        if (badges[1]) badges[1].textContent = unread;
     }
 
     function renderDashboardSchedule(selections) {

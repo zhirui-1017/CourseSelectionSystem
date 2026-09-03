@@ -113,16 +113,15 @@ public class User {
     public Date updateTime;
 
     /**
-     * 逻辑删除：0-未删除，1-已删除
+     * 逻辑删除：0-未删除，1-已删除（cloud 库 sys_user 表无 deleted 列，标记为不持久化）
      */
-    @Column(name = "deleted", columnDefinition = "tinyint default 0")
+    @Transient
     public Integer deleted;
 
     /**
-     * 乐观锁版本号
+     * 乐观锁版本号（cloud 库 sys_user 表无 version 列，标记为不持久化）
      */
-    @Version
-    @Column(name = "version", nullable = false, columnDefinition = "int default 0")
+    @Transient
     public Integer version;
 
     @ToString.Exclude

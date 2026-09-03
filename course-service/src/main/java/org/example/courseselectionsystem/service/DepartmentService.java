@@ -89,10 +89,11 @@ public interface DepartmentService {
      * @param pageRequest 分页请求参数
      * @param departmentName 学院名称
      * @param departmentCode 学院编号
+     * @param collegeId 所属学院ID
      * @param status 状态
      * @return 学院分页列表
      */
-    Page<Department> getDepartmentList(PageRequest pageRequest, String departmentName, String departmentCode, Integer status);
+    Page<Department> getDepartmentList(PageRequest pageRequest, String departmentName, String departmentCode, Long collegeId, Integer status);
 
     /**
      * 获取所有启用的学院

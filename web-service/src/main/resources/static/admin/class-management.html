@@ -17,14 +17,14 @@
     <div class="page-container">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <a href="/admin" class="sidebar-brand">
+                <a href="/admin/index.html" class="sidebar-brand">
                     <div class="sidebar-brand-icon"><i class="fas fa-cogs"></i></div>
                     <span class="sidebar-brand-text">管理员控制台</span>
                 </a>
                 <button class="sidebar-toggle"><i class="fas fa-chevron-left"></i></button>
             </div>
             <nav class="sidebar-nav">
-                <div class="nav-item"><a href="/admin" class="nav-link"><i class="nav-icon fas fa-tachometer-alt"></i><span class="nav-text">控制台首页</span></a></div>
+                <div class="nav-item"><a href="/admin/index.html" class="nav-link"><i class="nav-icon fas fa-tachometer-alt"></i><span class="nav-text">控制台首页</span></a></div>
                 <div class="nav-item"><a href="/admin/student-management.html" class="nav-link"><i class="nav-icon fas fa-user-graduate"></i><span class="nav-text">学生管理</span></a></div>
                 <div class="nav-item"><a href="/admin/teacher-management.html" class="nav-link"><i class="nav-icon fas fa-chalkboard-teacher"></i><span class="nav-text">教师管理</span></a></div>
                 <div class="nav-item"><a href="/admin/course-management.html" class="nav-link"><i class="nav-icon fas fa-book"></i><span class="nav-text">课程管理</span></a></div>
@@ -84,8 +84,8 @@
                             <div class="input-group">
                                 <input type="text" class="form-control" id="searchClassInput" placeholder="搜索班级编号/名称/学院">
                                 <span class="input-group-btn">
-                                    <button class="btn btn-default" type="button" onclick="searchClasses()">
-                                        <span class="glyphicon glyphicon-search"></span>
+                                    <button class="btn btn-primary" type="button" onclick="searchClasses()">
+                                        <span class="glyphicon glyphicon-search"></span> 搜索
                                     </button>
                                 </span>
                             </div>
@@ -191,7 +191,9 @@
                         </div>
                         <div class="form-group">
                             <label for="major">专业</label>
-                            <input type="text" class="form-control" id="major" placeholder="例如：计算机科学与技术">
+                            <select class="form-control" id="major">
+                                <option value="">请选择专业</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="grade">年级</label>
@@ -273,7 +275,9 @@
                         </div>
                         <div class="form-group">
                             <label for="editMajor">专业</label>
-                            <input type="text" class="form-control" id="editMajor">
+                            <select class="form-control" id="editMajor">
+                                <option value="">请选择专业</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="editGrade">年级</label>
@@ -505,603 +509,288 @@
 
     <!-- 引入公共JS -->
     <script src="/js/common.js"></script>
+    <script src="/js/app-api.js"></script>
     <script>
-        // 班级数据（模拟数据）
-        let classes = [
-            {
-                id: 'CS1901',
-                name: '计算机科学与技术1901班',
-                department: '计算机学院',
-                major: '计算机科学与技术',
-                grade: '2019级',
-                headTeacher: '张老师',
-                totalStudents: 45,
-                currentStudents: 42,
-                monitor: '李同学',
-                contactPhone: '13800138000',
-                createTime: '2019-09-01',
-                status: 'normal'
-            },
-            {
-                id: 'CS1902',
-                name: '计算机科学与技术1902班',
-                department: '计算机学院',
-                major: '计算机科学与技术',
-                grade: '2019级',
-                headTeacher: '王老师',
-                totalStudents: 45,
-                currentStudents: 44,
-                monitor: '张同学',
-                contactPhone: '13800138001',
-                createTime: '2019-09-01',
-                status: 'normal'
-            },
-            {
-                id: 'CS2001',
-                name: '计算机科学与技术2001班',
-                department: '计算机学院',
-                major: '计算机科学与技术',
-                grade: '2020级',
-                headTeacher: '李老师',
-                totalStudents: 50,
-                currentStudents: 48,
-                monitor: '王同学',
-                contactPhone: '13800138002',
-                createTime: '2020-09-01',
-                status: 'normal'
-            },
-            {
-                id: 'CS2002',
-                name: '计算机科学与技术2002班',
-                department: '计算机学院',
-                major: '计算机科学与技术',
-                grade: '2020级',
-                headTeacher: '赵老师',
-                totalStudents: 50,
-                currentStudents: 47,
-                monitor: '刘同学',
-                contactPhone: '13800138003',
-                createTime: '2020-09-01',
-                status: 'normal'
-            },
-            {
-                id: 'CS2101',
-                name: '计算机科学与技术2101班',
-                department: '计算机学院',
-                major: '计算机科学与技术',
-                grade: '2021级',
-                headTeacher: '张老师',
-                totalStudents: 55,
-                currentStudents: 53,
-                monitor: '陈同学',
-                contactPhone: '13800138004',
-                createTime: '2021-09-01',
-                status: 'normal'
-            },
-            {
-                id: 'CS2102',
-                name: '计算机科学与技术2102班',
-                department: '计算机学院',
-                major: '计算机科学与技术',
-                grade: '2021级',
-                headTeacher: '李老师',
-                totalStudents: 55,
-                currentStudents: 54,
-                monitor: '杨同学',
-                contactPhone: '13800138005',
-                createTime: '2021-09-01',
-                status: 'normal'
-            },
-            {
-                id: 'CS2201',
-                name: '计算机科学与技术2201班',
-                department: '计算机学院',
-                major: '计算机科学与技术',
-                grade: '2022级',
-                headTeacher: '王老师',
-                totalStudents: 60,
-                currentStudents: 58,
-                monitor: '黄同学',
-                contactPhone: '13800138006',
-                createTime: '2022-09-01',
-                status: 'normal'
-            },
-            {
-                id: 'CS2202',
-                name: '计算机科学与技术2202班',
-                department: '计算机学院',
-                major: '计算机科学与技术',
-                grade: '2022级',
-                headTeacher: '赵老师',
-                totalStudents: 60,
-                currentStudents: 59,
-                monitor: '周同学',
-                contactPhone: '13800138007',
-                createTime: '2022-09-01',
-                status: 'normal'
-            }
-        ];
+        var api = window.AppApi;
+        // ============ API 集成班级管理 ============
+        const API = '/api/v1/classes';
+        let currentPage = 1, pageSize = 10, totalPages = 1;
+        let colleges = [], majors = [];
 
-        // 当前页和每页显示数量
-        let currentPage = 1;
-        let pageSize = 10;
-        let filteredClasses = [...classes];
+        $(document).ready(function() { initPage(); });
 
-        // 初始化页面
-        $(document).ready(function() {
-            initPage();
-        });
-
-        // 初始化页面
-        function initPage() {
-            renderClassTable();
-            renderPagination();
+        async function initPage() {
+            await loadColleges();
+            await loadMajors();
+            await loadClasses();
+            populateFilters();
         }
 
-        // 渲染班级表格
-        function renderClassTable() {
-            const tableBody = $('#classTableBody');
-            tableBody.empty();
-            
-            // 计算分页数据
-            const startIndex = (currentPage - 1) * pageSize;
-            const endIndex = startIndex + pageSize;
-            const currentClasses = filteredClasses.slice(startIndex, endIndex);
-            
-            if (currentClasses.length === 0) {
-                tableBody.append(`
-                    <tr>
-                        <td colspan="11" class="text-center text-muted">暂无符合条件的班级数据</td>
-                    </tr>
-                `);
-                return;
-            }
-            
-            currentClasses.forEach(cls => {
-                let statusText = '正常';
-                let statusClass = 'label-success';
-                
-                if (cls.status === 'graduated') {
-                    statusText = '已毕业';
-                    statusClass = 'label-info';
-                } else if (cls.status === 'closed') {
-                    statusText = '已关闭';
-                    statusClass = 'label-danger';
-                }
-                
-                const row = `
-                    <tr class="class-row" data-id="${cls.id}">
-                        <td><input type="checkbox" class="class-checkbox" value="${cls.id}"></td>
-                        <td>${cls.id}</td>
-                        <td>${cls.name}</td>
-                        <td>${cls.department}</td>
-                        <td>${cls.major}</td>
-                        <td>${cls.grade}</td>
-                        <td>${cls.headTeacher}</td>
-                        <td>${cls.currentStudents}/${cls.totalStudents}</td>
-                        <td>${cls.monitor}</td>
-                        <td><span class="label ${statusClass}">${statusText}</span></td>
-                        <td>
-                            <div class="btn-group btn-group-xs">
-                                <button class="btn btn-info" onclick="showClassDetail('${cls.id}')">详情</button>
-                                <button class="btn btn-primary" onclick="showEditClassModal('${cls.id}')">编辑</button>
-                                <button class="btn btn-danger" onclick="deleteClass('${cls.id}')">删除</button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                tableBody.append(row);
-            });
-            
-            // 添加行点击事件
-            $('.class-row').click(function(e) {
-                if (!$(e.target).is('input[type="checkbox"]') && !$(e.target).closest('button').length) {
-                    const checkbox = $(this).find('input[type="checkbox"]');
-                    checkbox.prop('checked', !checkbox.prop('checked'));
-                }
+        async function loadColleges() {
+            try {
+                const data = await api.get('/api/v1/colleges');
+                colleges = (data && data.list) ? data.list : (Array.isArray(data) ? data : []);
+                $('#department, #editDepartment').each(function() {
+                    const sel = $(this), val = sel.data('val') || sel.val();
+                    sel.empty().append('<option value="">请选择学院</option>');
+                    colleges.forEach(c => { sel.append(`<option value="${api.escapeHtml(c.id)}">${api.escapeHtml(c.collegeName||c.name)}</option>`); });
+                    if (val) sel.val(val);
+                });
+            } catch(e) { console.error('加载学院失败', e); }
+        }
+
+        async function loadMajors() {
+            try {
+                const data = await api.get('/api/v1/majors/list', { pageNum: 1, pageSize: 1000 });
+                majors = (data && data.content) ? data.content : (data && data.list) ? data.list : (Array.isArray(data) ? data : []);
+                $('#major, #editMajor').each(function() {
+                    const sel = $(this), val = sel.data('val') || sel.val();
+                    sel.empty().append('<option value="">请选择专业</option>');
+                    majors.forEach(m => { sel.append(`<option value="${api.escapeHtml(m.id)}">${api.escapeHtml(m.majorName||m.name)}</option>`); });
+                    if (val) sel.val(val);
+                });
+            } catch(e) { console.error('加载专业失败', e); }
+        }
+
+        function populateFilters() {
+            const deptSel = $('#departmentFilter');
+            deptSel.empty().append('<option value="all">所有学院</option>');
+            colleges.forEach(c => { deptSel.append(`<option value="${api.escapeHtml(c.id)}">${api.escapeHtml(c.collegeName||c.name)}</option>`); });
+        }
+
+        async function loadClasses(params = {}) {
+            try {
+                const data = await api.get(API, { pageNum: currentPage, pageSize, ...params });
+                const list = (data && data.list) ? data.list : api.pageItems(data);
+                totalPages = Math.ceil((api.pageTotal(data) || 0) / pageSize);
+                renderClassTable(list);
+                renderPagination(totalPages);
+            } catch(e) { console.error('加载班级失败', e); }
+        }
+
+        function mapClass(c) {
+            return {
+                id: c.id,
+                classCode: c.classCode || '',
+                name: c.className || '',
+                collegeId: c.collegeId,
+                collegeName: c.collegeName || '',
+                majorId: c.majorId,
+                majorName: c.majorName || '',
+                grade: c.grade || '',
+                headTeacher: c.headTeacherName || '',
+                totalStudents: c.studentCount || 0,
+                currentStudents: c.studentCount || 0,
+                monitor: c.monitorName || '',
+                contactPhone: c.contactPhone || '',
+                createTime: c.createTime || '',
+                status: c.status === 1 ? 'normal' : (c.status === 2 ? 'graduated' : 'closed')
+            };
+        }
+
+        function renderClassTable(list) {
+            const tbody = $('#classTableBody').empty();
+            if (!list.length) { tbody.append('<tr><td colspan="11" class="text-center text-muted">暂无班级数据</td></tr>'); return; }
+            list.forEach(c => {
+                const cls = mapClass(c);
+                const statusMap = { normal: ['正常','label-success'], graduated: ['已毕业','label-info'], closed: ['已关闭','label-danger'] };
+                const [st, sc] = statusMap[cls.status] || ['正常','label-success'];
+                tbody.append(`<tr class="class-row" data-id="${api.escapeHtml(cls.id)}">
+                    <td><input type="checkbox" class="class-checkbox" value="${api.escapeHtml(cls.id)}"></td>
+                    <td>${api.escapeHtml(cls.classCode)}</td><td>${api.escapeHtml(cls.name)}</td><td>${api.escapeHtml(cls.collegeName)}</td><td>${api.escapeHtml(cls.majorName)}</td>
+                    <td>${api.escapeHtml(cls.grade)}</td><td>${api.escapeHtml(cls.headTeacher)}</td><td>${cls.currentStudents}/${cls.totalStudents}</td>
+                    <td>${api.escapeHtml(cls.monitor)}</td><td><span class="label ${sc}">${st}</span></td>
+                    <td><div class="btn-group btn-group-xs">
+                        <button class="btn btn-info" onclick="showClassDetail(${cls.id})">详情</button>
+                        <button class="btn btn-primary" onclick="showEditClassModal(${cls.id})">编辑</button>
+                        <button class="btn btn-danger" onclick="deleteClass(${cls.id})">删除</button>
+                    </div></td></tr>`);
             });
         }
 
-        // 渲染分页
-        function renderPagination() {
-            const pagination = $('#classPagination');
-            pagination.empty();
-            
-            const totalPages = Math.ceil(filteredClasses.length / pageSize);
-            
-            // 上一页按钮
-            const prevClass = currentPage === 1 ? 'disabled' : '';
-            pagination.append(`
-                <li class="${prevClass}">
-                    <a href="javascript:void(0)" onclick="goToPage(${currentPage - 1})">&laquo;</a>
-                </li>
-            `);
-            
-            // 页码按钮
-            for (let i = 1; i <= totalPages; i++) {
-                const activeClass = i === currentPage ? 'active' : '';
-                pagination.append(`
-                    <li class="${activeClass}">
-                        <a href="javascript:void(0)" onclick="goToPage(${i})"><strong>${i}</strong></a>
-                    </li>
-                `);
+        function renderPagination(total) {
+            const pag = $('#classPagination').empty();
+            pag.append(`<li class="${currentPage===1?'disabled':''}"><a href="javascript:void(0)" onclick="goToPage(${currentPage-1})">&laquo;</a></li>`);
+            for (let i = 1; i <= total; i++) {
+                pag.append(`<li class="${i===currentPage?'active':''}"><a href="javascript:void(0)" onclick="goToPage(${i})">${i}</a></li>`);
             }
-            
-            // 下一页按钮
-            const nextClass = currentPage === totalPages ? 'disabled' : '';
-            pagination.append(`
-                <li class="${nextClass}">
-                    <a href="javascript:void(0)" onclick="goToPage(${currentPage + 1})">&raquo;</a>
-                </li>
-            `);
+            pag.append(`<li class="${currentPage===total?'disabled':''}"><a href="javascript:void(0)" onclick="goToPage(${currentPage+1})">&raquo;</a></li>`);
         }
 
-        // 跳转到指定页
-        function goToPage(page) {
-            currentPage = page;
-            renderClassTable();
-            renderPagination();
-            // 滚动到顶部
-            $(window).scrollTop(0);
-        }
+        function goToPage(page) { if (page < 1 || page > totalPages) return; currentPage = page; loadClasses(); }
 
-        // 搜索班级
         function searchClasses() {
-            const keyword = $('#searchClassInput').val().toLowerCase();
-            if (!keyword) {
-                filterClasses();
-                return;
-            }
-            
-            filteredClasses = classes.filter(cls => 
-                cls.id.toLowerCase().includes(keyword) ||
-                cls.name.toLowerCase().includes(keyword) ||
-                cls.department.toLowerCase().includes(keyword) ||
-                cls.major.toLowerCase().includes(keyword) ||
-                cls.headTeacher.toLowerCase().includes(keyword)
-            );
-            
+            const kw = $('#searchClassInput').val().trim();
             currentPage = 1;
-            renderClassTable();
-            renderPagination();
+            loadClasses(kw ? { keyword: kw } : {});
         }
 
-        // 筛选班级
         function filterClasses() {
-            const department = $('#departmentFilter').val();
+            const collegeId = $('#departmentFilter').val();
             const grade = $('#gradeFilter').val();
             const status = $('#statusFilter').val();
-            
-            filteredClasses = classes.filter(cls => {
-                let match = true;
-                
-                if (department !== 'all' && cls.department !== department) {
-                    match = false;
-                }
-                
-                if (match && grade !== 'all' && cls.grade !== grade) {
-                    match = false;
-                }
-                
-                if (match && status !== 'all' && cls.status !== status) {
-                    match = false;
-                }
-                
-                return match;
-            });
-            
+            const params = {};
+            if (collegeId && collegeId !== 'all') params.collegeId = collegeId;
+            if (grade && grade !== 'all') params.grade = grade;
+            if (status && status !== 'all') params.status = status === 'normal' ? 1 : (status === 'graduated' ? 2 : 0);
             currentPage = 1;
-            renderClassTable();
-            renderPagination();
+            loadClasses(params);
         }
 
-        // 显示添加班级模态框
         function showAddClassModal() {
-            // 重置表单
             $('#addClassForm')[0].reset();
-            // 显示模态框
             $('#addClassModal').modal('show');
         }
 
-        // 添加班级
-        function addClass() {
-            // 收集表单数据
-            const classId = $('#classId').val();
-            const className = $('#className').val();
-            const department = $('#department').val();
-            const major = $('#major').val();
-            const grade = $('#grade').val();
-            const headTeacher = $('#headTeacher').val();
-            const totalStudents = parseInt($('#totalStudents').val());
-            const monitor = $('#monitor').val();
-            const contactPhone = $('#contactPhone').val();
-            const createTime = $('#createTime').val();
-            const status = $('#status').val();
-            
-            // 简单验证
-            if (!classId || !className || !department || !major || !grade) {
-                alert('请填写必要的班级信息！');
-                return;
-            }
-            
-            // 检查班级编号是否已存在
-            if (classes.some(cls => cls.id === classId)) {
-                alert('班级编号已存在！');
-                return;
-            }
-            
-            // 创建新班级对象
-            const newClass = {
-                id: classId,
-                name: className,
-                department: department,
-                major: major,
-                grade: grade,
-                headTeacher: headTeacher,
-                totalStudents: totalStudents || 0,
-                currentStudents: 0,
-                monitor: monitor,
-                contactPhone: contactPhone,
-                createTime: createTime || new Date().toISOString().split('T')[0],
-                status: status || 'normal'
+        async function addClass() {
+            const body = {
+                classCode: $('#classId').val().trim(),
+                className: $('#className').val().trim(),
+                collegeId: Number($('#department').val()) || null,
+                majorId: Number($('#major').val()) || null,
+                grade: $('#grade').val(),
+                headTeacherName: $('#headTeacher').val().trim() || null,
+                studentCount: Number($('#totalStudents').val()) || 0,
+                monitorName: $('#monitor').val().trim() || null,
+                contactPhone: $('#contactPhone').val().trim(),
+                status: $('#status').val() === 'normal' ? 1 : ($('#status').val() === 'graduated' ? 2 : 0)
             };
-            
-            // 添加到班级列表
-            classes.push(newClass);
-            
-            // 刷新列表
-            filterClasses();
-            
-            // 关闭模态框
-            $('#addClassModal').modal('hide');
-            
-            // 提示成功
-            alert('班级添加成功！');
+            if (!body.classCode || !body.className || !body.collegeId || !body.majorId || !body.grade) {
+                api.notify('error', '提示', '请填写必要的班级信息！'); return;
+            }
+            try {
+                await api.post(API, body);
+                $('#addClassModal').modal('hide'); await loadClasses(); api.notify('success', '成功', '班级添加成功！');
+            } catch(e) { api.notify('error', '添加失败', e.message); }
         }
 
-        // 显示编辑班级模态框
-        function showEditClassModal(classId) {
-            const cls = classes.find(c => c.id === classId);
-            if (!cls) return;
-            
-            // 填充表单数据
-            $('#editClassId').val(cls.id);
-            $('#editClassName').val(cls.name);
-            $('#editDepartment').val(cls.department);
-            $('#editMajor').val(cls.major);
-            $('#editGrade').val(cls.grade);
-            $('#editHeadTeacher').val(cls.headTeacher);
-            $('#editTotalStudents').val(cls.totalStudents);
-            $('#editMonitor').val(cls.monitor);
-            $('#editContactPhone').val(cls.contactPhone);
-            $('#editCreateTime').val(cls.createTime);
-            $('#editStatus').val(cls.status);
-            
-            // 显示模态框
-            $('#editClassModal').modal('show');
+        async function showEditClassModal(id) {
+            try {
+                const c = await api.get(`${API}/${id}`);
+                if (!c) { api.notify('error', '错误', '班级不存在'); return; }
+                $('#editClassId').val(c.id);
+                $('#editClassName').val(c.className || '');
+                $('#editDepartment').data('val', c.collegeId).val(c.collegeId);
+                $('#editMajor').data('val', c.majorId).val(c.majorId);
+                $('#editGrade').val(c.grade || '');
+                $('#editHeadTeacher').val(c.headTeacherName || '');
+                $('#editTotalStudents').val(c.studentCount ?? '');
+                $('#editMonitor').val(c.monitorName || '');
+                $('#editContactPhone').val(c.contactPhone || '');
+                $('#editStatus').val(c.status === 1 ? 'normal' : (c.status === 2 ? 'graduated' : 'closed'));
+                $('#editClassModal').modal('show');
+            } catch(e) { api.notify('error', '加载失败', e.message); }
         }
 
-        // 更新班级
-        function updateClass() {
-            const classId = $('#editClassId').val();
-            const cls = classes.find(c => c.id === classId);
-            if (!cls) return;
-            
-            // 更新班级信息
-            cls.name = $('#editClassName').val();
-            cls.department = $('#editDepartment').val();
-            cls.major = $('#editMajor').val();
-            cls.grade = $('#editGrade').val();
-            cls.headTeacher = $('#editHeadTeacher').val();
-            cls.totalStudents = parseInt($('#editTotalStudents').val());
-            cls.monitor = $('#editMonitor').val();
-            cls.contactPhone = $('#editContactPhone').val();
-            cls.createTime = $('#editCreateTime').val();
-            cls.status = $('#editStatus').val();
-            
-            // 刷新列表
-            filterClasses();
-            
-            // 关闭模态框
-            $('#editClassModal').modal('hide');
-            
-            // 提示成功
-            alert('班级信息更新成功！');
+        async function updateClass() {
+            const id = $('#editClassId').val();
+            const body = {
+                classCode: '', // not editable
+                className: $('#editClassName').val().trim(),
+                collegeId: Number($('#editDepartment').val()) || null,
+                majorId: Number($('#editMajor').val()) || null,
+                grade: $('#editGrade').val(),
+                headTeacherName: $('#editHeadTeacher').val().trim() || null,
+                studentCount: Number($('#editTotalStudents').val()) || 0,
+                monitorName: $('#editMonitor').val().trim() || null,
+                contactPhone: $('#editContactPhone').val().trim(),
+                status: $('#editStatus').val() === 'normal' ? 1 : ($('#editStatus').val() === 'graduated' ? 2 : 0)
+            };
+            // get existing classCode
+            try {
+                const existing = await api.get(`${API}/${id}`);
+                if (existing) body.classCode = existing.classCode;
+            } catch(e) {}
+            if (!body.className) { api.notify('error', '错误', '班级名称不能为空'); return; }
+            try {
+                await api.put(`${API}/${id}`, body);
+                $('#editClassModal').modal('hide'); await loadClasses(); api.notify('success', '成功', '班级信息更新成功！');
+            } catch(e) { api.notify('error', '更新失败', e.message); }
         }
 
-        // 删除班级
-        function deleteClass(classId) {
-            if (confirm('确定要删除这个班级吗？删除后将无法恢复！')) {
-                const index = classes.findIndex(c => c.id === classId);
-                if (index !== -1) {
-                    classes.splice(index, 1);
-                    filterClasses();
-                    alert('班级删除成功！');
+        async function deleteClass(id) {
+            if (!confirm('确定要删除这个班级吗？')) return;
+            try {
+                await api.del(`${API}/${id}`);
+                await loadClasses(); api.notify('success', '成功', '班级删除成功！');
+            } catch(e) { api.notify('error', '删除失败', e.message); }
+        }
+
+        async function showClassDetail(id) {
+            try {
+                const data = await api.get(`${API}/${id}`);
+                if (!data) { api.notify('error', '错误', '班级不存在'); return; }
+                const cls = mapClass(data);
+                $('#detailClassId').text(cls.classCode);
+                $('#detailClassName').text(cls.name);
+                $('#detailDepartment').text(cls.collegeName);
+                $('#detailMajor').text(cls.majorName);
+                $('#detailGrade').text(cls.grade);
+                $('#detailHeadTeacher').text(cls.headTeacher);
+                $('#detailStudents').text(`${cls.currentStudents}/${cls.totalStudents}人`);
+                $('#detailMonitor').text(cls.monitor);
+                $('#detailContactPhone').text(cls.contactPhone);
+                $('#detailCreateTime').text(cls.createTime);
+                const sm = { normal: '正常', graduated: '已毕业', closed: '已关闭' };
+                $('#detailStatus').text(sm[cls.status] || '正常');
+                $('#classStudentsModal').data('class-id', id);
+                $('#classCoursesModal').data('class-id', id);
+                $('#classDetailModal').modal('show');
+            } catch(e) { alert('加载失败: ' + e.message); }
+        }
+
+        async function showClassStudents() {
+            const id = $('#classStudentsModal').data('class-id');
+            try {
+                const data = await api.get(`${API}/${id}/students`);
+                const list = Array.isArray(data) ? data : (data && data.list ? data.list : []);
+                const tbody = $('#classStudentsTable').empty();
+                if (list.length) {
+                    list.forEach(s => {
+                        tbody.append(`<tr><td>${api.escapeHtml(s.studentNo||'')}</td><td>${api.escapeHtml(s.name||'')}</td><td>${api.escapeHtml(s.gender||'')}</td><td>${api.escapeHtml(s.createdAt||'')}</td><td>${s.status===1?'在读':'已离校'}</td></tr>`);
+                    });
+                } else {
+                    tbody.append('<tr><td colspan="5" class="text-center text-muted">暂无学生</td></tr>');
                 }
-            }
+                $('#classDetailModal').modal('hide');
+                $('#classStudentsModal').modal('show');
+            } catch(e) { api.notify('error', '加载失败', e.message); }
         }
 
-        // 显示班级详情
-        function showClassDetail(classId) {
-            const cls = classes.find(c => c.id === classId);
-            if (!cls) return;
-            
-            // 填充详情信息
-            $('#detailClassId').text(cls.id);
-            $('#detailClassName').text(cls.name);
-            $('#detailDepartment').text(cls.department);
-            $('#detailMajor').text(cls.major);
-            $('#detailGrade').text(cls.grade);
-            $('#detailHeadTeacher').text(cls.headTeacher);
-            $('#detailStudents').text(`${cls.currentStudents}/${cls.totalStudents}人`);
-            $('#detailMonitor').text(cls.monitor);
-            $('#detailContactPhone').text(cls.contactPhone);
-            $('#detailCreateTime').text(cls.createTime);
-            
-            let statusText = '正常';
-            if (cls.status === 'graduated') {
-                statusText = '已毕业';
-            } else if (cls.status === 'closed') {
-                statusText = '已关闭';
-            }
-            $('#detailStatus').text(statusText);
-            
-            // 保存当前选中的班级ID，供查看学生列表使用
-            $('#classStudentsModal').data('class-id', classId);
-            $('#classCoursesModal').data('class-id', classId);
-            
-            // 显示模态框
-            $('#classDetailModal').modal('show');
+        async function showClassCourses() {
+            const id = $('#classCoursesModal').data('class-id');
+            try {
+                const data = await api.get(`${API}/${id}/courses`);
+                const list = Array.isArray(data) ? data : (data && data.list ? data.list : []);
+                const tbody = $('#classCoursesTable').empty();
+                if (list.length) {
+                    list.forEach(c => {
+                        tbody.append(`<tr><td>${api.escapeHtml(c.courseCode||'')}</td><td>${api.escapeHtml(c.courseName||'')}</td><td>${api.escapeHtml(c.teacherName||'')}</td><td>${api.escapeHtml(c.credit||0)}学分</td><td>${api.escapeHtml(c.schedule||'')}</td></tr>`);
+                    });
+                } else {
+                    tbody.append('<tr><td colspan="5" class="text-center text-muted">暂无课程</td></tr>');
+                }
+                $('#classDetailModal').modal('hide');
+                $('#classCoursesModal').modal('show');
+            } catch(e) { api.notify('error', '加载失败', e.message); }
         }
 
-        // 查看班级学生列表
-        function showClassStudents() {
-            const classId = $('#classStudentsModal').data('class-id');
-            const cls = classes.find(c => c.id === classId);
-            if (!cls) return;
-            
-            // 设置模态框标题
-            $('#classStudentsModalLabel').text(`${cls.name} - 学生列表`);
-            
-            // 模拟班级学生数据
-            const students = generateMockStudents(classId, cls.currentStudents);
-            
-            // 渲染学生列表
-            const table = $('#classStudentsTable');
-            table.empty();
-            
-            students.forEach(student => {
-                const row = `
-                    <tr>
-                        <td>${student.id}</td>
-                        <td>${student.name}</td>
-                        <td>${student.gender}</td>
-                        <td>${student.admissionTime}</td>
-                        <td>${student.status}</td>
-                    </tr>
-                `;
-                table.append(row);
-            });
-            
-            // 显示模态框
-            $('#classDetailModal').modal('hide');
-            $('#classStudentsModal').modal('show');
+        async function batchDeleteClasses() {
+            const ids = [];
+            $('.class-checkbox:checked').each(function() { ids.push(Number($(this).val())); });
+            if (!ids.length) { api.notify('error', '提示', '请先选择要删除的班级！'); return; }
+            if (!confirm(`确定要删除选中的${ids.length}个班级吗？`)) return;
+            try {
+                await api.request(`${API}/batch`, { method: 'DELETE', body: ids });
+                await loadClasses(); api.notify('success', '成功', `已删除${ids.length}个班级！`);
+            } catch(e) { api.notify('error', '删除失败', e.message); }
         }
 
-        // 查看班级课程列表
-        function showClassCourses() {
-            const classId = $('#classCoursesModal').data('class-id');
-            const cls = classes.find(c => c.id === classId);
-            if (!cls) return;
-            
-            // 设置模态框标题
-            $('#classCoursesModalLabel').text(`${cls.name} - 课程列表`);
-            
-            // 模拟班级课程数据
-            const courses = generateMockCourses();
-            
-            // 渲染课程列表
-            const table = $('#classCoursesTable');
-            table.empty();
-            
-            courses.forEach(course => {
-                const row = `
-                    <tr>
-                        <td>${course.id}</td>
-                        <td>${course.name}</td>
-                        <td>${course.teacher}</td>
-                        <td>${course.credits}学分</td>
-                        <td>${course.semester}</td>
-                    </tr>
-                `;
-                table.append(row);
-            });
-            
-            // 显示模态框
-            $('#classDetailModal').modal('hide');
-            $('#classCoursesModal').modal('show');
-        }
-
-        // 批量删除班级
-        function batchDeleteClasses() {
-            const selectedIds = [];
-            $('.class-checkbox:checked').each(function() {
-                selectedIds.push($(this).val());
-            });
-            
-            if (selectedIds.length === 0) {
-                alert('请先选择要删除的班级！');
-                return;
-            }
-            
-            if (confirm(`确定要删除选中的${selectedIds.length}个班级吗？删除后将无法恢复！`)) {
-                classes = classes.filter(cls => !selectedIds.includes(cls.id));
-                filterClasses();
-                alert(`成功删除${selectedIds.length}个班级！`);
-            }
-        }
-
-        // 导出班级数据
-        function exportClassData() {
-            alert('班级数据导出功能正在开发中...');
-        }
-
-        // 导入班级数据
-        function importClassData(file) {
-            if (file) {
-                alert(`已选择文件：${file.name}\n导入功能正在开发中...`);
-                // 重置文件输入
-                $('#importClassFile').val('');
-            }
-        }
-
-        // 全选/取消全选
-        function toggleSelectAll() {
-            const isChecked = $('#selectAll').prop('checked');
-            $('.class-checkbox').prop('checked', isChecked);
-        }
-
-        // 生成模拟学生数据
-        function generateMockStudents(classId, count) {
-            const students = [];
-            for (let i = 1; i <= count; i++) {
-                students.push({
-                    id: `${classId.slice(2)}${String(i).padStart(3, '0')}`,
-                    name: `学生${i}`,
-                    gender: i % 2 === 0 ? '男' : '女',
-                    admissionTime: classId.slice(2, 4) === '19' ? '2019-09-01' : 
-                                  classId.slice(2, 4) === '20' ? '2020-09-01' :
-                                  classId.slice(2, 4) === '21' ? '2021-09-01' : '2022-09-01',
-                    status: '在读'
-                });
-            }
-            return students;
-        }
-
-        // 生成模拟课程数据
-        function generateMockCourses() {
-            return [
-                { id: 'CS101', name: '计算机科学基础', teacher: '张老师', credits: 4, semester: '2024春季' },
-                { id: 'CS102', name: '程序设计基础', teacher: '李老师', credits: 3, semester: '2024春季' },
-                { id: 'CS301', name: '数据结构', teacher: '王老师', credits: 4, semester: '2024春季' },
-                { id: 'CS302', name: '操作系统原理', teacher: '赵老师', credits: 4, semester: '2024春季' },
-                { id: 'MA201', name: '高等数学', teacher: '刘老师', credits: 5, semester: '2024春季' }
-            ];
-        }
-
-        // 显示用户信息
-        function showUserInfo() {
-            alert('当前用户：系统管理员');
-        }
-
-        // 退出登录
-        function logout() {
-            if (confirm('确定要退出登录吗？')) {
-                window.location.href = '/login/logout';
-            }
-        }
+        function exportClassData() { alert('导出功能开发中...'); }
+        function importClassData(f) { alert(`已选择: ${f?f.name:''}\n导入功能开发中...`); $('#importClassFile').val(''); }
+        function toggleSelectAll() { $('.class-checkbox').prop('checked', $('#selectAll').prop('checked')); }
+        function logout() { if (confirm('确定要退出登录吗？')) window.location.href = '/login/logout'; }
     </script>
-    <script src="/js/app-api.js"></script>
     <script src="/js/legacy-dynamic-pages.js"></script>
 </body>
 </html>

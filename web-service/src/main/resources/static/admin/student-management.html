@@ -15,7 +15,7 @@
         <!-- 侧边栏 -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <a href="/admin" class="sidebar-brand">
+                <a href="/admin/index.html" class="sidebar-brand">
                     <div class="sidebar-brand-icon">
                         <i class="fas fa-cogs"></i>
                     </div>
@@ -27,7 +27,7 @@
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-item">
-                    <a href="/admin" class="nav-link">
+                    <a href="/admin/index.html" class="nav-link">
                         <i class="nav-icon fas fa-tachometer-alt"></i>
                         <span class="nav-text">控制台首页</span>
                     </a>
@@ -205,10 +205,9 @@
                                             <div class="col-md-4">
                                                 <select class="form-control" id="studentStatusFilter">
                                                     <option value="">所有状态</option>
-                                                    <option value="active">在读</option>
-                                                    <option value="suspended">休学</option>
-                                                    <option value="graduated">毕业</option>
-                                                    <option value="dropout">退学</option>
+                                                    <option value="1">在读</option>
+                                                    <option value="0">休学</option>
+                                                    <option value="2">毕业</option>
                                                 </select>
                                             </div>
                                             <div class="col-md-4">
@@ -337,10 +336,9 @@
                                 <div class="form-group">
                                     <label class="form-label" for="studentStatus">状态 *</label>
                                     <select class="form-control" id="studentStatus" name="studentStatus" required>
-                                        <option value="active">在读</option>
-                                        <option value="suspended">休学</option>
-                                        <option value="graduated">毕业</option>
-                                        <option value="dropout">退学</option>
+                                        <option value="1">在读</option>
+                                        <option value="0">休学</option>
+                                        <option value="2">毕业</option>
                                     </select>
                                 </div>
                             </div>
@@ -428,10 +426,9 @@
                                 <div class="form-group">
                                     <label class="form-label" for="editStudentStatus">状态 *</label>
                                     <select class="form-control" id="editStudentStatus" required>
-                                        <option value="active">在读</option>
-                                        <option value="suspended">休学</option>
-                                        <option value="graduated">毕业</option>
-                                        <option value="dropout">退学</option>
+                                        <option value="1">在读</option>
+                                        <option value="0">休学</option>
+                                        <option value="2">毕业</option>
                                     </select>
                                 </div>
                             </div>
@@ -514,16 +511,16 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label class="form-label">下载模板</label>
-                        <a href="#" class="btn btn-secondary">
+                        <a href="javascript:void(0)" onclick="downloadImportTemplate()" class="btn btn-secondary">
                             <i class="fas fa-download"></i>
-                            学生信息导入模板.xlsx
+                            学生信息导入模板.csv
                         </a>
                     </div>
                     <div class="form-group">
                         <label class="form-label">上传文件</label>
                         <div class="file-upload">
-                            <input type="file" class="form-control-file" id="importFile" accept=".xlsx,.xls">
-                            <p class="text-sm text-muted mt-2">请上传Excel格式的学生信息文件，支持.xlsx和.xls格式</p>
+                            <input type="file" class="form-control-file" id="importFile" accept=".csv,.xlsx,.xls">
+                            <p class="text-sm text-muted mt-2">请上传 CSV 格式文件（表头：学号,姓名,性别,学院,专业,班级,状态,邮箱,电话）。Excel 请另存为 CSV（UTF-8）后导入，暂不支持 .xlsx 二进制文件。</p>
                         </div>
                     </div>
                 </div>
@@ -540,26 +537,121 @@
     <script>
         var api = window.AppApi;
         var curPage = 1, pageSize = 10;
+        // 学院/专业名称查找缓存
+        var collegeMap = {};
+        var majorMap = {};
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadDictData();
             loadStudents(1);
             document.getElementById('searchStudentBtn').addEventListener('click', function() { loadStudents(1); });
             document.getElementById('studentSearch').addEventListener('keydown', function(e) { if (e.key === 'Enter') loadStudents(1); });
             document.getElementById('filterStudentBtn').addEventListener('click', function() { loadStudents(1); });
-            document.getElementById('exportStudentsBtn').addEventListener('click', function() { api.notify('info', '导出', '正在导出...'); });
+            document.getElementById('exportStudentsBtn').addEventListener('click', exportStudents);
             document.getElementById('submitAddStudent').addEventListener('click', addStudent);
             document.getElementById('submitEditStudent').addEventListener('click', updateStudent);
             document.getElementById('confirmResetPassword').addEventListener('click', resetPassword);
             document.getElementById('confirmDeleteStudent').addEventListener('click', deleteStudent);
             document.getElementById('confirmImportStudents').addEventListener('click', importStudents);
+            // 学院切换联动专业
+            document.getElementById('studentCollege')?.addEventListener('change', function() { loadCollegeMajors('studentMajor', this.value); });
+            document.getElementById('editStudentCollege')?.addEventListener('change', function() { loadCollegeMajors('editStudentMajor', this.value); });
+            // 专业切换联动班级
+            document.getElementById('studentMajor')?.addEventListener('change', function() { loadClasses('studentClass', this.value); });
+            document.getElementById('editStudentMajor')?.addEventListener('change', function() { loadClasses('editStudentClass', this.value); });
         });
 
+        // ---- 加载学院/专业字典 ----
+        async function loadDictData() {
+            try {
+                // 加载学院
+                var colleges = await api.get('/api/v1/colleges');
+                if (!Array.isArray(colleges)) colleges = api.pageItems(colleges) || [];
+                colleges.forEach(function(c) { collegeMap[c.id] = c.name; });
+
+                // 填充筛选下拉框
+                var cf = document.getElementById('studentCollegeFilter');
+                if (cf) {
+                    cf.innerHTML = '<option value="">所有学院</option>';
+                    colleges.forEach(function(c) {
+                        cf.innerHTML += '<option value="' + c.id + '">' + api.escapeHtml(c.name) + '</option>';
+                    });
+                }
+                // 填充添加/编辑模态框的学院下拉
+                populateCollegeSelect('studentCollege', colleges);
+                populateCollegeSelect('editStudentCollege', colleges);
+
+                // 加载所有专业用于名称查找
+                var majorData = await api.get('/api/v1/majors/list', { pageSize: 999 });
+                var majors = api.pageItems(majorData) || [];
+                majors.forEach(function(m) { majorMap[m.id] = m.majorName || m.name; });
+            } catch(e) { console.error('加载字典数据失败', e); }
+        }
+
+        function populateCollegeSelect(selectId, colleges) {
+            var sel = document.getElementById(selectId);
+            if (!sel) return;
+            var curVal = sel.value;
+            sel.innerHTML = '<option value="">请选择学院</option>';
+            colleges.forEach(function(c) {
+                sel.innerHTML += '<option value="' + c.id + '">' + api.escapeHtml(c.name) + '</option>';
+            });
+            if (curVal) sel.value = curVal;
+        }
+
+        async function loadCollegeMajors(selectId, collegeId) {
+            var sel = document.getElementById(selectId);
+            if (!sel) return;
+            sel.innerHTML = '<option value="">请先选择学院</option>';
+            if (!collegeId) return;
+            try {
+                // 从已缓存的所有专业中过滤出属于该学院所属系部的专业
+                // 简化处理：先从 collegeId 查 departments，再从 departmentId 查 majors
+                // 但这里直接展示所有已缓存的专业，先按 majorMap 显示
+                var allMajorData = await api.get('/api/v1/majors/list', { pageSize: 999 });
+                var allMajors = api.pageItems(allMajorData) || [];
+                allMajors.forEach(function(m) { majorMap[m.id] = m.majorName || m.name; });
+                sel.innerHTML = '<option value="">请选择专业</option>';
+                allMajors.forEach(function(m) {
+                    sel.innerHTML += '<option value="' + m.id + '">' + api.escapeHtml(m.majorName || m.name) + '</option>';
+                });
+            } catch(e) { console.error('加载专业失败', e); }
+        }
+
+        async function loadClasses(selectId, majorId) {
+            var sel = document.getElementById(selectId);
+            if (!sel) return;
+            sel.innerHTML = '<option value="">请先选择专业</option>';
+            if (!majorId) return;
+            try {
+                var data = await api.get('/api/v1/classes/list', { majorId: majorId, pageSize: 999 });
+                var list = api.pageItems(data) || [];
+                sel.innerHTML = '<option value="">请选择班级</option>';
+                list.forEach(function(c) {
+                    var clsName = c.className || c.class_name || '';
+                    sel.innerHTML += '<option value="' + (c.id || '') + '">' + api.escapeHtml(clsName) + '</option>';
+                });
+            } catch(e) { console.error('加载班级失败', e); }
+        }
+
+        function getCollegeName(id) { return collegeMap[id] || id; }
+        function getMajorName(id) { return majorMap[id] || id; }
+
+        // ---- 加载学生列表 ----
         async function loadStudents(page) {
             curPage = page;
             var tb = document.getElementById('studentTableBody');
             tb.innerHTML = '<tr><td colspan="9" class="text-center" style="padding:40px 0;"><i class="fas fa-spinner fa-spin"></i> 加载中...</td></tr>';
             try {
-                var data = await api.get('/api/v1/students/list', { pageNum: curPage, pageSize: pageSize, orderByColumn: 'id', isAsc: true });
+                var params = { pageNum: curPage, pageSize: pageSize, orderByColumn: 'id', isAsc: true };
+                var cf = document.getElementById('studentCollegeFilter');
+                if (cf && cf.value) params.collegeId = cf.value;
+                var sf = document.getElementById('studentStatusFilter');
+                if (sf && sf.value) params.status = sf.value;
+                var kw = document.getElementById('studentSearch');
+                if (kw && kw.value.trim()) params.keyword = kw.value.trim();
+
+                var data = await api.get('/api/v1/students/list', params);
                 var items = api.pageItems(data), total = api.pageTotal(data);
                 if (!items || !items.length) {
                     tb.innerHTML = '<tr><td colspan="9" class="text-center" style="padding:40px 0;">暂无数据</td></tr>';
@@ -567,7 +659,7 @@
                     tb.innerHTML = items.map(function(s) {
                         var sm = { 1: '<span class="badge badge-success">在读</span>', 0: '<span class="badge badge-warning">休学</span>', 2: '<span class="badge badge-info">毕业</span>' };
                         var gm = { '男': '男', '女': '女', 'M': '男', 'F': '女' };
-                        return '<tr><td>' + api.escapeHtml(s.studentNo || '-') + '</td><td>' + api.escapeHtml(s.name) + '</td><td>' + (gm[s.gender] || s.gender) + '</td><td>' + api.escapeHtml(s.collegeId || '-') + '</td><td>' + api.escapeHtml(s.majorId || '-') + '</td><td>' + api.escapeHtml(s.className || '-') + '</td><td>' + (sm[s.status] || '<span class="badge badge-secondary">未知</span>') + '</td><td>' + api.formatDate(s.createdAt) + '</td><td>' +
+                        return '<tr><td>' + api.escapeHtml(s.studentNo || '-') + '</td><td>' + api.escapeHtml(s.name) + '</td><td>' + (gm[s.gender] || s.gender) + '</td><td>' + api.escapeHtml(getCollegeName(s.collegeId)) + '</td><td>' + api.escapeHtml(getMajorName(s.majorId)) + '</td><td>' + api.escapeHtml(s.className || '-') + '</td><td>' + (sm[s.status] || '<span class="badge badge-secondary">未知</span>') + '</td><td>' + api.formatDate(s.createdAt) + '</td><td>' +
                             '<button class="btn btn-sm btn-primary js-edit" data-id="' + s.id + '" title="编辑"><i class="fas fa-edit"></i></button> ' +
                             '<button class="btn btn-sm btn-warning js-reset" data-id="' + s.id + '" title="重置密码"><i class="fas fa-key"></i></button> ' +
                             '<button class="btn btn-sm btn-danger js-delete" data-id="' + s.id + '" title="删除"><i class="fas fa-trash"></i></button></td></tr>';
@@ -594,49 +686,331 @@
             document.getElementById('studentPagination').innerHTML = h;
         }
 
+        // ---- 添加学生 ----
         async function addStudent() {
             var f = document.getElementById('addStudentForm');
-            var d = { studentNo: f.querySelector('#studentId').value.trim(), name: f.querySelector('#studentName').value.trim(), gender: f.querySelector('#studentGender').value === 'male' ? '男' : '女', collegeId: Number(f.querySelector('#studentCollege').value) || 1, majorId: Number(f.querySelector('#studentMajor').value) || 1, className: f.querySelector('#studentClass').value || '未分班', status: 1, email: f.querySelector('#studentEmail').value.trim(), phone: f.querySelector('#studentPhone').value.trim() };
+            var classSel = f.querySelector('#studentClass');
+            var classId = Number(classSel?.value) || null;
+            var className = classId && classSel?.selectedOptions?.[0]?.text ? classSel.selectedOptions[0].text : '未分班';
+            var d = {
+                studentNo: f.querySelector('#studentId').value.trim(),
+                name: f.querySelector('#studentName').value.trim(),
+                gender: f.querySelector('#studentGender').value === 'male' ? '男' : '女',
+                collegeId: Number(f.querySelector('#studentCollege').value) || null,
+                majorId: Number(f.querySelector('#studentMajor').value) || null,
+                classId: classId,
+                className: className,
+                password: '123456',
+                status: 1,
+                email: f.querySelector('#studentEmail').value.trim(),
+                phone: f.querySelector('#studentPhone').value.trim()
+            };
             if (!d.studentNo || !d.name) { api.notify('warning', '提示', '请填写学号和姓名'); return; }
-            try { await api.post('/api/v1/students', d); closeModal(document.getElementById('addStudentModal')); f.reset(); api.notify('success', '添加成功', '学生已添加'); loadStudents(1); } catch (e) { api.notify('error', '添加失败', e.message); }
+            try {
+                await api.post('/api/v1/students', d);
+                closeModal(document.getElementById('addStudentModal'));
+                f.reset();
+                api.notify('success', '添加成功', '学生已添加');
+                loadStudents(1);
+            } catch (e) { api.notify('error', '添加失败', e.message); }
         }
 
+        // ---- 编辑学生 ----
         async function prepareEditStudent(id) {
             try {
                 var s = await api.get('/api/v1/students/' + id);
                 document.getElementById('editStudentId').value = s.id;
-                document.getElementById('editStudentName').value = s.name;
+                document.getElementById('editStudentName').value = s.name || '';
                 document.getElementById('editStudentGender').value = s.gender === '女' ? 'female' : 'male';
                 document.getElementById('editStudentCollege').value = String(s.collegeId || '');
                 document.getElementById('editStudentStatus').value = String(s.status || 1);
                 document.getElementById('editStudentEmail').value = s.email || '';
                 document.getElementById('editStudentPhone').value = s.phone || '';
+                // 加载该学院下的专业
+                if (s.collegeId) loadCollegeMajors('editStudentMajor', s.collegeId).then(function() {
+                    document.getElementById('editStudentMajor').value = String(s.majorId || '');
+                    // 加载该专业下的班级并选中当前班级
+                    if (s.majorId) loadClasses('editStudentClass', s.majorId).then(function() {
+                        var clsSel = document.getElementById('editStudentClass');
+                        if (s.classId && clsSel) clsSel.value = String(s.classId);
+                        // 如果 classId 不匹配，尝试用 className 匹配文本
+                        if (clsSel && (!clsSel.value || clsSel.value === '') && s.className) {
+                            for (var i = 0; i < clsSel.options.length; i++) {
+                                if (clsSel.options[i].text === s.className) {
+                                    clsSel.value = clsSel.options[i].value;
+                                    break;
+                                }
+                            }
+                            // 如果还是没匹配上，把当前 className 加进去
+                            if (!clsSel.value || clsSel.value === '') {
+                                clsSel.innerHTML += '<option value="" selected>' + api.escapeHtml(s.className) + '</option>';
+                            }
+                        }
+                    });
+                });
                 openModal(document.getElementById('editStudentModal'));
             } catch (e) { api.notify('error', '加载失败', e.message); }
         }
 
         async function updateStudent() {
             var id = document.getElementById('editStudentId').value;
-            var d = { name: document.getElementById('editStudentName').value.trim(), gender: document.getElementById('editStudentGender').value === 'female' ? '女' : '男', collegeId: Number(document.getElementById('editStudentCollege').value) || 1, className: document.getElementById('editStudentClass').value || '未分班', status: Number(document.getElementById('editStudentStatus').value) || 1, email: document.getElementById('editStudentEmail').value.trim(), phone: document.getElementById('editStudentPhone').value.trim() };
-            try { await api.request('/api/v1/students/' + id, { method: 'PUT', body: d }); closeModal(document.getElementById('editStudentModal')); api.notify('success', '更新成功', '学生信息已更新'); loadStudents(curPage); } catch (e) { api.notify('error', '更新失败', e.message); }
+            var classSel = document.getElementById('editStudentClass');
+            var classId = Number(classSel?.value) || null;
+            var className = classId && classSel?.selectedOptions?.[0]?.text ? classSel.selectedOptions[0].text : '未分班';
+            var d = {
+                name: document.getElementById('editStudentName').value.trim(),
+                gender: document.getElementById('editStudentGender').value === 'female' ? '女' : '男',
+                collegeId: Number(document.getElementById('editStudentCollege').value) || null,
+                majorId: Number(document.getElementById('editStudentMajor').value) || null,
+                classId: classId,
+                className: className,
+                status: Number(document.getElementById('editStudentStatus').value) || 1,
+                email: document.getElementById('editStudentEmail').value.trim(),
+                phone: document.getElementById('editStudentPhone').value.trim()
+            };
+            try {
+                await api.request('/api/v1/students/' + id, { method: 'PUT', body: d });
+                closeModal(document.getElementById('editStudentModal'));
+                api.notify('success', '更新成功', '学生信息已更新');
+                loadStudents(curPage);
+            } catch (e) { api.notify('error', '更新失败', e.message); }
         }
 
+        // ---- 重置密码 ----
         function prepareResetPassword(id) { document.getElementById('resetPasswordStudentId').value = id; openModal(document.getElementById('resetPasswordModal')); }
         async function resetPassword() {
             var id = document.getElementById('resetPasswordStudentId').value;
             try { await api.request('/api/v1/students/' + id + '/reset-password', { method: 'PUT' }); closeModal(document.getElementById('resetPasswordModal')); api.notify('success', '重置成功', '密码已重置'); } catch (e) { api.notify('error', '重置失败', e.message); }
         }
 
+        // ---- 删除学生 ----
         function prepareDeleteStudent(id) { document.getElementById('deleteStudentId').value = id; openModal(document.getElementById('deleteStudentModal')); }
         async function deleteStudent() {
             var id = document.getElementById('deleteStudentId').value;
             try { await api.del('/api/v1/students/' + id); closeModal(document.getElementById('deleteStudentModal')); api.notify('success', '删除成功', '学生已删除'); loadStudents(1); } catch (e) { api.notify('error', '删除失败', e.message); }
         }
 
-        function importStudents() {
+        // ---- 导出学生（CSV）----
+        async function exportStudents() {
+            try {
+                var data = await api.get('/api/v1/students/list', { pageNum: 1, pageSize: 1000, orderByColumn: 'id', isAsc: true });
+                var items = api.pageItems(data) || [];
+                var sm = { 1: '在读', 0: '休学', 2: '毕业' };
+                var rows = [['学号', '姓名', '性别', '学院', '专业', '班级', '状态', '电子邮箱', '手机号码']];
+                items.forEach(function(s) {
+                    rows.push([
+                        s.studentNo || '', s.name || '', s.gender || '',
+                        getCollegeName(s.collegeId), getMajorName(s.majorId),
+                        s.className || '', sm[s.status] || s.status,
+                        s.email || '', s.phone || ''
+                    ]);
+                });
+                downloadCsv('students.csv', rows);
+                api.notify('success', '导出成功', '已导出 ' + items.length + ' 名学生');
+            } catch (e) { api.notify('error', '导出失败', e.message); }
+        }
+
+        // ---- CSV 工具 ----
+        function downloadCsv(filename, rows) {
+            var csv = rows.map(function(row) {
+                return row.map(function(cell) { return '"' + String(cell == null ? '' : cell).replace(/"/g, '""') + '"'; }).join(',');
+            }).join('\r\n');
+            var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            URL.revokeObjectURL(link.href);
+            link.remove();
+        }
+
+        // ---- 下载导入模板（CSV）----
+        function downloadImportTemplate() {
+            var rows = [
+                ['学号', '姓名', '性别', '学院', '专业', '班级', '状态', '邮箱', '电话'],
+                ['20990001', '张三', '男', '计算机与信息技术学院', '计算机科学与技术', '计科2101班', '在读', 'zhangsan@example.com', '13800138001'],
+                ['20990002', '李四', '女', '计算机与信息技术学院', '软件工程', '软工2101班', '在读', 'lisi@example.com', '13800138002']
+            ];
+            downloadCsv('学生信息导入模板.csv', rows);
+            api.notify('success', '模板已下载', '请按模板填写后另存为 CSV（UTF-8）再导入');
+        }
+
+        function parseCsv(text) {
+            var rows = [], row = [], field = '', inQuotes = false;
+            for (var i = 0; i < text.length; i++) {
+                var ch = text[i];
+                if (inQuotes) {
+                    if (ch === '"') {
+                        if (text[i + 1] === '"') { field += '"'; i++; }
+                        else { inQuotes = false; }
+                    } else { field += ch; }
+                } else {
+                    if (ch === '"') { inQuotes = true; }
+                    else if (ch === ',') { row.push(field); field = ''; }
+                    else if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+                    else if (ch !== '\r') { field += ch; }
+                }
+            }
+            if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+            return rows;
+        }
+
+        function indexOfAny(headers, names) {
+            for (var i = 0; i < names.length; i++) {
+                var idx = headers.indexOf(names[i]);
+                if (idx >= 0) return idx;
+            }
+            return -1;
+        }
+
+        function readFileAsText(file) {
+            return new Promise(function(resolve, reject) {
+                var reader = new FileReader();
+                reader.onload = function() {
+                    try {
+                        var buf = new Uint8Array(reader.result);
+                        // 二进制检测：ZIP/xlsx 头（PK）或内容含空字节
+                        if (buf.length > 0) {
+                            var isBinary = (buf[0] === 0x50 && buf[1] === 0x4B);
+                            if (!isBinary) {
+                                for (var i = 0; i < Math.min(buf.length, 2000); i++) {
+                                    if (buf[i] === 0) { isBinary = true; break; }
+                                }
+                            }
+                            if (isBinary) {
+                                reject(new Error('您选择的文件是 .xlsx/.xls 等二进制格式，暂不支持直接导入。请用 Excel 打开后“另存为”，选择“CSV UTF-8(逗号分隔)”或“CSV(逗号分隔)”格式，再导入该 CSV 文件。'));
+                                return;
+                            }
+                        }
+                        var text;
+                        // 去掉 UTF-8 BOM
+                        var offset = (buf.length >= 3 && buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF) ? 3 : 0;
+                        var body = offset ? buf.subarray(offset) : buf;
+                        var utf8 = new TextDecoder('utf-8').decode(body);
+                        if (utf8.indexOf('\uFFFD') < 0) {
+                            text = utf8;
+                        } else {
+                            // UTF-8 出现乱码 → 尝试 GBK/GB18030（Excel 中文版另存 CSV 的默认编码）
+                            try { text = new TextDecoder('gbk').decode(body); }
+                            catch (e) { text = utf8; }
+                        }
+                        resolve(text);
+                    } catch (e) { reject(new Error('读取文件失败: ' + e.message)); }
+                };
+                reader.onerror = function() { reject(new Error('读取文件失败')); };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // 导入用的 名称->ID 映射
+        var collegeNameToId = {}, majorNameToId = {}, classNameToId = {};
+        var importDictsLoaded = false;
+        async function ensureImportDicts() {
+            if (importDictsLoaded) return;
+            collegeNameToId = {}; majorNameToId = {}; classNameToId = {};
+            try {
+                var colleges = await api.get('/api/v1/colleges');
+                if (!Array.isArray(colleges)) colleges = api.pageItems(colleges) || [];
+                colleges.forEach(function(c) { if (c.name) collegeNameToId[c.name] = c.id; });
+                var majorData = await api.get('/api/v1/majors/list', { pageSize: 999 });
+                api.pageItems(majorData).forEach(function(m) { var n = m.majorName || m.name; if (n) majorNameToId[n] = m.id; });
+                var classData = await api.get('/api/v1/classes/list', { pageSize: 999 });
+                api.pageItems(classData).forEach(function(c) { var n = c.className || c.name || c.classCode; if (n) classNameToId[n] = c.id; });
+            } catch (e) { console.error('加载导入字典失败', e); }
+            importDictsLoaded = true;
+        }
+
+        function resolveImportId(value, nameToId) {
+            var v = String(value == null ? '' : value).trim();
+            if (!v) return null;
+            if (/^\d+$/.test(v)) return Number(v);
+            return nameToId[v] || null;
+        }
+
+        function normalizeImportGender(v) {
+            var s = String(v == null ? '' : v).trim();
+            if (s === '男' || s === 'M' || s === 'm' || s === 'male' || s === '1') return '男';
+            if (s === '女' || s === 'F' || s === 'f' || s === 'female' || s === '0') return '女';
+            return s || '男';
+        }
+
+        function normalizeImportStatus(v) {
+            var s = String(v == null ? '' : v).trim();
+            if (s === '休学' || s === '0') return 0;
+            if (s === '毕业' || s === '2') return 2;
+            return 1;
+        }
+
+        // ---- 批量导入（CSV）----
+        async function importStudents() {
             var f = document.getElementById('importFile');
             if (!f.files || !f.files[0]) { api.notify('warning', '提示', '请选择文件'); return; }
-            api.notify('info', '导入', '正在导入...');
-            setTimeout(function() { closeModal(document.getElementById('importStudentsModal')); api.notify('success', '导入成功'); loadStudents(1); }, 1500);
+            var file = f.files[0];
+            api.notify('info', '导入', '正在解析文件...');
+            try {
+                var text;
+                try {
+                    text = await readFileAsText(file);
+                } catch (e) {
+                    api.notify('error', '导入失败', e.message);
+                    return;
+                }
+                var rows = parseCsv(text);
+                if (rows.length < 2) { api.notify('warning', '提示', '文件中没有可导入的数据'); return; }
+                var headers = rows[0].map(function(h) { return String(h).trim(); });
+                var iNo = indexOfAny(headers, ['学号', 'studentNo', 'student_no', 'studentId', 'id']);
+                var iName = indexOfAny(headers, ['姓名', 'name', 'studentName']);
+                var iGender = indexOfAny(headers, ['性别', 'gender']);
+                var iCollege = indexOfAny(headers, ['学院', 'college', 'collegeId', 'collegeName']);
+                var iMajor = indexOfAny(headers, ['专业', 'major', 'majorId', 'majorName']);
+                var iClass = indexOfAny(headers, ['班级', 'class', 'className', 'classId']);
+                var iStatus = indexOfAny(headers, ['状态', 'status']);
+                var iEmail = indexOfAny(headers, ['邮箱', 'email', '电子邮箱']);
+                var iPhone = indexOfAny(headers, ['电话', 'phone', '手机', '手机号码']);
+                if (iNo < 0) { api.notify('error', '导入失败', 'CSV 缺少“学号”列'); return; }
+
+                await ensureImportDicts();
+
+                var success = 0, failed = 0, errors = [];
+                for (var r = 1; r < rows.length; r++) {
+                    var row = rows[r];
+                    var studentNo = String(iNo >= 0 ? (row[iNo] || '') : '').trim();
+                    if (!studentNo) continue; // 跳过空行
+                    var collegeId = resolveImportId(iCollege >= 0 ? row[iCollege] : '', collegeNameToId);
+                    var majorId = resolveImportId(iMajor >= 0 ? row[iMajor] : '', majorNameToId);
+                    var classId = resolveImportId(iClass >= 0 ? row[iClass] : '', classNameToId);
+                    var body = {
+                        studentNo: studentNo,
+                        name: String(iName >= 0 ? (row[iName] || '') : '').trim(),
+                        gender: normalizeImportGender(iGender >= 0 ? row[iGender] : ''),
+                        collegeId: collegeId,
+                        majorId: majorId,
+                        classId: classId,
+                        className: String(iClass >= 0 ? (row[iClass] || '') : '').trim() || '未分班',
+                        status: normalizeImportStatus(iStatus >= 0 ? row[iStatus] : ''),
+                        email: String(iEmail >= 0 ? (row[iEmail] || '') : '').trim(),
+                        phone: String(iPhone >= 0 ? (row[iPhone] || '') : '').trim(),
+                        password: '123456'
+                    };
+                    try {
+                        await api.post('/api/v1/students', body);
+                        success++;
+                    } catch (e) {
+                        failed++;
+                        errors.push('第' + (r + 1) + '行(学号 ' + studentNo + '): ' + e.message);
+                    }
+                }
+                closeModal(document.getElementById('importStudentsModal'));
+                f.value = '';
+                if (failed > 0) {
+                    api.notify('warning', '导入完成', '成功 ' + success + ' 条，失败 ' + failed + ' 条（' + errors[0] + '）');
+                } else {
+                    api.notify('success', '导入成功', '成功导入 ' + success + ' 名学生');
+                }
+                loadStudents(1);
+            } catch (e) {
+                api.notify('error', '导入失败', e.message);
+            }
         }
     </script>

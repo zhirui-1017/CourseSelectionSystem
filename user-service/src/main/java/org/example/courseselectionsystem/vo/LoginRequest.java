@@ -23,4 +23,10 @@ public class LoginRequest {
     @Size(min = 6, max = 50, message = "密码长度必须在6-50个字符之间")
     @ApiModelProperty(value = "密码", required = true, example = "password123")
     public String password;
+
+    @ApiModelProperty(value = "验证码ID（由 /api/v1/auth/captcha 下发，存入 Redis）", example = "1f4f7f3a-....")
+    public String captchaId;
+
+    @ApiModelProperty(value = "用户输入的验证码", example = "A3k9")
+    public String captchaCode;
 }

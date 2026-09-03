@@ -101,8 +101,9 @@ public class DepartmentController {
     public Result getDepartmentList(PageRequest pageRequest,
                                   @RequestParam(required = false) String departmentName,
                                   @RequestParam(required = false) String departmentCode,
+                                  @RequestParam(required = false) Long collegeId,
                                   @RequestParam(required = false) Integer status) {
-        Page<Department> departmentPage = departmentService.getDepartmentList(pageRequest, departmentName, departmentCode, status);
+        Page<Department> departmentPage = departmentService.getDepartmentList(pageRequest, departmentName, departmentCode, collegeId, status);
         return Result.success(departmentPage);
     }
 

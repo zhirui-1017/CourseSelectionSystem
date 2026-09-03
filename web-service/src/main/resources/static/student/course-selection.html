@@ -130,6 +130,133 @@
                 flex-direction: column;
             }
         }
+        /* 课程卡片网格化：自动多列排布，不再每课占满一行 */
+        .courses-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+            gap: var(--spacing-lg);
+            align-items: stretch;
+        }
+        .courses-list .course-card {
+            margin-bottom: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .courses-list .course-card .course-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .courses-list .course-card .course-footer {
+            margin-top: auto;
+        }
+        .courses-list .course-card:only-child {
+            grid-column: 1 / -1;
+        }
+        @media (max-width: 768px) {
+            .courses-list { grid-template-columns: 1fr; }
+        }
+        /* 顶部通知：简洁单行轮播条 */
+        .notice-ticker {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(90deg, #fffdf8, #fff6e5);
+            border: 1px solid #ffe0b2;
+            border-radius: 12px;
+            padding: 9px 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+        .notice-ticker-icon {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #fff0d6;
+            color: #fa8c16;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .notice-ticker-label {
+            flex-shrink: 0;
+            color: #fa8c16;
+            font-weight: 600;
+            font-size: 13px;
+            border-right: 1px solid #ffe0b2;
+            padding-right: 12px;
+        }
+        .notice-ticker-body {
+            flex: 1;
+            overflow: hidden;
+            min-width: 0;
+        }
+        .notice-ticker-slide {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            white-space: nowrap;
+            transition: opacity .18s ease;
+            opacity: 1;
+        }
+        .notice-ticker-title {
+            color: var(--text-primary);
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .notice-ticker-meta {
+            color: var(--text-secondary);
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        /* 课程列表分页 */
+        .catalog-pager {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 14px;
+            border-top: 1px dashed var(--border-color);
+        }
+        .catalog-pager .page-btn {
+            min-width: 34px;
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: #fff;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all .15s ease;
+        }
+        .catalog-pager .page-btn:hover:not(:disabled):not(.active) {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        .catalog-pager .page-btn.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #fff;
+        }
+        .catalog-pager .page-btn:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+        .catalog-pager .page-ellipsis {
+            color: var(--text-secondary);
+            padding: 0 2px;
+        }
+        .catalog-pager .page-info {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-left: 6px;
+        }
     </style>
 </head>
 <body>
@@ -177,6 +304,7 @@
             </header>
 
             <div class="content-wrapper">
+                <div id="systemNoticeBanner"></div>
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">可选课程</h3>
@@ -187,6 +315,7 @@
                     </div>
                     <div class="card-body">
                         <div class="courses-list"></div>
+                        <div class="catalog-pager" id="catalogPager"></div>
                     </div>
                 </div>
             </div>

@@ -17,20 +17,79 @@
         .capacity-low { background-color: #dc3545; }
         .course-detail-item { margin-bottom: 12px; }
         .course-detail-label { font-weight: 600; color: #495057; display: inline-block; min-width: 80px; }
+        /* ===== 课程列表紧凑网格布局 ===== */
+        #courseListContainer {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        #courseListContainer .course-card {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: var(--radius-lg, 12px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: box-shadow .2s ease, transform .2s ease;
+        }
+        #courseListContainer .course-card:hover {
+            box-shadow: 0 6px 16px rgba(0, 0, 0, .12);
+            transform: translateY(-2px);
+        }
+        .course-card-head { display: flex; align-items: center; gap: 8px; }
+        .course-check-label { margin: 0; display: inline-flex; align-items: center; cursor: pointer; flex-shrink: 0; }
+        .course-check-label input { margin: 0; cursor: pointer; }
+        .course-card-title {
+            margin: 0;
+            flex: 1;
+            min-width: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #212529;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .course-card-status { flex-shrink: 0; }
+        .course-card-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+        .course-card-tag {
+            font-size: 12px;
+            color: #495057;
+            background: #f1f3f5;
+            border-radius: 4px;
+            padding: 2px 8px;
+        }
+        .course-card-info { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+        .course-card-row { display: flex; }
+        .course-card-label { color: #868e96; flex-shrink: 0; width: 40px; }
+        .course-card-value {
+            color: #343a40;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .course-card-capacity { display: flex; align-items: center; gap: 10px; }
+        .course-card-capacity .capacity-bar { flex: 1; }
+        .course-capacity-text { font-size: 12px; color: #495057; flex-shrink: 0; }
+        .course-card-footer { display: flex; gap: 8px; margin-top: 2px; }
+        .course-card-footer .btn { flex: 1; }
     </style>
 </head>
 <body>
     <div class="page-container">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <a href="/admin" class="sidebar-brand">
+                <a href="/admin/index.html" class="sidebar-brand">
                     <div class="sidebar-brand-icon"><i class="fas fa-cogs"></i></div>
                     <span class="sidebar-brand-text">管理员控制台</span>
                 </a>
                 <button class="sidebar-toggle"><i class="fas fa-chevron-left"></i></button>
             </div>
             <nav class="sidebar-nav">
-                <div class="nav-item"><a href="/admin" class="nav-link"><i class="nav-icon fas fa-tachometer-alt"></i><span class="nav-text">控制台首页</span></a></div>
+                <div class="nav-item"><a href="/admin/index.html" class="nav-link"><i class="nav-icon fas fa-tachometer-alt"></i><span class="nav-text">控制台首页</span></a></div>
                 <div class="nav-item"><a href="/admin/student-management.html" class="nav-link"><i class="nav-icon fas fa-user-graduate"></i><span class="nav-text">学生管理</span></a></div>
                 <div class="nav-item"><a href="/admin/teacher-management.html" class="nav-link"><i class="nav-icon fas fa-chalkboard-teacher"></i><span class="nav-text">教师管理</span></a></div>
                 <div class="nav-item"><a href="/admin/course-management.html" class="nav-link active"><i class="nav-icon fas fa-book"></i><span class="nav-text">课程管理</span></a></div>
@@ -69,6 +128,10 @@
                         <button type="button" class="btn btn-primary" onclick="showAddCourseModal()">
                             <i class="fas fa-plus"></i> 添加课程
                         </button>
+                        <button type="button" class="btn btn-secondary" onclick="openApprovalCenter()">
+                            <i class="fas fa-clipboard-check"></i> 审批中心
+                            <span class="badge" id="pendingApprovalBadge" style="display:none;background:#dc3545;color:#fff;border-radius:10px;padding:1px 6px;font-size:12px;margin-left:4px;"></span>
+                        </button>
                         <button type="button" class="btn btn-success" onclick="batchDeleteCourses()">
                             <i class="fas fa-trash"></i> 批量删除
                         </button>
@@ -88,8 +151,8 @@
                             <div class="input-group">
                                 <input type="text" class="form-control" id="searchCourseInput" placeholder="搜索课程名称/编号/教师">
                                 <span class="input-group-btn">
-                                    <button class="btn btn-default" type="button" onclick="searchCourses()">
-                                        <i class="fas fa-search"></i>
+                                    <button class="btn btn-primary" type="button" onclick="searchCourses()">
+                                        <i class="fas fa-search"></i> 搜索
                                     </button>
                                 </span>
                             </div>
@@ -97,19 +160,11 @@
                         <div class="col-md-3">
                             <select class="form-control" id="categoryFilter" onchange="filterCourses()">
                                 <option value="all">所有分类</option>
+                                <option value="专业必修">专业必修</option>
+                                <option value="专业选修">专业选修</option>
+                                <option value="公共必修">公共必修</option>
+                                <option value="公共选修">公共选修</option>
                                 <option value="必修课">必修课</option>
-                                <option value="选修课">选修课</option>
-                                <option value="专业基础课">专业基础课</option>
-                                <option value="专业课">专业课</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <select class="form-control" id="teacherFilter" onchange="filterCourses()">
-                                <option value="all">所有教师</option>
-                                <option value="张老师">张老师</option>
-                                <option value="李老师">李老师</option>
-                                <option value="王老师">王老师</option>
-                                <option value="赵老师">赵老师</option>
                             </select>
                         </div>
                         <div class="col-md-2">
@@ -147,69 +202,6 @@
         </main>
     </div>
 
-                <!-- 搜索和筛选 -->
-                <div class="search-form">
-                    <div class="input-group">
-                        <input type="text" id="searchCourseInput" class="form-control" placeholder="搜索课程名称、编号、教师...">
-                        <span class="input-group-btn">
-                            <button class="btn btn-primary" onclick="searchCourses()">
-                                <i class="glyphicon glyphicon-search"></i> 搜索
-                            </button>
-                        </span>
-                    </div>
-                </div>
-
-                <div class="filter-options">
-                    <select id="categoryFilter" class="form-control" onchange="filterCourses()">
-                        <option value="all">所有分类</option>
-                        <option value="必修课">必修课</option>
-                        <option value="选修课">选修课</option>
-                        <option value="专业基础课">专业基础课</option>
-                        <option value="专业课">专业课</option>
-                    </select>
-                    
-                    <select id="teacherFilter" class="form-control" onchange="filterCourses()">
-                        <option value="all">所有教师</option>
-                        <option value="张老师">张老师</option>
-                        <option value="李老师">李老师</option>
-                        <option value="王老师">王老师</option>
-                    </select>
-                    
-                    <select id="capacityFilter" class="form-control" onchange="filterCourses()">
-                        <option value="all">所有状态</option>
-                        <option value="normal">正常招生</option>
-                        <option value="full">已满</option>
-                        <option value="closed">已关闭</option>
-                    </select>
-                </div>
-
-                <!-- 课程列表 -->
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">课程列表</h3>
-                    </div>
-                    <div class="panel-body">
-                        <div class="course-list">
-                            <div class="row" id="courseListContainer">
-                                <!-- 课程卡片将通过JavaScript动态生成 -->
-                            </div>
-                        </div>
-                    </div>
-                    <!-- 分页控件 -->
-                    <div class="panel-footer">
-                        <div class="pagination-container">
-                            <nav aria-label="Page navigation">
-                                <ul class="pagination" id="coursePagination">
-                                    <!-- 分页将通过JavaScript动态生成 -->
-                                </ul>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- 添加课程模态框 -->
     <div class="modal" id="addCourseModal">
         <div class="modal-dialog modal-lg">
@@ -232,13 +224,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">授课教师</label>
-                                    <select class="form-control" id="courseTeacher" required>
-                                        <option value="">请选择教师</option>
-                                        <option value="张老师">张老师</option>
-                                        <option value="李老师">李老师</option>
-                                        <option value="王老师">王老师</option>
-                                        <option value="赵老师">赵老师</option>
-                                    </select>
+                                    <input type="text" class="form-control" id="courseTeacher" placeholder="请输入授课教师姓名">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">学分</label>
@@ -247,10 +233,11 @@
                                 <div class="form-group">
                                     <label class="form-label">课程分类</label>
                                     <select class="form-control" id="courseCategory" required>
+                                        <option value="专业必修">专业必修</option>
+                                        <option value="专业选修">专业选修</option>
+                                        <option value="公共必修">公共必修</option>
+                                        <option value="公共选修">公共选修</option>
                                         <option value="必修课">必修课</option>
-                                        <option value="选修课">选修课</option>
-                                        <option value="专业基础课">专业基础课</option>
-                                        <option value="专业课">专业课</option>
                                     </select>
                                 </div>
                             </div>
@@ -318,13 +305,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">授课教师</label>
-                                    <select class="form-control" id="editCourseTeacher" required>
-                                        <option value="">请选择教师</option>
-                                        <option value="张老师">张老师</option>
-                                        <option value="李老师">李老师</option>
-                                        <option value="王老师">王老师</option>
-                                        <option value="赵老师">赵老师</option>
-                                    </select>
+                                    <input type="text" class="form-control" id="editCourseTeacher" placeholder="请输入授课教师姓名">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">学分</label>
@@ -333,10 +314,11 @@
                                 <div class="form-group">
                                     <label class="form-label">课程分类</label>
                                     <select class="form-control" id="editCourseCategory" required>
+                                        <option value="专业必修">专业必修</option>
+                                        <option value="专业选修">专业选修</option>
+                                        <option value="公共必修">公共必修</option>
+                                        <option value="公共选修">公共选修</option>
                                         <option value="必修课">必修课</option>
-                                        <option value="选修课">选修课</option>
-                                        <option value="专业基础课">专业基础课</option>
-                                        <option value="专业课">专业课</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -467,11 +449,10 @@
                     <table class="data-table">
                         <thead>
                             <tr>
+                                <th style="width:60px;">序号</th>
                                 <th>学生学号</th>
                                 <th>学生姓名</th>
-                                <th>班级</th>
                                 <th>选课时间</th>
-                                <th>操作</th>
                             </tr>
                         </thead>
                         <tbody id="enrolledStudentsTable">
@@ -486,14 +467,123 @@
         </div>
     </div>
 
+    <!-- 审批中心模态框 -->
+    <div class="modal" id="approvalCenterModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">课程申请审批中心</h4>
+                    <button class="close" data-dismiss="modal"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>类型</th>
+                                <th>课程</th>
+                                <th>申请人</th>
+                                <th>理由/说明</th>
+                                <th>申请时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="approvalTableBody">
+                            <tr><td colspan="6" class="text-center" style="padding:20px;">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 驳回意见模态框 -->
+    <div class="modal" id="rejectModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">驳回申请</h4>
+                    <button class="close" data-dismiss="modal"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="rejectApplicationId">
+                    <div class="form-group">
+                        <label class="form-label">驳回意见</label>
+                        <textarea class="form-control" id="rejectComment" rows="3" placeholder="请输入驳回原因"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button class="btn btn-danger" onclick="submitReject()">确认驳回</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除理由模态框 -->
+    <div class="modal" id="deleteReasonModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">删除课程</h4>
+                    <button class="close" data-dismiss="modal"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="deleteCourseId">
+                    <p class="text-muted" id="deleteCourseHint"></p>
+                    <div class="form-group">
+                        <label class="form-label">删除理由 <span style="color:#dc3545;">*</span></label>
+                        <textarea class="form-control" id="deleteReasonInput" rows="3" placeholder="该课程已有学生选课，请填写删除理由，系统将通知相关学生重新选课"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button class="btn btn-danger" onclick="submitDeleteWithReason()">确认删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="/js/common.js"></script>
     <script src="/js/app-api.js"></script>
     <script>
         var api = window.AppApi;
-        var curPage = 1, pageSize = 6;
+        var curPage = 1, pageSize = 12;
+
+        // 若指定值不在下拉中则补一个选项（兼容旧数据）
+        function addOptionIfMissing(select, value) {
+            if (!select || !value) return;
+            var found = Array.prototype.some.call(select.options, function (o) { return o.value === value; });
+            if (!found) {
+                var opt = document.createElement('option');
+                opt.value = value;
+                opt.text = value;
+                select.appendChild(opt);
+            }
+        }
+
+        // 从“学期管理”加载学期，用于新建/编辑课程时选择开设学期
+        async function loadSemesterOptions() {
+            try {
+                var data = await api.get('/api/v1/semesters/list', { pageNum: 1, pageSize: 100, orderByColumn: 'startDate', isAsc: false });
+                var rows = api.pageItems(data) || [];
+                if (!rows.length) return;
+                var opts = rows.map(function (s) {
+                    return '<option value="' + api.escapeHtml(String(s.semesterId)) + '">' + api.escapeHtml(s.semesterName || s.semesterId) + '</option>';
+                }).join('');
+                ['courseSemester', 'editCourseSemester'].forEach(function (id) {
+                    var sel = document.getElementById(id);
+                    if (sel) sel.innerHTML = opts;
+                });
+            } catch (e) { /* 学期接口不可用时保留原有选项 */ }
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             loadCourses(1);
+            loadSemesterOptions();
+            checkPendingApprovals();
             document.getElementById('searchCourseInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') loadCourses(1); });
         });
 
@@ -502,8 +592,24 @@
             var container = document.getElementById('courseListContainer');
             container.innerHTML = '<div class="col-md-12 text-center" style="padding:40px 0;"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>';
             try {
-                var data = await api.get('/api/v1/courses/list', { pageNum: curPage, pageSize: pageSize, orderByColumn: 'id', isAsc: true });
+                var params = { pageNum: curPage, pageSize: pageSize, orderByColumn: 'id', isAsc: true };
+                var kw = document.getElementById('searchCourseInput') ? document.getElementById('searchCourseInput').value.trim() : '';
+                if (kw) {
+                    var _tid = await resolveTeacherIdByName(kw);
+                    if (_tid) {
+                        params.teacherId = _tid;
+                    } else {
+                        params.courseName = kw;
+                        params.courseCode = kw;
+                    }
+                }
+                var _cf = document.getElementById('categoryFilter');
+                if (_cf && _cf.value && _cf.value !== 'all') { params.courseType = _cf.value; }
+                var _sf = document.getElementById('capacityFilter');
+                if (_sf && _sf.value && _sf.value !== 'all') { params.status = _sf.value === 'normal' ? 1 : (_sf.value === 'full' ? 2 : 0); }
+                var data = await api.get('/api/v1/courses/list', params);
                 var items = api.pageItems(data), total = api.pageTotal(data);
+                window._courseItems = items || [];
                 if (!items || !items.length) {
                     container.innerHTML = '<div class="col-md-12 text-center text-muted" style="padding:40px 0;">暂无数据</div>';
                 } else {
@@ -517,20 +623,33 @@
                         if (c.status === 2 || c.status === 'closed' || c.status === 'full') { st = '已满'; sc = 'badge-warning'; }
                         else if (c.status === 0) { st = '已关闭'; sc = 'badge-danger'; }
                         var card = document.createElement('div');
-                        card.className = 'col-md-6 col-lg-4';
-                        card.innerHTML = '<div class="card" style="margin-bottom:16px;"><div class="card-header"><h3 class="card-title" style="font-size:16px;">' + api.escapeHtml(c.courseName || c.courseCode) + '</h3></div><div class="card-body">' +
-                            '<p style="color:#6c757d;margin-bottom:8px;">' + api.escapeHtml(c.courseCode || '-') + ' | ' + api.escapeHtml(c.courseType || '-') + ' | ' + (c.credit || '-') + '学分</p>' +
-                            '<p style="margin-bottom:6px;"><strong>教师：</strong>' + api.escapeHtml(c.teacherName || c.teacherId || '-') + '</p>' +
-                            '<p style="margin-bottom:6px;"><strong>时间：</strong>' + api.escapeHtml(c.schedule || '-') + '</p>' +
-                            '<p style="margin-bottom:6px;"><strong>地点：</strong>' + api.escapeHtml(c.classroom || '-') + '</p>' +
-                            '<p style="margin-bottom:6px;"><strong>学期：</strong>' + api.escapeHtml(c.semester || '-') + '</p>' +
-                            '<div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>选课进度：</span><span>' + enrolled + '/' + totalSlots + '人</span></div>' +
-                            '<div class="capacity-bar"><div class="capacity-progress ' + capClass + '" style="width:' + Math.min(progress, 100) + '%;"></div></div></div>' +
-                            '<span class="badge ' + sc + '">' + st + '</span></div>' +
-                            '<div class="card-footer" style="display:flex;gap:8px;justify-content:center;">' +
-                            '<button class="btn btn-sm btn-info" onclick="showCourseDetail(' + c.id + ')"><i class="fas fa-eye"></i> 详情</button>' +
-                            '<button class="btn btn-sm btn-primary" onclick="showEditCourseModal(' + c.id + ')"><i class="fas fa-edit"></i> 编辑</button>' +
-                            '<button class="btn btn-sm btn-danger" onclick="deleteCourse(' + c.id + ')"><i class="fas fa-trash"></i> 删除</button></div></div>';
+                        card.className = 'course-card';
+                        card.innerHTML =
+                            '<div class="course-card-head">' +
+                                '<label class="course-check-label" title="选择课程"><input type="checkbox" class="course-checkbox" value="' + c.id + '"></label>' +
+                                '<h4 class="course-card-title">' + api.escapeHtml(c.courseName || c.courseCode) + '</h4>' +
+                                '<span class="course-card-status"><span class="badge ' + sc + '">' + st + '</span></span>' +
+                            '</div>' +
+                            '<div class="course-card-meta">' +
+                                '<span class="course-card-tag">' + api.escapeHtml(c.courseCode || '-') + '</span>' +
+                                '<span class="course-card-tag">' + api.escapeHtml(c.courseType || '-') + '</span>' +
+                                '<span class="course-card-tag">' + (c.credit || '-') + '学分</span>' +
+                            '</div>' +
+                            '<div class="course-card-info">' +
+                                '<div class="course-card-row"><span class="course-card-label">教师</span><span class="course-card-value">' + api.escapeHtml(c.teacherName || '-') + '</span></div>' +
+                                '<div class="course-card-row"><span class="course-card-label">时间</span><span class="course-card-value">' + api.escapeHtml(c.schedule || '-') + '</span></div>' +
+                                '<div class="course-card-row"><span class="course-card-label">地点</span><span class="course-card-value">' + api.escapeHtml(c.classroom || '-') + '</span></div>' +
+                                '<div class="course-card-row"><span class="course-card-label">学期</span><span class="course-card-value">' + api.escapeHtml(c.semester || '-') + '</span></div>' +
+                            '</div>' +
+                            '<div class="course-card-capacity">' +
+                                '<div class="capacity-bar"><div class="capacity-progress ' + capClass + '" style="width:' + Math.min(progress, 100) + '%;"></div></div>' +
+                                '<span class="course-capacity-text">' + enrolled + '/' + totalSlots + '人</span>' +
+                            '</div>' +
+                            '<div class="course-card-footer">' +
+                                '<button type="button" class="btn btn-sm btn-info" onclick="showCourseDetail(' + c.id + ')">详情</button>' +
+                                '<button type="button" class="btn btn-sm btn-primary" onclick="showEditCourseModal(' + c.id + ')">编辑</button>' +
+                                '<button type="button" class="btn btn-sm btn-danger" onclick="deleteCourse(' + c.id + ')">删除</button>' +
+                            '</div>';
                         container.appendChild(card);
                     });
                 }
@@ -558,8 +677,24 @@
 
         function showAddCourseModal() { document.getElementById('addCourseForm').reset(); openModal(document.getElementById('addCourseModal')); }
 
+        async function resolveTeacherIdByName(name) {
+            if (!name) return null;
+            try {
+                const data = await api.get('/api/v1/teachers/list', { pageNum: 1, pageSize: 50, keyword: name });
+                const rows = api.pageItems(data);
+                const hit = rows.find(function (t) { return String(t.name) === name; }) || rows.find(function (t) { return String(t.name).indexOf(name) >= 0; });
+                return hit ? hit.id : null;
+            } catch (e) { return null; }
+        }
+
         async function addCourse() {
-            var d = { courseCode: document.getElementById('courseId').value.trim(), courseName: document.getElementById('courseName').value.trim(), teacherId: 1, credit: parseFloat(document.getElementById('courseCredits').value) || 0, totalHours: (parseFloat(document.getElementById('courseCredits').value) || 2) * 16, availableSlots: parseInt(document.getElementById('courseTotal').value) || 40, courseType: document.getElementById('courseCategory').value, semester: document.getElementById('courseSemester').value, schedule: document.getElementById('courseTime').value.trim(), classroom: document.getElementById('courseLocation').value.trim(), description: document.getElementById('courseDescription').value.trim(), status: 1 };
+            var teacherName = document.getElementById('courseTeacher').value.trim();
+            var teacherId = null;
+            if (teacherName) {
+                teacherId = await resolveTeacherIdByName(teacherName);
+                if (!teacherId) { api.notify('warning', '提示', '未找到授课教师：' + teacherName); return; }
+            }
+            var d = { courseCode: document.getElementById('courseId').value.trim(), courseName: document.getElementById('courseName').value.trim(), teacherId: teacherId || 1, credit: parseFloat(document.getElementById('courseCredits').value) || 0, totalHours: (parseFloat(document.getElementById('courseCredits').value) || 2) * 16, availableSlots: parseInt(document.getElementById('courseTotal').value) || 40, courseType: document.getElementById('courseCategory').value, semester: document.getElementById('courseSemester').value, schedule: document.getElementById('courseTime').value.trim(), classroom: document.getElementById('courseLocation').value.trim(), description: document.getElementById('courseDescription').value.trim(), status: 1 };
             if (!d.courseCode || !d.courseName) { api.notify('warning', '提示', '请填写课程编号和名称'); return; }
             try { await api.post('/api/v1/courses', d); closeModal(document.getElementById('addCourseModal')); api.notify('success', '添加成功', '课程已添加'); loadCourses(1); } catch (e) { api.notify('error', '添加失败', e.message); }
         }
@@ -569,11 +704,15 @@
                 var c = await api.get('/api/v1/courses/' + id);
                 document.getElementById('editCourseId').value = c.id;
                 document.getElementById('editCourseName').value = c.courseName;
-                document.getElementById('editCourseTeacher').value = c.teacherName || c.teacherId || '';
+                document.getElementById('editCourseTeacher').value = c.teacherName || '';
                 document.getElementById('editCourseCredits').value = c.credit;
                 document.getElementById('editCourseCategory').value = c.courseType || '选修课';
                 document.getElementById('editCourseTotal').value = c.availableSlots || 40;
-                document.getElementById('editCourseSemester').value = c.semester || '';
+                var editSemSel = document.getElementById('editCourseSemester');
+                if (editSemSel) {
+                    if (c.semester) addOptionIfMissing(editSemSel, String(c.semester));
+                    editSemSel.value = c.semester || '';
+                }
                 document.getElementById('editCourseTime').value = c.schedule || '';
                 document.getElementById('editCourseLocation').value = c.classroom || '';
                 document.getElementById('editCourseStatus').value = c.status === 0 ? 'closed' : (c.status === 2 ? 'full' : 'normal');
@@ -584,13 +723,26 @@
 
         async function updateCourse() {
             var id = document.getElementById('editCourseId').value;
-            var d = { courseName: document.getElementById('editCourseName').value.trim(), credit: parseFloat(document.getElementById('editCourseCredits').value) || 0, availableSlots: parseInt(document.getElementById('editCourseTotal').value) || 40, schedule: document.getElementById('editCourseTime').value.trim(), classroom: document.getElementById('editCourseLocation').value.trim(), description: document.getElementById('editCourseDescription').value.trim() };
+            var credit = parseFloat(document.getElementById('editCourseCredits').value) || 0;
+            var statusVal = document.getElementById('editCourseStatus').value;
+            var d = {
+                courseName: document.getElementById('editCourseName').value.trim(),
+                credit: credit,
+                totalHours: (credit || 2) * 16,
+                courseType: document.getElementById('editCourseCategory').value,
+                availableSlots: parseInt(document.getElementById('editCourseTotal').value) || 40,
+                semester: document.getElementById('editCourseSemester').value,
+                schedule: document.getElementById('editCourseTime').value.trim(),
+                classroom: document.getElementById('editCourseLocation').value.trim(),
+                description: document.getElementById('editCourseDescription').value.trim(),
+                status: statusVal === 'closed' ? 0 : (statusVal === 'full' ? 2 : 1)
+            };
+            var teacherName = document.getElementById('editCourseTeacher').value.trim();
+            if (teacherName) {
+                var tid = await resolveTeacherIdByName(teacherName);
+                if (tid) { d.teacherId = tid; }
+            }
             try { await api.request('/api/v1/courses/' + id, { method: 'PUT', body: d }); closeModal(document.getElementById('editCourseModal')); api.notify('success', '更新成功', '课程已更新'); loadCourses(curPage); } catch (e) { api.notify('error', '更新失败', e.message); }
-        }
-
-        async function deleteCourse(id) {
-            if (!confirm('确定要删除该课程吗？')) return;
-            try { await api.del('/api/v1/courses/' + id); api.notify('success', '删除成功', '课程已删除'); loadCourses(1); } catch (e) { api.notify('error', '删除失败', e.message); }
         }
 
         async function showCourseDetail(id) {
@@ -598,7 +750,7 @@
                 var c = await api.get('/api/v1/courses/' + id);
                 document.getElementById('detailCourseId').textContent = c.courseCode || '-';
                 document.getElementById('detailCourseName').textContent = c.courseName;
-                document.getElementById('detailCourseTeacher').textContent = c.teacherName || c.teacherId || '-';
+                document.getElementById('detailCourseTeacher').textContent = c.teacherName || '-';
                 document.getElementById('detailCourseCredits').textContent = (c.credit || '-') + ' 学分';
                 document.getElementById('detailCourseCategory').textContent = c.courseType || '-';
                 document.getElementById('detailCourseSemester').textContent = c.semester || '-';
@@ -617,15 +769,361 @@
             } catch (e) { api.notify('error', '加载失败', e.message); }
         }
 
-        function showEnrolledStudents() {
+        async function showEnrolledStudents() {
             closeModal(document.getElementById('courseDetailModal'));
-            document.getElementById('enrolledStudentsTable').innerHTML = '<tr><td colspan="5" class="text-center" style="padding:20px;">选课学生列表功能开发中</td></tr>';
+            var body = document.getElementById('enrolledStudentsTable');
+            var courseId = window._detailCourseId;
+            if (!courseId) {
+                body.innerHTML = '<tr><td colspan="4" class="text-center" style="padding:20px;">无法获取课程信息</td></tr>';
+                openModal(document.getElementById('enrolledStudentsModal'));
+                return;
+            }
+            body.innerHTML = '<tr><td colspan="4" class="text-center" style="padding:20px;"><i class="fas fa-spinner fa-spin"></i> 加载中...</td></tr>';
             openModal(document.getElementById('enrolledStudentsModal'));
+            try {
+                var data = await api.get('/api/v1/course-selections/course/' + encodeURIComponent(courseId), { pageNum: 1, pageSize: 1000, status: 1, orderByColumn: 'id', isAsc: true });
+                var rows = api.pageItems(data);
+                if (!rows || !rows.length) {
+                    body.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding:20px;">暂无学生选课</td></tr>';
+                    return;
+                }
+                body.innerHTML = rows.map(function (row, index) {
+                    return '<tr>' +
+                        '<td>' + (index + 1) + '</td>' +
+                        '<td>' + api.escapeHtml(row.studentCode || row.studentNo || row.studentId || '-') + '</td>' +
+                        '<td>' + api.escapeHtml(row.studentName || '-') + '</td>' +
+                        '<td>' + api.formatDate(row.selectionTime) + '</td>' +
+                    '</tr>';
+                }).join('');
+            } catch (e) {
+                body.innerHTML = '<tr><td colspan="4" class="text-center" style="color:#dc3545;padding:20px;">加载失败: ' + api.escapeHtml(e.message) + '</td></tr>';
+            }
         }
 
-        function batchDeleteCourses() { api.notify('info', '批量删除', '请选择要删除的课程'); }
-        function exportCourseData() { api.notify('info', '导出', '正在导出...'); }
-        function importCourseData(file) { if (file) api.notify('success', '导入成功', '数据已导入'); }
+        async function batchDeleteCourses() {
+            var ids = Array.from(document.querySelectorAll('.course-checkbox:checked')).map(function (cb) { return Number(cb.value); });
+            if (!ids.length) { api.notify('warning', '提示', '请先勾选要删除的课程'); return; }
+            if (!confirm('确定删除选中的 ' + ids.length + ' 门课程吗？')) return;
+            try {
+                await api.request('/api/v1/courses/batch', { method: 'DELETE', body: ids });
+                api.notify('success', '删除成功', '已删除 ' + ids.length + ' 门课程');
+                loadCourses(1);
+            } catch (e) { api.notify('error', '删除失败', e.message); }
+        }
+        // ===== 导出课程（CSV） =====
+        async function exportCourseData() {
+            try {
+                var data = await api.get('/api/v1/courses/list', { pageNum: 1, pageSize: 1000, orderByColumn: 'id', isAsc: true });
+                var items = api.pageItems(data) || [];
+                var sm = { 1: '正常招生', 0: '已关闭', 2: '已满' };
+                var rows = [['课程编号', '课程名称', '课程分类', '学分', '学时', '授课教师', '学期', '上课时间', '上课地点', '总人数', '已选人数', '状态', '课程描述']];
+                items.forEach(function (c) {
+                    rows.push([
+                        c.courseCode || '', c.courseName || '', c.courseType || '',
+                        c.credit ?? '', c.totalHours ?? '', c.teacherName || c.teacherId || '',
+                        c.semester || '', c.schedule || '', c.classroom || '',
+                        c.availableSlots ?? '', c.selectedCount ?? 0,
+                        sm[c.status] || c.status, c.description || ''
+                    ]);
+                });
+                downloadCsv('courses.csv', rows);
+                api.notify('success', '导出成功', '已导出 ' + items.length + ' 门课程');
+            } catch (e) { api.notify('error', '导出失败', e.message); }
+        }
+
+        // ===== CSV 工具 =====
+        function downloadCsv(filename, rows) {
+            var csv = rows.map(function (row) {
+                return row.map(function (cell) { return '"' + String(cell == null ? '' : cell).replace(/"/g, '""') + '"'; }).join(',');
+            }).join('\r\n');
+            var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            URL.revokeObjectURL(link.href);
+            link.remove();
+        }
+
+        function parseCsv(text) {
+            var rows = [], row = [], field = '', inQuotes = false;
+            for (var i = 0; i < text.length; i++) {
+                var ch = text[i];
+                if (inQuotes) {
+                    if (ch === '"') {
+                        if (text[i + 1] === '"') { field += '"'; i++; }
+                        else { inQuotes = false; }
+                    } else { field += ch; }
+                } else {
+                    if (ch === '"') { inQuotes = true; }
+                    else if (ch === ',') { row.push(field); field = ''; }
+                    else if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+                    else if (ch !== '\r') { field += ch; }
+                }
+            }
+            if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+            return rows;
+        }
+
+        function indexOfAny(headers, names) {
+            for (var i = 0; i < names.length; i++) {
+                var idx = headers.indexOf(names[i]);
+                if (idx >= 0) return idx;
+            }
+            return -1;
+        }
+
+        function readFileAsText(file) {
+            return new Promise(function (resolve, reject) {
+                var reader = new FileReader();
+                reader.onload = function () {
+                    try {
+                        var buf = new Uint8Array(reader.result);
+                        if (buf.length > 0) {
+                            var isBinary = (buf[0] === 0x50 && buf[1] === 0x4B);
+                            if (!isBinary) {
+                                for (var i = 0; i < Math.min(buf.length, 2000); i++) {
+                                    if (buf[i] === 0) { isBinary = true; break; }
+                                }
+                            }
+                            if (isBinary) {
+                                reject(new Error('您选择的文件是 .xlsx/.xls 等二进制格式，暂不支持直接导入。请用 Excel 打开后“另存为”，选择“CSV UTF-8(逗号分隔)”或“CSV(逗号分隔)”格式，再导入该 CSV 文件。'));
+                                return;
+                            }
+                        }
+                        var text;
+                        var offset = (buf.length >= 3 && buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF) ? 3 : 0;
+                        var body = offset ? buf.subarray(offset) : buf;
+                        var utf8 = new TextDecoder('utf-8').decode(body);
+                        if (utf8.indexOf('\uFFFD') < 0) {
+                            text = utf8;
+                        } else {
+                            try { text = new TextDecoder('gbk').decode(body); }
+                            catch (e) { text = utf8; }
+                        }
+                        resolve(text);
+                    } catch (e) { reject(new Error('读取文件失败: ' + e.message)); }
+                };
+                reader.onerror = function () { reject(new Error('读取文件失败')); };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function normalizeImportCourseStatus(v) {
+            var s = String(v == null ? '' : v).trim();
+            if (/^1$|正常|开放|启用/.test(s)) return 1;
+            if (/^2$|已满|满/.test(s)) return 2;
+            if (/^0$|关闭|停开/.test(s)) return 0;
+            return 1;
+        }
+
+        var teacherNameToId = {};
+        var teacherDictLoaded = false;
+        async function ensureTeacherDict() {
+            if (teacherDictLoaded) return;
+            teacherNameToId = {};
+            try {
+                var data = await api.get('/api/v1/teachers/list', { pageNum: 1, pageSize: 1000 });
+                api.pageItems(data).forEach(function (t) { if (t.name) teacherNameToId[t.name] = t.id; });
+            } catch (e) { /* ignore */ }
+            teacherDictLoaded = true;
+        }
+
+        // ===== 导入课程（CSV） =====
+        async function importCourseData(file) {
+            if (!file) { api.notify('warning', '提示', '请选择文件'); return; }
+            api.notify('info', '导入', '正在解析文件...');
+            try {
+                var text;
+                try { text = await readFileAsText(file); }
+                catch (e) { api.notify('error', '导入失败', e.message); return; }
+                var rows = parseCsv(text);
+                if (rows.length < 2) { api.notify('warning', '提示', '文件中没有可导入的数据'); return; }
+                var headers = rows[0].map(function (h) { return String(h).trim(); });
+                var iCode = indexOfAny(headers, ['课程编号', '编号', 'courseCode', 'course_code']);
+                var iName = indexOfAny(headers, ['课程名称', '名称', 'courseName', 'course_name']);
+                var iType = indexOfAny(headers, ['课程分类', '分类', '类型', 'courseType', 'course_type']);
+                var iCredit = indexOfAny(headers, ['学分', 'credit']);
+                var iHours = indexOfAny(headers, ['学时', '课时', 'totalHours', 'total_hours']);
+                var iTeacher = indexOfAny(headers, ['授课教师', '教师', 'teacher', 'teacherName', 'teacher_name']);
+                var iSemester = indexOfAny(headers, ['学期', 'semester']);
+                var iSchedule = indexOfAny(headers, ['上课时间', '时间', 'schedule']);
+                var iClassroom = indexOfAny(headers, ['上课地点', '地点', '教室', 'classroom']);
+                var iCapacity = indexOfAny(headers, ['总人数', '人数', '容量', 'availableSlots', 'capacity']);
+                var iStatus = indexOfAny(headers, ['状态', 'status']);
+                var iDesc = indexOfAny(headers, ['课程描述', '描述', 'description']);
+                if (iCode < 0) { api.notify('error', '导入失败', 'CSV 缺少“课程编号”列'); return; }
+
+                await ensureTeacherDict();
+
+                var success = 0, failed = 0, errors = [];
+                for (var r = 1; r < rows.length; r++) {
+                    var row = rows[r];
+                    var courseCode = String(iCode >= 0 ? (row[iCode] || '') : '').trim();
+                    if (!courseCode) continue; // 跳过空行
+                    var courseName = String(iName >= 0 ? (row[iName] || '') : '').trim();
+                    var teacherName = String(iTeacher >= 0 ? (row[iTeacher] || '') : '').trim();
+                    var teacherId = null;
+                    if (teacherName) {
+                        teacherId = teacherNameToId[teacherName] || null;
+                        if (!teacherId) { teacherId = await resolveTeacherIdByName(teacherName); }
+                        if (!teacherId) {
+                            failed++;
+                            errors.push('第' + (r + 1) + '行(编号 ' + courseCode + '): 未找到教师“' + teacherName + '”');
+                            continue;
+                        }
+                    }
+                    var credit = parseFloat(iCredit >= 0 ? row[iCredit] : '') || 0;
+                    var body = {
+                        courseCode: courseCode,
+                        courseName: courseName,
+                        courseType: String(iType >= 0 ? (row[iType] || '') : '').trim() || '专业选修',
+                        credit: credit,
+                        totalHours: parseInt(iHours >= 0 ? row[iHours] : '') || (credit ? credit * 16 : 32),
+                        teacherId: teacherId || 1,
+                        semester: String(iSemester >= 0 ? (row[iSemester] || '') : '').trim(),
+                        schedule: String(iSchedule >= 0 ? (row[iSchedule] || '') : '').trim(),
+                        classroom: String(iClassroom >= 0 ? (row[iClassroom] || '') : '').trim(),
+                        availableSlots: parseInt(iCapacity >= 0 ? row[iCapacity] : '') || 40,
+                        status: normalizeImportCourseStatus(iStatus >= 0 ? row[iStatus] : ''),
+                        description: String(iDesc >= 0 ? (row[iDesc] || '') : '').trim()
+                    };
+                    try {
+                        await api.post('/api/v1/courses', body);
+                        success++;
+                    } catch (e) {
+                        failed++;
+                        errors.push('第' + (r + 1) + '行(编号 ' + courseCode + '): ' + e.message);
+                    }
+                }
+                document.getElementById('importCourseFile').value = '';
+                if (failed > 0) {
+                    api.notify('warning', '导入完成', '成功 ' + success + ' 条，失败 ' + failed + ' 条（' + errors[0] + '）');
+                } else {
+                    api.notify('success', '导入成功', '成功导入 ' + success + ' 门课程');
+                }
+                loadCourses(1);
+            } catch (e) {
+                api.notify('error', '导入失败', e.message);
+            }
+        }
+
+        // ===== 审批中心（教师提交的课程新增/编辑/删除申请） =====
+        var _approverId = null;
+        async function ensureApproverId() {
+            if (_approverId) return _approverId;
+            try {
+                var u = await api.get('/api/v1/auth/current-user');
+                _approverId = u ? Number(u.userId || u.id || 0) : 0;
+            } catch (e) { _approverId = 0; }
+            return _approverId;
+        }
+
+        async function checkPendingApprovals() {
+            try {
+                var data = await api.get('/api/v1/course-applications/pending', { pageNum: 1, pageSize: 1 });
+                var total = api.pageTotal(data);
+                var badge = document.getElementById('pendingApprovalBadge');
+                if (badge) { badge.textContent = total; badge.style.display = total > 0 ? 'inline-block' : 'none'; }
+            } catch (e) { }
+        }
+
+        function openApprovalCenter() {
+            openModal(document.getElementById('approvalCenterModal'));
+            loadPendingApplications(1);
+        }
+
+        async function loadPendingApplications(page) {
+            var body = document.getElementById('approvalTableBody');
+            body.innerHTML = '<tr><td colspan="6" class="text-center" style="padding:20px;"><i class="fas fa-spinner fa-spin"></i> 加载中...</td></tr>';
+            try {
+                var data = await api.get('/api/v1/course-applications/pending', { pageNum: page || 1, pageSize: 10 });
+                var rows = api.pageItems(data);
+                if (!rows || !rows.length) { body.innerHTML = '<tr><td colspan="6" class="text-center text-muted" style="padding:20px;">暂无待审批申请</td></tr>'; checkPendingApprovals(); return; }
+                var typeMap = { add: '<span class="badge badge-primary">新增</span>', edit: '<span class="badge badge-warning">编辑</span>', delete: '<span class="badge badge-danger">删除</span>' };
+                body.innerHTML = rows.map(function (a) {
+                    var reason = api.escapeHtml(a.reason || '-');
+                    var courseName = api.escapeHtml(a.courseName || a.courseCode || '-');
+                    return '<tr>' +
+                        '<td>' + (typeMap[a.type] || api.escapeHtml(a.type)) + '</td>' +
+                        '<td>' + courseName + '</td>' +
+                        '<td>' + api.escapeHtml(a.applicantName || '-') + '</td>' +
+                        '<td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + reason + '">' + reason + '</td>' +
+                        '<td>' + api.formatDate(a.createTime) + '</td>' +
+                        '<td>' +
+                            '<button class="btn btn-sm btn-success" onclick="approveApplication(' + a.id + ')">同意</button> ' +
+                            '<button class="btn btn-sm btn-danger" onclick="openRejectModal(' + a.id + ')">驳回</button>' +
+                        '</td>' +
+                    '</tr>';
+                }).join('');
+            } catch (e) { body.innerHTML = '<tr><td colspan="6" class="text-center" style="color:#dc3545;padding:20px;">加载失败: ' + api.escapeHtml(e.message) + '</td></tr>'; }
+        }
+
+        async function approveApplication(id) {
+            if (!confirm('确认通过该申请吗？通过后立即生效。')) return;
+            try {
+                await api.put('/api/v1/course-applications/' + id + '/approve', { approverId: await ensureApproverId() });
+                api.notify('success', '审批通过', '申请已通过并生效');
+                loadPendingApplications(1);
+            } catch (e) { api.notify('error', '审批失败', e.message); }
+        }
+
+        function openRejectModal(id) {
+            document.getElementById('rejectApplicationId').value = id;
+            document.getElementById('rejectComment').value = '';
+            openModal(document.getElementById('rejectModal'));
+        }
+
+        async function submitReject() {
+            var id = document.getElementById('rejectApplicationId').value;
+            var comment = document.getElementById('rejectComment').value.trim();
+            try {
+                await api.put('/api/v1/course-applications/' + id + '/reject', { approverId: await ensureApproverId(), comment: comment });
+                closeModal(document.getElementById('rejectModal'));
+                api.notify('success', '已驳回', '申请已驳回');
+                loadPendingApplications(1);
+            } catch (e) { api.notify('error', '驳回失败', e.message); }
+        }
+
+        // ===== 删除课程：已有学生选课时必须填写删除理由并通知学生 =====
+        function openDeleteReasonModal(id, name) {
+            document.getElementById('deleteCourseId').value = id;
+            document.getElementById('deleteReasonInput').value = '';
+            document.getElementById('deleteCourseHint').innerHTML = '课程 <strong>' + api.escapeHtml(name || '') + '</strong> 已有学生选课，删除后系统将自动通知相关学生并让其重新选课。';
+            openModal(document.getElementById('deleteReasonModal'));
+        }
+
+        async function submitDeleteWithReason() {
+            var id = document.getElementById('deleteCourseId').value;
+            var reason = document.getElementById('deleteReasonInput').value.trim();
+            if (!reason) { api.notify('warning', '提示', '请填写删除理由'); return; }
+            try {
+                var operator = await api.get('/api/v1/auth/current-user');
+                var oid = operator ? (operator.userId || operator.id || '') : '';
+                var oname = operator ? (operator.username || operator.name || '管理员') : '管理员';
+                var q = '?reason=' + encodeURIComponent(reason) + '&operatorId=' + encodeURIComponent(oid) + '&operatorName=' + encodeURIComponent(oname);
+                await api.del('/api/v1/courses/' + id + q);
+                closeModal(document.getElementById('deleteReasonModal'));
+                api.notify('success', '删除成功', '课程已删除，已通知相关学生重新选课');
+                loadCourses(1);
+            } catch (e) { api.notify('error', '删除失败', e.message); }
+        }
+
+        async function deleteCourse(id) {
+            var item = (window._courseItems || []).find(function (c) { return String(c.id) === String(id); });
+            var hasStudents = item && Number(item.selectedCount || 0) > 0;
+            if (hasStudents) { openDeleteReasonModal(id, item.courseName); return; }
+            if (!confirm('确定要删除该课程吗？')) return;
+            try {
+                var operator = await api.get('/api/v1/auth/current-user');
+                var oid = operator ? (operator.userId || operator.id || '') : '';
+                var oname = operator ? (operator.username || operator.name || '管理员') : '管理员';
+                await api.del('/api/v1/courses/' + id + '?operatorId=' + encodeURIComponent(oid) + '&operatorName=' + encodeURIComponent(oname));
+                api.notify('success', '删除成功', '课程已删除');
+                loadCourses(1);
+            } catch (e) { api.notify('error', '删除失败', e.message); }
+        }
     </script>
 </body>
 </html>

@@ -1,6 +1,8 @@
 package org.example.courseselectionsystem.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -15,6 +17,7 @@ public class Student implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     public Long id;
 
     @Column(name = "student_no", unique = true, nullable = false, length = 20)
@@ -39,7 +42,8 @@ public class Student implements Serializable {
     @Column(name = "password", nullable = false, length = 100)
     public String password;
 
-    @Column(name = "avatar", length = 200)
+    @Transient
+    @TableField(exist = false)
     public String avatar;
 
     @Column(name = "major_id", nullable = false)
@@ -56,7 +60,8 @@ public class Student implements Serializable {
     @TableField(exist = false)
     public String grade;
 
-    @Column(name = "class_name", nullable = false, length = 50)
+    @Transient
+    @TableField(exist = false)
     public String className;
 
     @Column(name = "status", nullable = false, columnDefinition = "int default 1")
@@ -66,10 +71,12 @@ public class Student implements Serializable {
     @TableField(exist = false)
     public Integer deleted;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "create_time", updatable = false)
+    @TableField("create_time")
     public Date createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "update_time")
+    @TableField("update_time")
     public Date updatedAt;
 
     @Column(name = "class_id")

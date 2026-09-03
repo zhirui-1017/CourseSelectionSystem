@@ -1,11 +1,15 @@
 package org.example.courseselectionsystem.service.impl;
 
 import org.example.courseselectionsystem.common.Result;
+import org.example.courseselectionsystem.entity.College;
 import org.example.courseselectionsystem.entity.Department;
 import org.example.courseselectionsystem.exception.BusinessException;
+import org.example.courseselectionsystem.repository.CollegeRepository;
 import org.example.courseselectionsystem.repository.DepartmentRepository;
 import org.example.courseselectionsystem.service.DepartmentService;
 import org.example.courseselectionsystem.vo.PageRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -15,6 +19,9 @@ import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 学院服务实现类
@@ -22,8 +29,13 @@ import java.util.List;
 @Service
 public class DepartmentServiceImpl implements DepartmentService {
 
+    private static final Logger logger = LoggerFactory.getLogger(DepartmentServiceImpl.class);
+
     @Autowired
     private DepartmentRepository departmentRepository;
+
+    @Autowired
+    private CollegeRepository collegeRepository;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -164,17 +176,43 @@ public class DepartmentServiceImpl implements DepartmentService {
     }
 
     @Override
-    public Page<Department> getDepartmentList(PageRequest pageRequest, String departmentName, String departmentCode, Integer status) {
+    public Page<Department> getDepartmentList(PageRequest pageRequest, String departmentName, String departmentCode, Long collegeId, Integer status) {
         // 构建排序规则
         PageRequest request = pageRequest == null ? new PageRequest() : pageRequest;
         int pageNum = request.getPageNum() == null || request.getPageNum() < 1 ? 1 : request.getPageNum();
-        int pageSize = request.getPageSize() == null || request.getPageSize() < 1 ? 10 : Math.min(request.getPageSize(), 100);
+        int pageSize = request.getPageSize() == null || request.getPageSize() < 1 ? 10 : Math.min(request.getPageSize(), 1000);
 
         // 构建分页请求
         org.springframework.data.domain.PageRequest springPageRequest =
                 org.springframework.data.domain.PageRequest.of(pageNum - 1, pageSize, departmentSort(request));
 
-        return departmentRepository.findDepartments(blankToNull(departmentName), blankToNull(departmentCode), status, springPageRequest);
+        Page<Department> departmentPage = departmentRepository.findDepartments(blankToNull(departmentName), blankToNull(departmentCode), collegeId, status, springPageRequest);
+        return enrichCollegeName(departmentPage);
+    }
+
+    /**
+     * 为分页结果填充所属学院名称
+     */
+    private Page<Department> enrichCollegeName(Page<Department> page) {
+        try {
+            List<Long> collegeIds = page.getContent().stream()
+                    .map(Department::getCollegeId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (!collegeIds.isEmpty()) {
+                Map<Long, String> names = collegeRepository.findAllById(collegeIds).stream()
+                        .collect(Collectors.toMap(College::getId, College::getName, (a, b) -> a));
+                page.getContent().forEach(d -> {
+                    if (d.getCollegeId() != null) {
+                        d.setCollegeName(names.get(d.getCollegeId()));
+                    }
+                });
+            }
+        } catch (Exception e) {
+            logger.warn("填充系部所属学院名称失败", e);
+        }
+        return page;
     }
 
     @Override

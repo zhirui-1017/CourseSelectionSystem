@@ -37,15 +37,17 @@ public class PermissionServiceImpl implements PermissionService {
     public Map<String, Object> addPermission(Map<String, Object> permissionMap) {
         logger.info("Add permission: {}", permissionMap);
 
-        if (isBlank(permissionMap.get("name"))) {
+        Object nameValue = valueOf(permissionMap, "name", "permissionName");
+        Object codeValue = valueOf(permissionMap, "code", "permissionCode");
+        if (isBlank(nameValue)) {
             return response(400, "Permission name cannot be empty", null);
         }
-        if (isBlank(permissionMap.get("code"))) {
+        if (isBlank(codeValue)) {
             return response(400, "Permission code cannot be empty", null);
         }
 
-        String name = permissionMap.get("name").toString().trim();
-        String code = permissionMap.get("code").toString().trim();
+        String name = nameValue.toString().trim();
+        String code = codeValue.toString().trim();
 
         try {
             if (permissionRepository.existsByName(name)) {
@@ -99,22 +101,24 @@ public class PermissionServiceImpl implements PermissionService {
 
             Permission permission = optionalPermission.get();
 
-            if (permissionMap.containsKey("name")) {
-                String name = permissionMap.get("name").toString().trim();
-                if (name.isEmpty()) {
+            if (permissionMap.containsKey("name") || permissionMap.containsKey("permissionName")) {
+                Object rawName = valueOf(permissionMap, "name", "permissionName");
+                if (rawName == null || rawName.toString().trim().isEmpty()) {
                     return response(400, "Permission name cannot be empty", null);
                 }
+                String name = rawName.toString().trim();
                 if (!permission.getName().equals(name) && permissionRepository.existsByName(name)) {
                     return response(400, "Permission name already exists", null);
                 }
                 permission.setName(name);
             }
 
-            if (permissionMap.containsKey("code")) {
-                String code = permissionMap.get("code").toString().trim();
-                if (code.isEmpty()) {
+            if (permissionMap.containsKey("code") || permissionMap.containsKey("permissionCode")) {
+                Object rawCode = valueOf(permissionMap, "code", "permissionCode");
+                if (rawCode == null || rawCode.toString().trim().isEmpty()) {
                     return response(400, "Permission code cannot be empty", null);
                 }
+                String code = rawCode.toString().trim();
                 if (!permission.getCode().equals(code) && permissionRepository.existsByCode(code)) {
                     return response(400, "Permission code already exists", null);
                 }
@@ -217,13 +221,13 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     @Override
-    public Map<String, Object> getPermissionsByPage(Integer page, Integer size, String name, String code, Long parentId) {
-        logger.info("Query permissions, page: {}, size: {}, name: {}, code: {}, parentId: {}", page, size, name, code, parentId);
+    public Map<String, Object> getPermissionsByPage(Integer page, Integer size, String name, String code, Integer status, Long parentId) {
+        logger.info("Query permissions, page: {}, size: {}, name: {}, code: {}, status: {}, parentId: {}", page, size, name, code, status, parentId);
 
         if (page == null || page < 1) {
             page = 1;
         }
-        if (size == null || size < 1 || size > 100) {
+        if (size == null || size < 1 || size > 1000) {
             size = 10;
         }
 
@@ -231,7 +235,11 @@ public class PermissionServiceImpl implements PermissionService {
             List<Permission> permissions;
             long total;
 
-            if (name != null && !name.trim().isEmpty()) {
+            if (status != null) {
+                permissions = permissionRepository.findByStatus(status,
+                        org.springframework.data.domain.PageRequest.of(page - 1, size)).getContent();
+                total = permissionRepository.countByStatus(status);
+            } else if (name != null && !name.trim().isEmpty()) {
                 permissions = permissionRepository.findByNameContaining(name,
                         org.springframework.data.domain.PageRequest.of(page - 1, size));
                 total = permissionRepository.countByNameContaining(name);
@@ -338,6 +346,8 @@ public class PermissionServiceImpl implements PermissionService {
         result.put("id", permission.getId());
         result.put("name", permission.getName());
         result.put("code", permission.getCode());
+        result.put("permissionName", permission.getName());
+        result.put("permissionCode", permission.getCode());
         result.put("description", permission.getDescription());
         result.put("url", permission.getUrl());
         result.put("method", permission.getMethod());
@@ -354,6 +364,7 @@ public class PermissionServiceImpl implements PermissionService {
     private Map<String, Object> response(int code, String message, Object data) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("code", code);
+        result.put("success", code == 200);
         result.put("message", message);
         result.put("data", data);
         return result;
@@ -374,6 +385,19 @@ public class PermissionServiceImpl implements PermissionService {
 
     private boolean isBlank(Object value) {
         return value == null || value.toString().trim().isEmpty();
+    }
+
+    private Object valueOf(Map<String, Object> source, String... keys) {
+        if (source == null) {
+            return null;
+        }
+        for (String key : keys) {
+            Object value = source.get(key);
+            if (value != null && !value.toString().trim().isEmpty()) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private String stringValue(Object value) {

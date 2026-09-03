@@ -8,7 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 课程控制器
@@ -69,11 +72,17 @@ public class CourseController {
     /**
      * 删除课程
      * @param courseId 课程ID
+     * @param reason 删除理由（课程已有学生选课时必填，用于发布停开通知）
+     * @param operatorId 操作人ID
+     * @param operatorName 操作人姓名
      * @return 删除结果
      */
     @DeleteMapping("/{courseId}")
-    public Result deleteCourse(@PathVariable Long courseId) {
-        boolean result = courseService.deleteCourse(courseId);
+    public Result deleteCourse(@PathVariable Long courseId,
+                               @RequestParam(required = false) String reason,
+                               @RequestParam(required = false) Long operatorId,
+                               @RequestParam(required = false) String operatorName) {
+        boolean result = courseService.deleteCourse(courseId, reason, operatorId, operatorName);
         return Result.success(result);
     }
 
@@ -86,6 +95,23 @@ public class CourseController {
     public Result batchDeleteCourses(@RequestBody List<Long> courseIds) {
         boolean result = courseService.batchDeleteCourses(courseIds);
         return Result.success(result);
+    }
+
+    /**
+     * 获取课程分页列表（供 Feign 跨服务调用，根路径）
+     */
+    @GetMapping
+    public Result<List<Map<String, Object>>> listCourses(
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+        PageRequest pageRequest = new PageRequest();
+        pageRequest.setPageNum(page);
+        pageRequest.setPageSize(size);
+        Page<Course> coursePage = courseService.getCourseList(pageRequest, null, null, null, null, null, null);
+        List<Map<String, Object>> list = coursePage.getContent().stream()
+                .map(this::courseToMap)
+                .collect(Collectors.toList());
+        return Result.success(list);
     }
 
     /**
@@ -207,5 +233,31 @@ public class CourseController {
     @GetMapping("/count")
     public Result<Long> count() {
         return Result.success(courseService.count());
+    }
+
+    @GetMapping("/count/recent")
+    public Result<Long> countRecent(@RequestParam(defaultValue = "30") int days) {
+        return Result.success(courseService.countRecent(days));
+    }
+
+    // ========== 内部辅助方法 ==========
+
+    private Map<String, Object> courseToMap(Course course) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("id", course.getId());
+        map.put("courseCode", course.getCourseCode());
+        map.put("courseName", course.getCourseName());
+        map.put("courseType", course.getCourseType());
+        map.put("credit", course.getCredit());
+        map.put("totalHours", course.getTotalHours());
+        map.put("teacherId", course.getTeacherId());
+        map.put("teacherName", course.getTeacherName());
+        map.put("departmentId", course.getDepartmentId());
+        map.put("availableSlots", course.getAvailableSlots());
+        map.put("selectedCount", course.getSelectedCount());
+        map.put("classroom", course.getClassroom());
+        map.put("schedule", course.getSchedule());
+        map.put("status", course.getStatus());
+        return map;
     }
 }

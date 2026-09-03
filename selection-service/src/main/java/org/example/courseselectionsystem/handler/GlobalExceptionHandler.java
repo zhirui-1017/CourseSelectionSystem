@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public Result<?> handleBusinessException(HttpServletRequest request, BusinessException ex) {
         logger.warn("业务异常处理：请求路径={}, 错误信息={}", request.getRequestURI(), ex.getMessage());
-        return Result.fail(400, ex.getMessage());
+        return Result.fail(ex.getCode(), ex.getMessage());
     }
 
     /**

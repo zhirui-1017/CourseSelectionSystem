@@ -48,6 +48,16 @@ public interface CourseService {
     boolean deleteCourse(Long courseId);
 
     /**
+     * 删除课程（增强）：若课程已有学生选课，自动发布停开通知并清理选课记录，让学生重新选课
+     * @param courseId 课程ID
+     * @param reason 删除理由
+     * @param operatorId 操作人ID
+     * @param operatorName 操作人姓名
+     * @return 删除结果
+     */
+    boolean deleteCourse(Long courseId, String reason, Long operatorId, String operatorName);
+
+    /**
      * 批量删除课程
      * @param courseIds 课程ID列表
      * @return 删除结果
@@ -233,4 +243,9 @@ public interface CourseService {
      * @return 课程总数
      */
     long count();
+
+    /**
+     * 统计最近 days 天内新增的课程数量（用于仪表盘增长率）
+     */
+    long countRecent(int days);
 }

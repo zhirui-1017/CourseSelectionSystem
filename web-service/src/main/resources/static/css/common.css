@@ -506,6 +506,11 @@ html, body {
 }
 
 /* 数据表格 */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
 .table-container {
     overflow-x: auto;
     margin-bottom: var(--spacing-xl);
@@ -617,6 +622,17 @@ html, body {
     transform: none;
 }
 
+/* 按钮组：横向排列 */
+.btn-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    vertical-align: middle;
+}
+.btn-group .btn {
+    white-space: nowrap;
+}
+
 /* 标签样式 */
 .badge {
     display: inline-block;
@@ -685,6 +701,45 @@ html, body {
     background-color: var(--gray-200);
     color: var(--text-secondary);
     cursor: not-allowed;
+}
+
+/* ===== 输入组（输入框 + 搜索/操作按钮） ===== */
+.input-group {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+}
+.input-group .form-control {
+    flex: 1;
+    min-width: 0;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+.input-group .input-group-btn {
+    display: flex;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+.input-group .input-group-btn .btn {
+    height: 100%;
+    min-height: 38px;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    margin-left: -1px;
+    white-space: nowrap;
+}
+
+/* ===== Select 元素修复：防止文字被箭头遮挡 ===== */
+select.form-control,
+.form-control select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 2.2rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 12px 12px;
+    cursor: pointer;
+    text-overflow: ellipsis;
 }
 
 /* 动画效果 */
@@ -953,6 +1008,27 @@ html, body {
     position: relative;
     flex: 1 1 auto;
     padding: var(--spacing-lg);
+}
+
+/* 长模态框内容可滚动，底部按钮固定可见 */
+.modal-dialog {
+    max-height: calc(100vh - 2rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.modal-dialog .modal-content {
+    max-height: calc(100vh - 2rem);
+    min-height: 0;
+}
+.modal-dialog .modal-body {
+    overflow-y: auto;
+    min-height: 0;
+}
+.modal-lg {
+    width: min(820px, calc(100vw - 2rem));
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .modal-footer {

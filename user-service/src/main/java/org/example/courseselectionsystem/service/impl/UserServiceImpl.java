@@ -99,17 +99,6 @@ public class UserServiceImpl implements UserService {
             return buildLoginResult(fromAdmin(admin));
         }
 
-        if (Constants.ADMIN_USERNAME.equals(username) && "admin123".equals(password)) {
-            User user = new User();
-            user.setId(0L);
-            user.setUsername(Constants.ADMIN_USERNAME);
-            user.setRealName("管理员");
-            user.setUserType(3);
-            user.setUserCode(Constants.ADMIN_USERNAME);
-            user.setStatus(1);
-            return buildLoginResult(user);
-        }
-
         throw new BusinessException(Constants.NOT_FOUND_CODE, "用户不存在");
     }
 
@@ -358,7 +347,7 @@ public class UserServiceImpl implements UserService {
 
         Student student = studentMapper.selectById(userId);
         if (student != null) {
-            student.setPassword(password);
+            student.setPassword(passwordEncoder.encode(password));
             int result = studentMapper.updateById(student);
             if (result > 0) {
                 return true;
@@ -368,7 +357,7 @@ public class UserServiceImpl implements UserService {
 
         Teacher teacher = teacherMapper.selectById(userId);
         if (teacher != null) {
-            teacher.setPassword(password);
+            teacher.setPassword(passwordEncoder.encode(password));
             int result = teacherMapper.updateById(teacher);
             if (result > 0) {
                 return true;
@@ -378,7 +367,7 @@ public class UserServiceImpl implements UserService {
 
         Admin admin = adminRepository.findById(userId).orElse(null);
         if (admin != null) {
-            admin.setPassword(password);
+            admin.setPassword(passwordEncoder.encode(password));
             adminRepository.save(admin);
             return true;
         }
@@ -399,7 +388,7 @@ public class UserServiceImpl implements UserService {
             if (!passwordMatches(oldPassword, student.getPassword())) {
                 throw new BusinessException(Constants.PARAM_ERROR_CODE, "旧密码不正确");
             }
-            student.setPassword(newPassword);
+            student.setPassword(passwordEncoder.encode(newPassword));
             int result = studentMapper.updateById(student);
             if (result > 0) {
                 return true;
@@ -412,7 +401,7 @@ public class UserServiceImpl implements UserService {
             if (!teacherPasswordMatches(oldPassword, teacher.getPassword())) {
                 throw new BusinessException(Constants.PARAM_ERROR_CODE, "旧密码不正确");
             }
-            teacher.setPassword(newPassword);
+            teacher.setPassword(passwordEncoder.encode(newPassword));
             int result = teacherMapper.updateById(teacher);
             if (result > 0) {
                 return true;
@@ -425,7 +414,7 @@ public class UserServiceImpl implements UserService {
             if (!passwordMatches(oldPassword, admin.getPassword())) {
                 throw new BusinessException(Constants.PARAM_ERROR_CODE, "旧密码不正确");
             }
-            admin.setPassword(newPassword);
+            admin.setPassword(passwordEncoder.encode(newPassword));
             adminRepository.save(admin);
             return true;
         }
@@ -604,10 +593,6 @@ public class UserServiceImpl implements UserService {
                 logger.info("Admin login success, username: {}", username);
                 return true;
             }
-            if ("admin".equals(username) && "admin123".equals(password)) {
-                logger.info("Admin login success with legacy fallback account");
-                return true;
-            }
             logger.warn("Admin login failed, username: {}", username);
             return false;
         }
@@ -691,8 +676,8 @@ public class UserServiceImpl implements UserService {
         student.setClassName(StringUtils.hasText(registerRequest.className) ? registerRequest.className : "未分班");
         student.setStatus(1);
         Date now = new Date();
-        student.setCreatedAt(now);
-        student.setUpdatedAt(now);
+        student.setCreateTime(now);
+        student.setUpdateTime(now);
 
         int result = studentMapper.insert(student);
         if (result <= 0) {
@@ -724,8 +709,8 @@ public class UserServiceImpl implements UserService {
         teacher.setDepartmentId(registerRequest.departmentId == null ? 1L : registerRequest.departmentId);
         teacher.setStatus(1);
         Date now = new Date();
-        teacher.setCreatedAt(now);
-        teacher.setUpdatedAt(now);
+        teacher.setCreateTime(now);
+        teacher.setUpdateTime(now);
 
         int result = teacherMapper.insert(teacher);
         if (result <= 0) {
@@ -751,7 +736,7 @@ public class UserServiceImpl implements UserService {
         Admin admin = new Admin();
         admin.setUsername(username);
         admin.setPassword(passwordEncoder.encode(registerRequest.password));
-        admin.setRole(3);
+        admin.setRole("admin");
         admin.setStatus(1);
         adminRepository.save(admin);
         logger.info("管理员注册成功，用户名: {}", username);
@@ -891,14 +876,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private boolean teacherPasswordMatches(String rawPassword, String storedPassword) {
-        if (passwordMatches(rawPassword, storedPassword)) {
-            return true;
-        }
-
-        // Existing teacher seed data uses one BCrypt string that does not match the expected default password.
-        // Keep the UI usable without rewriting local database rows.
-        return "123456".equals(rawPassword)
-                && "$2a$10$N.zmdr9k7uOCQbF9SvOPe.XqKdJhG5HnTmqxY6uI6v1eAHsVbDp/W".equals(storedPassword);
+        return passwordMatches(rawPassword, storedPassword);
     }
 
     @Override

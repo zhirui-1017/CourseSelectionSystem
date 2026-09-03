@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/teachers")
@@ -68,6 +70,18 @@ public class TeacherApiController {
         return Result.success(teacherService.getTeacherByTeacherNo(teacherNo));
     }
 
+    /**
+     * 获取教师列表（供 Feign 跨服务调用，根路径）
+     */
+    @GetMapping
+    public Result<List<Map<String, Object>>> listTeachers() {
+        List<Teacher> teachers = teacherService.getAllTeachers();
+        List<Map<String, Object>> list = teachers.stream()
+                .map(this::teacherToMap)
+                .collect(Collectors.toList());
+        return Result.success(list);
+    }
+
     @GetMapping("/all")
     public Result<List<Teacher>> getAllTeachers() {
         return Result.success(teacherService.getAllTeachers());
@@ -105,6 +119,11 @@ public class TeacherApiController {
         return Result.success(teacherService.count());
     }
 
+    @GetMapping("/count/recent")
+    public Result<Long> countRecent(@RequestParam(defaultValue = "30") int days) {
+        return Result.success(teacherService.countRecent(days));
+    }
+
     @PutMapping("/{teacherId}/reset-password")
     public Result<Boolean> resetPassword(@PathVariable Long teacherId) {
         return Result.success(teacherService.resetPassword(teacherId));
@@ -115,5 +134,21 @@ public class TeacherApiController {
                                           @RequestParam String oldPassword,
                                           @RequestParam String newPassword) {
         return Result.success(teacherService.changePassword(teacherId, oldPassword, newPassword));
+    }
+
+    // ========== 内部辅助方法 ==========
+
+    private Map<String, Object> teacherToMap(Teacher teacher) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("id", teacher.getId());
+        map.put("teacherNo", teacher.getTeacherNo());
+        map.put("name", teacher.getName());
+        map.put("gender", teacher.getGender());
+        map.put("phone", teacher.getPhone());
+        map.put("email", teacher.getEmail());
+        map.put("title", teacher.getTitle());
+        map.put("departmentId", teacher.getDepartmentId());
+        map.put("status", teacher.getStatus());
+        return map;
     }
 }

@@ -1,6 +1,7 @@
 package org.example.courseselectionsystem.course;
 
 import org.example.courseselectionsystem.entity.Major;
+import org.example.courseselectionsystem.repository.DepartmentRepository;
 import org.example.courseselectionsystem.repository.MajorRepository;
 import org.example.courseselectionsystem.service.impl.MajorServiceImpl;
 import org.example.courseselectionsystem.vo.PageRequest;
@@ -26,6 +27,9 @@ class MajorServiceImplTest {
 
     @Mock
     private MajorRepository majorRepository;
+
+    @Mock
+    private DepartmentRepository departmentRepository;
 
     @Test
     void getMajorListUsesRepositoryPagingFilteringAndSortAlias() {
@@ -66,13 +70,14 @@ class MajorServiceImplTest {
                 ArgumentCaptor.forClass(org.springframework.data.domain.PageRequest.class);
         verify(majorRepository).findMajors(isNull(), isNull(), isNull(), isNull(), captor.capture());
         assertThat(captor.getValue().getPageNumber()).isEqualTo(0);
-        assertThat(captor.getValue().getPageSize()).isEqualTo(100);
+        assertThat(captor.getValue().getPageSize()).isEqualTo(500);
         assertThat(captor.getValue().getSort().getOrderFor("id")).isNotNull();
     }
 
     private MajorServiceImpl newService() {
         MajorServiceImpl service = new MajorServiceImpl();
         ReflectionTestUtils.setField(service, "majorRepository", majorRepository);
+        ReflectionTestUtils.setField(service, "departmentRepository", departmentRepository);
         return service;
     }
 }

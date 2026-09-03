@@ -21,7 +21,7 @@ class ConstantsTest {
         assertThat(Constants.ROLE_STUDENT).isEqualTo("ROLE_STUDENT");
         assertThat(Constants.DEFAULT_PAGE_NUM).isEqualTo(1);
         assertThat(Constants.DEFAULT_PAGE_SIZE).isEqualTo(10);
-        assertThat(Constants.MAX_PAGE_SIZE).isEqualTo(100);
+        assertThat(Constants.MAX_PAGE_SIZE).isEqualTo(1000);
     }
 
     @Test

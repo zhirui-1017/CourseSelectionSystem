@@ -30,4 +30,16 @@
             AND id != #{id}
         </if>
     </select>
+
+    <select id="countCourseSelectionByStudentId" resultType="int">
+        SELECT COUNT(*) FROM course_selection WHERE student_id = #{studentId}
+    </select>
+
+    <select id="countCourseEvaluationByStudentId" resultType="int">
+        SELECT COUNT(*) FROM course_evaluation WHERE student_id = #{studentId}
+    </select>
+
+    <select id="countClassMonitorByStudentId" resultType="int">
+        SELECT COUNT(*) FROM class_info WHERE monitor_id = #{studentId}
+    </select>
 </mapper>

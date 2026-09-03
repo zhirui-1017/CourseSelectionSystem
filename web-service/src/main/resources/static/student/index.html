@@ -13,7 +13,7 @@
         <!-- 侧边栏 -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <a href="#" class="sidebar-brand">
+                <a href="index.html" class="sidebar-brand">
                     <div class="sidebar-brand-icon">
                         <i class="fas fa-graduation-cap"></i>
                     </div>
@@ -27,38 +27,38 @@
             <nav class="sidebar-nav">
                 <div class="nav-group">
                     <div class="nav-item">
-                        <a href="#dashboard" class="nav-link active">
+                        <a href="index.html" class="nav-link active">
                             <i class="nav-icon fas fa-home"></i>
                             <span class="nav-text">首页</span>
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#my-courses" class="nav-link">
+                        <a href="my-courses.html" class="nav-link">
                             <i class="nav-icon fas fa-book"></i>
                             <span class="nav-text">我的课程</span>
-                            <span class="nav-badge">8</span>
+    
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#course-selection" class="nav-link">
+                        <a href="course-selection.html" class="nav-link">
                             <i class="nav-icon fas fa-search"></i>
                             <span class="nav-text">课程选择</span>
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#schedule" class="nav-link">
+                        <a href="schedule.html" class="nav-link">
                             <i class="nav-icon fas fa-calendar-alt"></i>
                             <span class="nav-text">我的课表</span>
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#grades" class="nav-link">
+                        <a href="grades.html" class="nav-link">
                             <i class="nav-icon fas fa-chart-line"></i>
                             <span class="nav-text">成绩查询</span>
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#evaluations" class="nav-link">
+                        <a href="evaluations.html" class="nav-link">
                             <i class="nav-icon fas fa-star"></i>
                             <span class="nav-text">课程评价</span>
                         </a>
@@ -67,20 +67,20 @@
                 
                 <div class="nav-group">
                     <div class="nav-item">
-                        <a href="#profile" class="nav-link">
+                        <a href="profile.html" class="nav-link">
                             <i class="nav-icon fas fa-user"></i>
                             <span class="nav-text">个人信息</span>
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#messages" class="nav-link">
+                        <a href="messages.html" class="nav-link">
                             <i class="nav-icon fas fa-envelope"></i>
                             <span class="nav-text">消息通知</span>
-                            <span class="nav-badge">5</span>
+    
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#settings" class="nav-link">
+                        <a href="settings.html" class="nav-link">
                             <i class="nav-icon fas fa-cog"></i>
                             <span class="nav-text">设置</span>
                         </a>
@@ -102,7 +102,7 @@
                 
                 <div class="nav-right">
                     <div class="breadcrumb">
-                        <a href="#dashboard">首页</a>
+                        <a href="index.html">首页</a>
                         <span class="breadcrumb-separator">/</span>
                         <span class="breadcrumb-current">学生控制台</span>
                     </div>
@@ -123,10 +123,10 @@
                             </div>
                         </button>
                         <div class="dropdown-menu">
-                            <a href="#profile" class="dropdown-item">
+                            <a href="profile.html" class="dropdown-item">
                                 <i class="fas fa-user"></i> 个人信息
                             </a>
-                            <a href="#settings" class="dropdown-item">
+                            <a href="settings.html" class="dropdown-item">
                                 <i class="fas fa-cog"></i> 设置
                             </a>
                             <div class="dropdown-divider"></div>
@@ -939,10 +939,16 @@
             initModals();
             initFormValidation();
             
-            // 初始化导航标签切换
+            // 初始化导航切换
             const navLinks = document.querySelectorAll('.nav-link');
             navLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
+                    const targetId = this.getAttribute('href') || '';
+                    // 链接指向独立页面文件（my-courses.html 等）时放行，交给浏览器正常跳转
+                    if (targetId && targetId.charAt(0) !== '#') {
+                        return;
+                    }
+                    // 仅 #锚点 走页内标签切换（兼容保留）
                     e.preventDefault();
                     
                     // 移除所有导航链接的激活状态
@@ -956,7 +962,6 @@
                     tabContents.forEach(content => content.style.display = 'none');
                     
                     // 显示当前内容区域
-                    const targetId = this.getAttribute('href');
                     const targetContent = document.querySelector(targetId);
                     if (targetContent) {
                         targetContent.style.display = 'block';

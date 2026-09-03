@@ -43,7 +43,7 @@ public class AiController {
     @Value("${ai.qwen.base-url:https://dashscope.aliyuncs.com/compatible-mode/v1}")
     private String baseUrl;
 
-    @Value("${ai.qwen.api-key:REDACTED_API_KEY}")
+    @Value("${ai.qwen.api-key:}")
     private String apiKey;
 
     @Value("${ai.qwen.model:qwen-plus}")
@@ -83,6 +83,10 @@ public class AiController {
             sendErrorAndComplete(emitter, "消息不能为空");
             return emitter;
         }
+        if (apiKey == null || apiKey.isBlank()) {
+            sendErrorAndComplete(emitter, "AI 服务未配置 API Key，请联系管理员");
+            return emitter;
+        }
 
         String role = UserContext.getRole();
         String username = UserContext.getUsername();
@@ -115,6 +119,9 @@ public class AiController {
         String message = request.get("message");
         if (message == null || message.trim().isEmpty()) {
             return Result.error("消息不能为空");
+        }
+        if (apiKey == null || apiKey.isBlank()) {
+            return Result.error("AI 服务未配置 API Key，请联系管理员");
         }
 
         String role = UserContext.getRole();

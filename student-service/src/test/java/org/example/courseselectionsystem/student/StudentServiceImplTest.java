@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -40,7 +41,8 @@ class StudentServiceImplTest {
         boolean result = service.resetPassword(7L);
 
         assertThat(result).isTrue();
-        assertThat(student.getPassword()).isEqualTo("230088");
+        assertThat(student.getPassword()).isNotEqualTo("230088");
+        assertThat(new BCryptPasswordEncoder().matches("230088", student.getPassword())).isTrue();
     }
 
     @Test
@@ -53,7 +55,21 @@ class StudentServiceImplTest {
         boolean result = service.changePassword(7L, "old123", "new123");
 
         assertThat(result).isTrue();
-        assertThat(student.getPassword()).isEqualTo("new123");
+        assertThat(student.getPassword()).isNotEqualTo("new123");
+        assertThat(new BCryptPasswordEncoder().matches("new123", student.getPassword())).isTrue();
+    }
+
+    @Test
+    void changePasswordWorksWithBcryptStoredPassword() {
+        StudentServiceImpl service = newService();
+        Student student = student(7L, "S20230088", new BCryptPasswordEncoder().encode("old123"));
+        when(studentMapper.selectById(7L)).thenReturn(student);
+        when(studentMapper.updateById(any(Student.class))).thenReturn(1);
+
+        boolean result = service.changePassword(7L, "old123", "new456");
+
+        assertThat(result).isTrue();
+        assertThat(new BCryptPasswordEncoder().matches("new456", student.getPassword())).isTrue();
     }
 
     @Test
@@ -110,10 +126,10 @@ class StudentServiceImplTest {
         ArgumentCaptor<QueryWrapper> wrapperCaptor = ArgumentCaptor.forClass(QueryWrapper.class);
         verify(studentMapper).selectPage(pageCaptor.capture(), wrapperCaptor.capture());
         assertThat(pageCaptor.getValue().getCurrent()).isEqualTo(1);
-        assertThat(pageCaptor.getValue().getSize()).isEqualTo(100);
+        assertThat(pageCaptor.getValue().getSize()).isEqualTo(500);
         assertThat(wrapperCaptor.getValue().getSqlSegment()).contains("ORDER BY id ASC");
         assertThat(result.getPageNum()).isEqualTo(1);
-        assertThat(result.getPageSize()).isEqualTo(100);
+        assertThat(result.getPageSize()).isEqualTo(500);
     }
 
     @Test

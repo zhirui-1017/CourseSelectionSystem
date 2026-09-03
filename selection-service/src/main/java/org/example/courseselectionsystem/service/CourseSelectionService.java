@@ -117,4 +117,10 @@ public interface CourseSelectionService {
     List<Map<String, Object>> getTeacherCourseStudents(Long courseId, Long teacherId, Integer status);
 
     Map<String, Object> getTeacherDashboard(Long teacherId);
+
+    /**
+     * 获取全部选课记录总数（供 Feign 调用）
+     * @return 选课记录总数
+     */
+    long countAll();
 }

@@ -22,6 +22,9 @@ public class CourseSelection {
     @Transient
     private String studentCode;
 
+    @Transient
+    private String className;
+
     @Column(name = "course_id", nullable = false)
     private Long courseId;
 
@@ -79,10 +82,10 @@ public class CourseSelection {
     @Column(name = "drop_time")
     private Date dropTime;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "create_time", updatable = false)
     private Date createTime;
 
-    @Column(name = "updated_at")
+    @Column(name = "update_time")
     private Date updateTime;
 
     @PrePersist

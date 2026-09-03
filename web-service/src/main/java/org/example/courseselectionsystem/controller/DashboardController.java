@@ -16,13 +16,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * 仪表盘控制器
@@ -85,21 +86,29 @@ public class DashboardController {
             logger.info("并行查询完成 - 学生:{}, 教师:{}, 课程:{}, 选课:{}, 用户:{}",
                     totalStudents, totalTeachers, totalCourses, totalSelections, totalUsers);
 
-            // 构造统计数据
+            // 获取真实趋势数据（月度/每日选课量）与近期新增数量
+            List<Map<String, Object>> monthlyTrend = buildMonthlyTrend();
+            List<Map<String, Object>> dailyTrend = buildDailyTrend();
+            long recentStudents = safeGetRecent(() -> studentFeignClient.countRecent(30), "学生");
+            long recentTeachers = safeGetRecent(() -> teacherFeignClient.countRecent(30), "教师");
+            long recentCourses = safeGetRecent(() -> courseFeignClient.countRecent(30), "课程");
+
+            // 构造统计数据（增长率基于真实数据计算，不再写死）
             Map<String, Object> stats = new HashMap<>();
             stats.put("totalStudents", totalStudents);
             stats.put("totalTeachers", totalTeachers);
             stats.put("totalCourses", totalCourses);
             stats.put("totalSelections", totalSelections);
             stats.put("totalUsers", totalUsers);
-            stats.put("studentsGrowthRate", 5.2);
-            stats.put("teachersGrowthRate", 2.4);
-            stats.put("coursesGrowthRate", 8.7);
-            stats.put("selectionsGrowthRate", 12.5);
+            stats.put("studentsGrowthRate", growthRate(recentStudents, totalStudents));
+            stats.put("teachersGrowthRate", growthRate(recentTeachers, totalTeachers));
+            stats.put("coursesGrowthRate", growthRate(recentCourses, totalCourses));
+            stats.put("selectionsGrowthRate", selectionGrowthRate(monthlyTrend));
 
-            // 构造图表数据
+            // 构造图表数据（真实趋势）
             Map<String, Object> charts = new HashMap<>();
-            charts.put("selectionTrend", buildMonthlyTrend());
+            charts.put("selectionTrend", monthlyTrend);
+            charts.put("dailyTrend", dailyTrend);
             charts.put("roleDistribution", buildRoleDistribution(totalStudents, totalTeachers,
                     totalUsers - totalStudents - totalTeachers));
 
@@ -171,30 +180,80 @@ public class DashboardController {
         Result<?> get();
     }
 
-    private List<Map<String, Object>> buildMonthlyTrend() {
-        List<Map<String, Object>> trend = new ArrayList<>();
-        // 默认每个月为0，前端可通过真实数据替换
-        for (int i = 1; i <= 12; i++) {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("month", i + "月");
-            map.put("count", 0L);
-            trend.add(map);
+    @FunctionalInterface
+    private interface RecentSupplier {
+        Result<Long> get();
+    }
+
+    private List<Map<String, Object>> safeGetTrend(Supplier<Result<List<Map<String, Object>>>> supplier) {
+        try {
+            Result<List<Map<String, Object>>> result = supplier.get();
+            if (result != null && result.getSuccess() && result.getData() != null) {
+                return result.getData();
+            }
+        } catch (Exception e) {
+            logger.warn("获取选课趋势失败：{}", e.getMessage());
         }
-        return trend;
+        return Collections.emptyList();
+    }
+
+    private long safeGetRecent(RecentSupplier supplier, String name) {
+        try {
+            Result<Long> result = supplier.get();
+            if (result != null && result.getSuccess() && result.getData() != null) {
+                return result.getData();
+            }
+        } catch (Exception e) {
+            logger.warn("获取{}近30天新增数量失败：{}", name, e.getMessage());
+        }
+        return 0L;
+    }
+
+    /**
+     * 近30天新增数量占总数的比例（百分比，保留1位小数），作为真实增长率指标
+     */
+    private double growthRate(long recent, long total) {
+        if (total <= 0) {
+            return 0D;
+        }
+        return Math.round(recent * 1000D / total) / 10D;
+    }
+
+    /**
+     * 根据真实月度选课趋势计算环比增长率（本月 vs 上月，百分比，保留1位小数）
+     */
+    private double selectionGrowthRate(List<Map<String, Object>> trend) {
+        if (trend == null || trend.size() < 2) {
+            return 0D;
+        }
+        long current = numberValue(trend.get(trend.size() - 1).get("count"));
+        long previous = numberValue(trend.get(trend.size() - 2).get("count"));
+        if (previous <= 0) {
+            return 0D;
+        }
+        return Math.round((current - previous) * 1000D / previous) / 10D;
+    }
+
+    private long numberValue(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        if (value != null) {
+            try {
+                return Long.parseLong(String.valueOf(value));
+            } catch (NumberFormatException ignored) {
+                // 非数字视为 0
+            }
+        }
+        return 0L;
+    }
+
+    private List<Map<String, Object>> buildMonthlyTrend() {
+        return safeGetTrend(selectionFeignClient::getMonthlyTrend);
     }
 
     private List<Map<String, Object>> buildDailyTrend() {
-        List<Map<String, Object>> trend = new ArrayList<>();
-        Calendar cal = Calendar.getInstance();
-        for (int i = 30; i >= 0; i--) {
-            Calendar dayCal = (Calendar) cal.clone();
-            dayCal.add(Calendar.DAY_OF_MONTH, -i);
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("day", dayCal.get(Calendar.DAY_OF_MONTH) + "日");
-            map.put("count", 0L);
-            trend.add(map);
-        }
-        return trend;
+        return safeGetTrend(selectionFeignClient::getDailyTrend);
     }
 
     private List<Map<String, Object>> buildRoleDistribution(long students, long teachers, long admins) {

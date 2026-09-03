@@ -44,11 +44,12 @@
 
     async function loadStats() {
         try {
-            const [stats, students, teachers, courses] = await Promise.all([
+            const [stats, students, teachers, courses, trend] = await Promise.all([
                 api.get('/api/v1/course-selections/stats'),
                 api.get('/api/v1/students/list', { pageNum: 1, pageSize: 1, orderByColumn: 'id', isAsc: true }),
                 api.get('/api/v1/teachers/list', { pageNum: 1, pageSize: 1, orderByColumn: 'id', isAsc: true }),
-                api.get('/api/v1/courses/list', { pageNum: 1, pageSize: 1, orderByColumn: 'id', isAsc: true })
+                api.get('/api/v1/courses/list', { pageNum: 1, pageSize: 1, orderByColumn: 'id', isAsc: true }),
+                api.get('/api/v1/course-selections/trend/month').catch(() => [])
             ]);
 
             const studentTotal = api.pageTotal(students);
@@ -64,12 +65,13 @@
                 element.textContent = Number(totals[index] || 0).toLocaleString('zh-CN');
             });
 
-            // 通知图表初始化，传入真实统计数据
+            // 通知图表初始化，传入真实统计数据与真实趋势
             if (typeof window.initDashboardCharts === 'function') {
                 window.initDashboardCharts({
                     studentCount: studentTotal,
                     teacherCount: teacherTotal,
-                    adminCount: 1
+                    adminCount: 1,
+                    trend: Array.isArray(trend) ? trend : []
                 });
             }
         } catch (error) {

@@ -8,6 +8,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 @Data
 @Entity
@@ -38,7 +39,10 @@ public class Student {
     @Column(name = "college_id")
     private Long collegeId;
 
-    @Column(name = "class_name", length = 50)
+    @Column(name = "class_id")
+    private Long classId;
+
+    @Transient
     private String className;
 
     @Column(name = "status")

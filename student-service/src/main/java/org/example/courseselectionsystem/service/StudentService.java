@@ -201,4 +201,9 @@ public interface StudentService {
      * @return 学生总数
      */
     long count();
+
+    /**
+     * 统计最近 days 天内新增的学生数量（用于仪表盘增长率）
+     */
+    long countRecent(int days);
 }

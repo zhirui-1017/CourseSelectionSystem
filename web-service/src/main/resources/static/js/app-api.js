@@ -37,7 +37,8 @@
         if (response.status === 401) {
             localStorage.removeItem('token');
             localStorage.removeItem('userInfo');
-            if (window.location.pathname.indexOf('/login') === -1) {
+            const currentPath = window.location.pathname;
+            if (currentPath !== '/login.html' && currentPath !== '/login') {
                 window.location.href = '/login.html';
             }
             throw new Error('未登录或登录已过期');
@@ -64,6 +65,10 @@
 
     function post(path, body, params) {
         return request(`${path}${toQuery(params)}`, { method: 'POST', body });
+    }
+
+    function put(path, body, params) {
+        return request(`${path}${toQuery(params)}`, { method: 'PUT', body });
     }
 
     function del(path, params) {
@@ -127,6 +132,7 @@
         request,
         get,
         post,
+        put,
         del,
         escapeHtml,
         formatDate,

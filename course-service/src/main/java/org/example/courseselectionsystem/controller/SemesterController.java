@@ -39,7 +39,7 @@ public class SemesterController {
     @GetMapping({"", "/list"})
     public Result<PageResult<Map<String, Object>>> list(@RequestParam Map<String, String> params) {
         int pageNum = positiveInt(params.get("pageNum"), 1);
-        int pageSize = Math.min(positiveInt(params.get("pageSize"), 20), 100);
+        int pageSize = Math.min(positiveInt(params.get("pageSize"), 20), 1000);
         MapSqlParameterSource source = new MapSqlParameterSource()
                 .addValue("offset", (pageNum - 1) * pageSize)
                 .addValue("pageSize", pageSize);
@@ -212,7 +212,11 @@ public class SemesterController {
         if (text == null || "all".equalsIgnoreCase(text)) {
             return defaultValue;
         }
-        return Integer.parseInt(text);
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 
     private String requiredText(Object value, String message) {

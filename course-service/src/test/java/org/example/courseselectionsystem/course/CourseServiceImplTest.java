@@ -108,7 +108,7 @@ class CourseServiceImplTest {
                 org.mockito.ArgumentCaptor.forClass(org.springframework.data.domain.PageRequest.class);
         verify(courseRepository).findCourses(isNull(), isNull(), isNull(), isNull(), isNull(), captor.capture());
         assertThat(captor.getValue().getPageNumber()).isEqualTo(0);
-        assertThat(captor.getValue().getPageSize()).isEqualTo(100);
+        assertThat(captor.getValue().getPageSize()).isEqualTo(500);
         assertThat(captor.getValue().getSort().getOrderFor("id")).isNotNull();
     }
 

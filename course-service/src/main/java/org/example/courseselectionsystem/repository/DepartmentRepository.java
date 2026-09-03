@@ -38,11 +38,14 @@ public interface DepartmentRepository extends JpaRepository<Department, Long> {
     List<Department> findByStatusOrderByIdAsc(Integer status);
 
     @Query("SELECT d FROM Department d WHERE 1=1 " +
-            "AND (:departmentName IS NULL OR d.departmentName LIKE CONCAT('%', :departmentName, '%')) " +
-            "AND (:departmentCode IS NULL OR d.departmentCode LIKE CONCAT('%', :departmentCode, '%')) " +
+            "AND ((:departmentName IS NULL AND :departmentCode IS NULL) " +
+            "     OR d.departmentName LIKE CONCAT('%', :departmentName, '%') " +
+            "     OR d.departmentCode LIKE CONCAT('%', :departmentCode, '%')) " +
+            "AND (:collegeId IS NULL OR d.collegeId = :collegeId) " +
             "AND (:status IS NULL OR d.status = :status)")
     Page<Department> findDepartments(@Param("departmentName") String departmentName,
                                      @Param("departmentCode") String departmentCode,
+                                     @Param("collegeId") Long collegeId,
                                      @Param("status") Integer status,
                                      Pageable pageable);
 }

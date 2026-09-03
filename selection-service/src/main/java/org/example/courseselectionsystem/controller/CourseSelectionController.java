@@ -1,13 +1,16 @@
 package org.example.courseselectionsystem.controller;
 
 import org.example.courseselectionsystem.common.Result;
+import org.example.courseselectionsystem.component.RedisLock;
 import org.example.courseselectionsystem.entity.CourseSelection;
+import org.example.courseselectionsystem.exception.BusinessException;
 import org.example.courseselectionsystem.service.CourseSelectionService;
 import org.example.courseselectionsystem.vo.PageRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +24,9 @@ public class CourseSelectionController {
     @Autowired
     private CourseSelectionService courseSelectionService;
 
+    @Autowired
+    private RedisLock redisLock;
+
     /**
      * 学生选课
      * @param studentId 学生ID
@@ -29,8 +35,20 @@ public class CourseSelectionController {
      */
     @PostMapping
     public Result selectCourse(@RequestParam Long studentId, @RequestParam Long courseId) {
-        Map<String, Object> result = courseSelectionService.selectCourse(studentId, courseId);
-        return Result.success(result);
+        if (courseId == null || studentId == null) {
+            throw new BusinessException(Result.PARAM_ERROR, "学生ID和课程ID不能为空");
+        }
+        // === Redis 分布式锁：同一课程并发抢选时串行化“查容量-写选课”，防止超员 ===
+        String owner = redisLock.newOwner();
+        if (!redisLock.tryLockCourseWithRetry(courseId, owner, 15)) {
+            throw new BusinessException(Result.PARAM_ERROR, "该课程当前选课人数过多，请稍后重试");
+        }
+        try {
+            Map<String, Object> result = courseSelectionService.selectCourse(studentId, courseId);
+            return Result.success(result);
+        } finally {
+            redisLock.unlockCourse(courseId, owner);
+        }
     }
 
     /**
@@ -41,8 +59,17 @@ public class CourseSelectionController {
      */
     @DeleteMapping("/{selectionId}")
     public Result dropCourse(@PathVariable Long selectionId, @RequestParam Long studentId) {
-        boolean result = courseSelectionService.dropCourse(selectionId, studentId);
-        return Result.success("退课成功", result);
+        // === Redis 分布式锁：退课与“候补晋升”串行化，避免名额释放被并发抢占 ===
+        String owner = redisLock.newOwner();
+        if (!redisLock.tryLockSelection(selectionId, owner)) {
+            throw new BusinessException(Result.PARAM_ERROR, "该选课记录正在处理中，请稍后重试");
+        }
+        try {
+            boolean result = courseSelectionService.dropCourse(selectionId, studentId);
+            return Result.success("退课成功", result);
+        } finally {
+            redisLock.unlockSelection(selectionId, owner);
+        }
     }
 
     /**
@@ -117,10 +144,40 @@ public class CourseSelectionController {
      */
     @PostMapping("/batch")
     public Result batchSelectCourses(@RequestBody Map<String, Object> batchSelectionInfo) {
-        List<Long> studentIds = (List<Long>) batchSelectionInfo.get("studentIds");
-        Long courseId = (Long) batchSelectionInfo.get("courseId");
+        List<Long> studentIds = toLongList(batchSelectionInfo.get("studentIds"));
+        Long courseId = toLong(batchSelectionInfo.get("courseId"));
         Map<String, Object> result = courseSelectionService.batchSelectCourses(studentIds, courseId);
         return Result.success(result);
+    }
+
+    /**
+     * 将请求体中的值安全转换为 Long（兼容 Integer/Long/字符串等类型）
+     * 注意：Jackson 反序列化 JSON 数字时可能生成 Integer，直接 (Long) 强转会抛 ClassCastException
+     */
+    private static Long toLong(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        return Long.parseLong(String.valueOf(value));
+    }
+
+    /**
+     * 将请求体中的值安全转换为 List&lt;Long&gt;（JSON 数字可能被反序列化为 Integer）
+     */
+    private static List<Long> toLongList(Object value) {
+        if (!(value instanceof List<?>)) {
+            return null;
+        }
+        List<Long> ids = new ArrayList<>();
+        for (Object item : (List<?>) value) {
+            if (item != null) {
+                ids.add(toLong(item));
+            }
+        }
+        return ids;
     }
     
     /**
@@ -149,6 +206,16 @@ public class CourseSelectionController {
     public Result getStudentCurrentCourses(@PathVariable Long studentId, @RequestParam String semester) {
         List<CourseSelection> courses = courseSelectionService.getStudentCurrentCourses(studentId, semester);
         return Result.success(courses);
+    }
+
+    /**
+     * 获取全部选课记录总数（供 Feign 跨服务调用）
+     * @return 选课总数
+     */
+    @GetMapping("/count")
+    public Result<Map<String, Object>> countAll() {
+        long count = courseSelectionService.countAll();
+        return Result.success(Map.of("count", count));
     }
 
     /**

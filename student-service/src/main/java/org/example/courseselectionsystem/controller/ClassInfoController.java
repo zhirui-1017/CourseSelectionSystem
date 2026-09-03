@@ -23,10 +23,10 @@ public class ClassInfoController {
             "classCode", "c.class_code",
             "className", "c.class_name",
             "grade", "c.grade",
-            "studentCount", "c.student_count",
+            "studentCount", "c.total_students",
             "status", "c.status",
             "createTime", "c.create_time",
-            "updatedAt", "c.updated_at"
+            "updatedAt", "c.update_time"
     );
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -38,14 +38,14 @@ public class ClassInfoController {
     @GetMapping({"", "/list"})
     public Result<PageResult<Map<String, Object>>> list(@RequestParam Map<String, String> params) {
         int pageNum = positiveInt(params.get("pageNum"), 1);
-        int pageSize = Math.min(positiveInt(params.get("pageSize"), 10), 100);
+        int pageSize = Math.min(positiveInt(params.get("pageSize"), 10), 1000);
         MapSqlParameterSource source = new MapSqlParameterSource()
                 .addValue("offset", (pageNum - 1) * pageSize)
                 .addValue("pageSize", pageSize);
         String where = classWhere(params, source);
         String orderBy = orderBy(params.get("orderByColumn"), params.get("isAsc"), "c.id");
 
-        long total = jdbcTemplate.queryForObject("select count(*) from class_info c " + where, source, Long.class);
+        long total = jdbcTemplate.queryForObject("select count(*) from class_info c left join college co on co.id = c.college_id " + where, source, Long.class);
         List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
                 select c.id,
                        c.class_code classCode,
@@ -55,19 +55,17 @@ public class ClassInfoController {
                        c.major_id majorId,
                        m.major_name majorName,
                        c.grade,
-                       c.head_teacher_id headTeacherId,
-                       ht.name headTeacherName,
-                       c.student_count studentCount,
+                       c.head_teacher headTeacherName,
+                       c.total_students studentCount,
                        c.monitor_id monitorId,
                        mon.name monitorName,
                        c.contact_phone contactPhone,
                        c.create_time createTime,
                        c.status,
-                       c.updated_at updatedAt
+                       c.update_time updatedAt
                   from class_info c
                   left join college co on co.id = c.college_id
                   left join major m on m.id = c.major_id
-                  left join teacher ht on ht.id = c.head_teacher_id
                   left join student mon on mon.id = c.monitor_id
                 """ + where + " order by " + orderBy + " limit :pageSize offset :offset", source);
         return Result.success(new PageResult<>(pageNum, pageSize, total, rows));
@@ -80,13 +78,12 @@ public class ClassInfoController {
 
     @PostMapping
     public Result<Map<String, Object>> create(@RequestBody Map<String, Object> body) {
-        MapSqlParameterSource source = classParams(body)
-                .addValue("studentCount", intValue(body.get("studentCount"), 0));
+        MapSqlParameterSource source = classParams(body);
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update("""
                 insert into class_info
-                    (class_code, class_name, college_id, major_id, grade, head_teacher_id,
-                     student_count, monitor_id, contact_phone, status)
+                    (class_code, class_name, college_id, major_id, grade, head_teacher,
+                     total_students, monitor_id, contact_phone, status)
                 values
                     (:classCode, :className, :collegeId, :majorId, :grade, :headTeacherId,
                      :studentCount, :monitorId, :contactPhone, :status)
@@ -106,8 +103,9 @@ public class ClassInfoController {
                        college_id = :collegeId,
                        major_id = :majorId,
                        grade = :grade,
-                       head_teacher_id = :headTeacherId,
+                       head_teacher = :headTeacherId,
                        monitor_id = :monitorId,
+                       total_students = :studentCount,
                        contact_phone = :contactPhone,
                        status = :status
                  where id = :id
@@ -134,8 +132,7 @@ public class ClassInfoController {
     public Result<List<Map<String, Object>>> students(@PathVariable Long id) {
         Map<String, Object> classInfo = requireClass(id);
         MapSqlParameterSource source = new MapSqlParameterSource()
-                .addValue("id", id)
-                .addValue("className", classInfo.get("className"));
+                .addValue("id", id);
         List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
                 select s.id,
                        s.student_no studentNo,
@@ -143,11 +140,10 @@ public class ClassInfoController {
                        s.gender,
                        s.phone,
                        s.email,
-                       s.class_name className,
                        s.status,
-                       s.created_at createdAt
+                       s.create_time createdAt
                   from student s
-                 where s.class_id = :id or s.class_name = :className
+                 where s.class_id = :id
                  order by s.student_no
                 """, source);
         return Result.success(rows);
@@ -173,7 +169,7 @@ public class ClassInfoController {
                   join course_selection cs on cs.student_id = s.id and cs.status = 1
                   join course c on c.id = cs.course_id
                   left join teacher t on t.id = c.teacher_id
-                 where s.class_id = :id or s.class_name = :className
+                 where s.class_id = :id
                  order by c.course_code
                 """, source);
         return Result.success(rows);
@@ -189,19 +185,17 @@ public class ClassInfoController {
                        c.major_id majorId,
                        m.major_name majorName,
                        c.grade,
-                       c.head_teacher_id headTeacherId,
-                       ht.name headTeacherName,
-                       c.student_count studentCount,
+                       c.head_teacher headTeacherName,
+                       c.total_students studentCount,
                        c.monitor_id monitorId,
                        mon.name monitorName,
                        c.contact_phone contactPhone,
                        c.create_time createTime,
                        c.status,
-                       c.updated_at updatedAt
+                       c.update_time updatedAt
                   from class_info c
                   left join college co on co.id = c.college_id
                   left join major m on m.id = c.major_id
-                  left join teacher ht on ht.id = c.head_teacher_id
                   left join student mon on mon.id = c.monitor_id
                  where c.id = :id
                 """, new MapSqlParameterSource("id", id));
@@ -215,7 +209,7 @@ public class ClassInfoController {
         List<String> filters = new ArrayList<>();
         String keyword = text(params.get("keyword"));
         if (keyword != null) {
-            filters.add("(c.class_code like :keyword or c.class_name like :keyword or c.grade like :keyword)");
+            filters.add("(c.class_code like :keyword or c.class_name like :keyword or c.grade like :keyword or co.college_name like :keyword)");
             source.addValue("keyword", "%" + keyword + "%");
         }
         addLongFilter(filters, source, "collegeId", "c.college_id", params.get("collegeId"));
@@ -235,15 +229,32 @@ public class ClassInfoController {
         Long collegeId = requiredLong(body.get("collegeId"), "学院不能为空");
         Long majorId = requiredLong(body.get("majorId"), "专业不能为空");
         String grade = requiredText(body.get("grade"), "年级不能为空");
+        // head_teacher 列存教师姓名；优先 headTeacherName，兼容 headTeacherId
+        String headTeacher = text(body.get("headTeacherName"));
+        if (headTeacher == null) {
+            Long htId = longValue(body.get("headTeacherId"));
+            headTeacher = htId == null ? null : String.valueOf(htId);
+        }
+        // monitor_id 列存学生 ID；优先 monitorId，兼容 monitorName 按姓名查询
+        Long monitorId = longValue(body.get("monitorId"));
+        if (monitorId == null) {
+            String monitorName = text(body.get("monitorName"));
+            if (monitorName != null) {
+                monitorId = jdbcTemplate.query("select id from student where name = :name order by id limit 1",
+                        new MapSqlParameterSource("name", monitorName),
+                        rs -> rs.next() ? rs.getLong(1) : null);
+            }
+        }
         return new MapSqlParameterSource()
                 .addValue("classCode", classCode)
                 .addValue("className", className)
                 .addValue("collegeId", collegeId)
                 .addValue("majorId", majorId)
                 .addValue("grade", grade)
-                .addValue("headTeacherId", longValue(body.get("headTeacherId")))
-                .addValue("monitorId", longValue(body.get("monitorId")))
+                .addValue("headTeacherId", headTeacher)
+                .addValue("monitorId", monitorId)
                 .addValue("contactPhone", text(body.get("contactPhone")))
+                .addValue("studentCount", intValue(body.get("studentCount"), 0))
                 .addValue("status", intValue(body.get("status"), 1));
     }
 

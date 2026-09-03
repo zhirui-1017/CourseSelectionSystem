@@ -105,18 +105,15 @@ class UserServiceImplTest {
     }
 
     @Test
-    void loginSupportsLegacyAdminFallback() {
+    void loginRejectsNonExistentAdmin() {
         UserServiceImpl service = newService();
         when(studentMapper.selectByStudentNo("admin")).thenReturn(null);
         when(teacherMapper.selectByTeacherNo("admin")).thenReturn(null);
         when(adminRepository.findByUsername("admin")).thenReturn(Optional.empty());
 
-        Map<String, Object> result = service.login(loginRequest("admin", "admin123"));
-
-        User user = (User) result.get("user");
-        assertThat(user.getId()).isZero();
-        assertThat(user.getUsername()).isEqualTo("admin");
-        assertThat(user.getUserType()).isEqualTo(3);
+        assertThatThrownBy(() -> service.login(loginRequest("admin", "admin123")))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("code", 404);
     }
 
     @Test
@@ -223,7 +220,7 @@ class UserServiceImplTest {
         assertThat(result).isTrue();
         verify(adminRepository).save(argThat(admin ->
                 "new-admin".equals(admin.getUsername())
-                        && Integer.valueOf(3).equals(admin.getRole())
+                        && "admin".equals(admin.getRole())
                         && Integer.valueOf(1).equals(admin.getStatus())
                         && new BCryptPasswordEncoder().matches("admin123", admin.getPassword())
         ));
@@ -326,7 +323,8 @@ class UserServiceImplTest {
         boolean result = service.resetPassword(2L, "new123");
 
         assertThat(result).isTrue();
-        assertThat(student.getPassword()).isEqualTo("new123");
+        assertThat(student.getPassword()).isNotEqualTo("new123");
+        assertThat(new BCryptPasswordEncoder().matches("new123", student.getPassword())).isTrue();
     }
 
     @Test
@@ -341,7 +339,8 @@ class UserServiceImplTest {
         boolean result = service.changePassword(3L, "old123", "new123");
 
         assertThat(result).isTrue();
-        assertThat(teacher.getPassword()).isEqualTo("new123");
+        assertThat(teacher.getPassword()).isNotEqualTo("new123");
+        assertThat(new BCryptPasswordEncoder().matches("new123", teacher.getPassword())).isTrue();
     }
 
     @Test
@@ -368,7 +367,8 @@ class UserServiceImplTest {
         boolean result = service.resetPassword(4L, "newAdmin123");
 
         assertThat(result).isTrue();
-        assertThat(admin.getPassword()).isEqualTo("newAdmin123");
+        assertThat(admin.getPassword()).isNotEqualTo("newAdmin123");
+        assertThat(new BCryptPasswordEncoder().matches("newAdmin123", admin.getPassword())).isTrue();
         verify(adminRepository).save(admin);
     }
 
@@ -495,7 +495,7 @@ class UserServiceImplTest {
         admin.setId(id);
         admin.setUsername(username);
         admin.setPassword("admin123");
-        admin.setRole(3);
+        admin.setRole("admin");
         admin.setStatus(1);
         return admin;
     }

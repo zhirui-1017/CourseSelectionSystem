@@ -38,7 +38,7 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
      */
     private static final Set<String> WHITELIST_PATHS = new HashSet<>(Arrays.asList(
             "/login", "/login.html", "/register",
-            "/api/v1/auth/login", "/api/v1/auth/register",
+            "/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/auth/captcha",
             "/api/v1/users/login", "/api/v1/users/register",
             "/static", "/css", "/js", "/images", "/lib",
             "/webjars", "/favicon.ico",
@@ -96,14 +96,16 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
     }
 
     /**
-     * 判断请求路径是否在白名单中（前缀匹配）
+     * 判断请求路径是否在白名单中（段边界匹配）
+     * 仅当路径等于白名单项，或白名单项作为完整路径段前缀时才放行，
+     * 避免 /loginx、/api/v1/auth/loginxxx 等被误放行。
      */
     private boolean isWhitelisted(String path) {
         if (path == null) {
             return false;
         }
         for (String whitelistPath : WHITELIST_PATHS) {
-            if (path.startsWith(whitelistPath)) {
+            if (path.equals(whitelistPath) || path.startsWith(whitelistPath + "/")) {
                 return true;
             }
         }

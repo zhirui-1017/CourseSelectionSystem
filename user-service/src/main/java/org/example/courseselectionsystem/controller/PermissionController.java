@@ -81,11 +81,29 @@ public class PermissionController {
      * @return 分页权限列表
      */
     @GetMapping("/page")
-    public Map<String, Object> getPermissionsByPage(@RequestParam(defaultValue = "1") Integer page,
-                                               @RequestParam(defaultValue = "10") Integer size,
+    public Map<String, Object> getPermissionsByPage(@RequestParam(required = false) Integer pageNum,
+                                               @RequestParam(required = false) Integer pageSize,
+                                               @RequestParam(required = false) Integer page,
+                                               @RequestParam(required = false) Integer size,
                                                @RequestParam(required = false) String name,
-                                               @RequestParam(required = false) String code) {
-        return permissionService.getPermissionsByPage(page, size, name, code);
+                                               @RequestParam(required = false) String code,
+                                               @RequestParam(required = false) String permissionName,
+                                               @RequestParam(required = false) String permissionCode,
+                                               @RequestParam(required = false) Integer status) {
+        Integer p = pageNum != null ? pageNum : (page != null ? page : 1);
+        Integer s = pageSize != null ? pageSize : (size != null ? size : 10);
+        String n = firstNonBlank(permissionName, name);
+        String c = firstNonBlank(permissionCode, code);
+        return permissionService.getPermissionsByPage(p, s, n, c, status);
+    }
+
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.trim().isEmpty()) {
+                return value;
+            }
+        }
+        return null;
     }
 
     /**
