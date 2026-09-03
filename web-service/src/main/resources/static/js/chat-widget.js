@@ -1,4 +1,4 @@
-/*
+﻿/*
  * AI 智能助手 — 浮动对话面板
  * v3.0 — SSE 流式对话 + Markdown 渲染 + 会话历史管理
  */
@@ -10,7 +10,7 @@
   window.__aiChatWidgetInitialized = true;
 
   // ========== 配置 ==========
-  var CONTEXT_PATH = '/' + window.location.pathname.split('/')[1];
+  var CONTEXT_PATH = ''; // 微服务网关挂载于根路径 /
   var CHAT_STREAM_API = CONTEXT_PATH + '/api/v1/ai/chat/stream';
   var SESSIONS_API = CONTEXT_PATH + '/api/v1/ai/sessions';
   var MARKED_CDN = CONTEXT_PATH + '/lib/marked/15.0.0/marked.min.js';
@@ -526,7 +526,7 @@
 
   /** 加载会话列表 */
   function fetchSessions(callback) {
-    fetch(SESSIONS_API)
+    authFetch(SESSIONS_API)
       .then(function(r) { return r.json(); })
       .then(function(res) {
         if (res.code === 200 && res.data) {
@@ -543,7 +543,7 @@
 
   /** 创建新会话（服务器端） */
   function createSession(callback) {
-    fetch(SESSIONS_API + '/new', { method: 'POST' })
+    authFetch(SESSIONS_API + '/new', { method: 'POST' })
       .then(function(r) { return r.json(); })
       .then(function(res) {
         if (res.code === 200 && res.data) {
@@ -561,7 +561,7 @@
 
   /** 删除会话（服务器端） */
   function deleteSession(sessionUid, callback) {
-    fetch(SESSIONS_API + '/' + sessionUid, { method: 'DELETE' })
+    authFetch(SESSIONS_API + '/' + sessionUid, { method: 'DELETE' })
       .then(function(r) { return r.json(); })
       .then(function(res) {
         if (callback) callback(res.code === 200);
@@ -574,7 +574,7 @@
 
   /** 清空会话消息（服务器端） */
   function clearSessionMessages(sessionUid, callback) {
-    fetch(SESSIONS_API + '/' + sessionUid + '/messages', { method: 'DELETE' })
+    authFetch(SESSIONS_API + '/' + sessionUid + '/messages', { method: 'DELETE' })
       .then(function(r) { return r.json(); })
       .then(function(res) {
         if (callback) callback(res.code === 200);
@@ -587,7 +587,7 @@
 
   /** 加载会话历史消息 */
   function loadSessionMessages(sessionUid, callback) {
-    fetch(SESSIONS_API + '/' + sessionUid + '/messages')
+    authFetch(SESSIONS_API + '/' + sessionUid + '/messages')
       .then(function(r) { return r.json(); })
       .then(function(res) {
         if (res.code === 200 && res.data) {
@@ -835,7 +835,7 @@
         }
       }, 30000);
 
-      fetch(CHAT_STREAM_API, {
+      authFetch(CHAT_STREAM_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: msg, sessionId: currentSessionId })
@@ -1181,3 +1181,10 @@
     init();
   }
 })();
+
+  // 微服务版：所有请求自动携带 JWT
+  function authFetch(url, options) {
+    options = options || {};
+    options.headers = Object.assign({}, options.headers || {}, { 'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') });
+    return fetch(url, options);
+  }
